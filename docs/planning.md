@@ -20,6 +20,8 @@ Whether operating in **VS Code + OpenCode** for high-level architectural plannin
 2. **Defensive Blast Radius Assessment:** Every change in attendance capture, user status, or database schema has systemic ripple effects across Admin, Teacher, Student, Hardware, and Parent SMS layers. These impacts must be mapped before implementation.
 3. **No Hallucinated Business Logic:** Do not invent institution-specific policies (e.g., cutoff times, excuse slip escalation ladders, SMS templates). Rely strictly on confirmed specs or prompt the user for clarification.
 4. **Lightweight & Framework-Free Constraint:** Enforce the lightweight Vanilla JS (ES6+ modular) + Tailwind CSS + Supabase stack. Never propose React, Vue, Angular, Laravel, or full-stack SSR frameworks.
+5. **Anti AI Slop:** Keep all code, plans, and technical blueprints lean, complete, and grounded. Reject bloated boilerplate, speculative abstractions, placeholder stubs (`TODO`), and trivial comments.
+6. **No Emoji, Just Use an Icon Instead:** Strictly forbid emojis across UI elements, buttons, badges, notifications, and plans. Mandate crisp SVG vector icons styled via Tailwind CSS.
 
 ---
 

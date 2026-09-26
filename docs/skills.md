@@ -16,6 +16,14 @@ This document is the **authoritative single source of truth** for all domain ski
 
 It combines all high-level agent capability specifications with concrete, step-by-step development and debugging procedures. AI agents (in Google Antigravity, OpenCode, VS Code, Claude) and software engineers must adhere to these directives for all development, maintenance, and deployment tasks.
 
+### 1.1 Engineering Mandate: Anti AI Slop Directive
+Every contribution to the Bestlink College AMS codebase must adhere to strict **Anti AI Slop** engineering standards:
+* **No Speculative or Hallucinated Logic:** Never invent ungrounded database columns, non-existent RPCs, fake endpoints, or unrequested features. Every piece of code must map to `docs/PRD.md`, `docs/DATA.md`, or confirmed specifications.
+* **No Filler Comments or Obvious Explanations:** Do not clutter code with trivial comments (e.g., `// loop through items`, `// return true`). Code must be self-documenting with clean, descriptive naming. Reserve comments solely for institutional invariants, edge-case rationale, and complex domain logic.
+* **No Incomplete / Placeholder Stubs:** Never leave stubbed functions, mock fake data, `TODO: implement later`, or unhandled promise rejections in production code. Write complete, functional, robust logic.
+* **No Bloated Abstractions:** Avoid unnecessary wrapper classes, deep inheritance hierarchies, or speculative indirection. Write lean, modular, purposeful ES6+ and PostgreSQL functions.
+* **No Code Rewrites for Small Changes:** Adhere to the Change Size Principle. Edit surgically and preserve surrounding established code patterns.
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                              DEVELOPER / AGENT WORKSPACE                               │
@@ -80,6 +88,7 @@ It combines all high-level agent capability specifications with concrete, step-b
   3. Re-render Chart.js gradients and grid lines dynamically on theme toggle without page reload.
   4. Ensure minimum **WCAG 2.1 AA** contrast (`4.5:1` body text, `3.0:1` interactive elements).
   5. Include pulsing live indicator (`@keyframes pulse-dot`) on active gate scanner feeds.
+  6. **No Emoji, Just Use an Icon Instead:** NEVER use raw Unicode emojis (e.g. 📊, 🚀, 🔔, ⚠️, ❌, ✅, 📅, 👤) in UI components, buttons, navigation links, cards, tables, badges, toasts, or console logs. Always use sharp, lightweight SVG vector icons (or standardized icon libraries like Lucide / Heroicons / FontAwesome) styled via Tailwind CSS classes. Emojis degrade institutional academic professionalism and render inconsistently across operating systems.
 
 ---
 
@@ -108,6 +117,8 @@ It combines all high-level agent capability specifications with concrete, step-b
      * `teacher`: Scoped strictly to assigned sections via `teacher_sections`.
      * `admin`: Global administrative access.
   4. **Preserve Historical Integrity:** Never hard-delete student or teacher records (`DELETE FROM users`). Deactivation must set `status = 'inactive'` to preserve historical attendance logs and audit integrity.
+  5. **XSS Prevention & DOM Sanitization:** Never render user-supplied strings via `innerHTML`. Dynamic data must use `element.textContent` or sanitized DOM node creation routines.
+  6. **Rate Limiting & Cooldowns:** Enforce the 5-minute anti-passback cooldown window (HTTP 429) and auth rate limiting (5 failed login attempts &rarr; 15-minute lockout).
 
 ---
 
@@ -369,6 +380,8 @@ Before marking any feature complete:
 - [ ] **Theme Switching:** Toggle Light and Dark themes; verify Chart.js axes and cards update cleanly without layout jump.
 - [ ] **Tabular Numerals:** Verify timestamps and counters use `font-variant-numeric: tabular-nums` to eliminate jitter.
 - [ ] **Mobile Responsiveness:** Verify layout stacks properly on mobile screens (<768px).
+- [ ] **Iconography Polish (No Emoji):** Verify zero raw Unicode emojis across views; verify crisp SVG vector icons styled with Tailwind.
+- [ ] **Anti AI Slop Audit:** Verify code is clean, concise, free of obvious/filler comments, ungrounded abstractions, and placeholder stubs.
 
 ---
 

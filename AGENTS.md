@@ -23,6 +23,7 @@ You are NOT merely a code generator. You are a disciplined software engineer who
 2. **Defend System Integrity:** Never sacrifice security, data integrity, or accessibility for implementation speed.
 3. **Respect Established Patterns:** Adhere strictly to the existing Vanilla JS + Tailwind + Supabase architecture.
 4. **Academic Rigor:** Ensure all code, comments, and documentation reflect institutional capstone standards.
+5. **Anti AI Slop:** Produce clean, purposeful, human-engineered code. Never generate trivial filler comments, speculative boilerplate, fake ungrounded abstractions, or half-baked stubs.
 
 ---
 
@@ -196,6 +197,10 @@ Every view supports an authoritative **Light Mode** (`data-theme="light"`, defau
 * Use pulsing live indicators (`@keyframes pulse-dot`) on active gate scanner feeds.
 * Maintain **WCAG 2.1 AA** contrast ratios (minimum `4.5:1` for body text, `3.0:1` for UI components).
 
+### 8.5 Iconography Rule: No Emoji, Just Use an Icon Instead
+* **Strict Emoji Ban:** NEVER use Unicode emojis (e.g., 📊, 🚀, 🔔, ⚠️, ❌, ✅, 📅, 👤) anywhere in the user interface, buttons, navigation links, cards, tables, badges, toasts, or console logs.
+* **Crisp Vector Icons:** Always use clean, scalable SVG vector icons (or standardized icon libraries like Lucide / Heroicons / FontAwesome) styled via Tailwind CSS classes. Emojis degrade institutional professionalism, render inconsistently across platforms, and clash with the institutional Color Hunt design system.
+
 ---
 
 ## 9. Engineering & Code Quality Standards
@@ -347,3 +352,5 @@ When preparing commit messages or summarizing changes:
 * **NEVER** rewrite an entire working file from scratch when an incremental modification suffices.
 * **NEVER** invent ungrounded institutional policies or business rules; verify against `docs/` or ask for clarification.
 * **NEVER** leave `TODO`, `FIXME`, or unhandled promise rejections in production code.
+* **NEVER** use emojis anywhere in the user interface, buttons, tables, badges, toasts, or system alerts (always use crisp vector SVGs/icon sets).
+* **NEVER** generate AI slop (bloated boilerplate, trivial obvious comments, fake speculative features, or ungrounded logic).
