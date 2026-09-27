@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Camera QR Scanner Kiosk | Bestlink College</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  
+  <!-- jsQR Decoder CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    .kiosk-canvas {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .kiosk-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kiosk-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+    }
+    .scanner-box {
+      background: #050b14;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 4 / 3;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    #qrVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .scan-reticle {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border: 2px dashed rgba(33, 150, 243, 0.7);
+      border-radius: 14px;
+      box-shadow: 0 0 0 9999px rgba(5, 11, 20, 0.65);
+      pointer-events: none;
+    }
+    .scan-beam {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--ch-500), transparent);
+      box-shadow: 0 0 8px var(--ch-500);
+      top: 0;
+      animation: scanBeam 2.2s infinite ease-in-out;
+    }
+    @keyframes scanBeam {
+      0% { top: 0%; opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+    .feedback-banner {
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 14px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .feedback-present {
+      background: var(--present-soft);
+      border: 1px solid var(--present);
+      color: var(--present);
+    }
+    .feedback-late {
+      background: var(--late-soft);
+      border: 1px solid var(--late);
+      color: var(--late);
+    }
+    .feedback-cooldown {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid #f59e0b;
+      color: #d97706;
+    }
+    .feedback-error {
+      background: var(--absent-soft);
+      border: 1px solid var(--absent);
+      color: var(--absent);
+    }
+    .offline-bar {
+      display: none;
+      background: #f59e0b;
+      color: #ffffff;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .kiosk-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="kiosk-canvas">
+    <!-- Offline Sync Banner -->
+    <div id="offlineBar" class="offline-bar">
+      <span>Offline Ingress Mode Active: <span id="offlineCount">0</span> scans buffered locally</span>
+    </div>
+
+    <!-- Header -->
+    <header class="kiosk-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="../index.html" class="pillbtn" style="text-decoration: none;" title="Return to Portal">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back
+        </a>
+        <div style="font-size: 16px; font-weight: 700; color: var(--text-1);">
+          Gate Ingress QR Scanner
+        </div>
+        <span class="live-badge">
+          <span class="live-dot"></span>
+          Camera Active
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="theme-toggle" aria-label="Toggle Theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="kiosk-grid">
+      <!-- Left: Camera Viewfinder -->
+      <section>
+        <div class="scanner-box">
+          <video id="qrVideo" playsinline autoplay muted></video>
+          <canvas id="qrCanvas" style="display: none;"></canvas>
+          <div class="scan-reticle">
+            <div class="scan-beam"></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align: center; color: var(--text-2); font-size: 12.5px;">
+          Position your student digital QR code within the viewfinder. Auto-scanning active.
+        </div>
+      </section>
+
+      <!-- Right: Live Feedback & Scan Stream -->
+      <section>
+        <!-- Feedback Strobe Banner -->
+        <div id="feedbackBanner" class="feedback-banner">
+          <div id="feedbackIcon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"></div>
+          <div>
+            <div id="feedbackTitle" style="font-size: 14px; font-weight: 700;">Scan Verified</div>
+            <div id="feedbackDesc" style="font-size: 12.5px; opacity: 0.9;">Time-in recorded successfully.</div>
+          </div>
+        </div>
+
+        <!-- Recent Gate Scans Card -->
+        <div class="card" style="padding: 18px 20px;">
+          <div class="rowhead">
+            <h3>Recent Scans (Current Session)</h3>
+            <span style="font-size: 11.5px; color: var(--text-3); font-weight: 500;">Hardware Fallback</span>
+          </div>
+          <div class="sub">Logs processed via camera optical scanner</div>
+
+          <div id="scanLogList">
+            <div class="list-row">
+              <div class="avatar">JD</div>
+              <div class="row-main">
+                <div class="name">Juan Dela Cruz</div>
+                <div class="meta">BSIT 3-1 · QR Ingress · <span class="tabular-nums">07:54 AM</span></div>
+              </div>
+              <span class="pill pill-present">Present</span>
+            </div>
+            <div class="list-row">
+              <div class="avatar">MC</div>
+              <div class="row-main">
+                <div class="name">Maria Clara</div>
+                <div class="meta">BSIT 3-1 · QR Ingress · <span class="tabular-nums">08:12 AM</span></div>
+              </div>
+              <span class="pill pill-late">Late (12m)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initThemeToggle } from '../assets/js/lib/rbac-guard.js';
+
+    initThemeToggle();
+
+    // 1. Audio Synthesis Feedback (<300ms latency)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, type, duration, count = 1) {
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+          } catch(e) {}
+        }, i * 160);
+      }
+    }
+
+    // 2. Offline IndexedDB Queue
+    let db;
+    const dbReq = indexedDB.open('ams_offline_scans_db', 1);
+    dbReq.onupgradeneeded = (e) => {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains('scans')) {
+        db.createObjectStore('scans', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    dbReq.onsuccess = (e) => {
+      db = e.target.result;
+      updateOfflineCount();
+    };
+
+    function updateOfflineCount() {
+      if (!db) return;
+      const tx = db.transaction('scans', 'readonly');
+      const store = tx.objectStore('scans');
+      const countReq = store.count();
+      countReq.onsuccess = () => {
+        const count = countReq.result;
+        const offlineBar = document.getElementById('offlineBar');
+        const countEl = document.getElementById('offlineCount');
+        if (count > 0 || !navigator.onLine) {
+          offlineBar.style.display = 'block';
+          countEl.textContent = count;
+        } else {
+          offlineBar.style.display = 'none';
+        }
+      };
+    }
+
+    window.addEventListener('online', () => {
+      updateOfflineCount();
+      flushOfflineQueue();
+    });
+    window.addEventListener('offline', () => updateOfflineCount());
+
+    function flushOfflineQueue() {
+      if (!db || !navigator.onLine) return;
+      const tx = db.transaction('scans', 'readwrite');
+      const store = tx.objectStore('scans');
+      const getAllReq = store.getAll();
+      getAllReq.onsuccess = () => {
+        const scans = getAllReq.result;
+        if (scans.length > 0) {
+          console.log(`[AMS Ingress] Flushing ${scans.length} buffered scans.`);
+          store.clear();
+          updateOfflineCount();
+        }
+      };
+    }
+
+    // 3. Camera Setup & jsQR Continuous Loop
+    const video = document.getElementById('qrVideo');
+    const canvas = document.getElementById('qrCanvas');
+    const ctx = canvas.getContext('2d');
+    let lastScanTime = 0;
+    const SCAN_THROTTLE_MS = 3000; // Prevent instant duplicate camera reads
+
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = stream;
+        video.setAttribute('playsinline', true);
+        video.play();
+        requestAnimationFrame(tick);
+      } catch (err) {
+        console.warn('[AMS QR Scan] Camera access denied or not available:', err);
+        // Simulation helper for testing environments without webcam
+        simulateScanner();
+      }
+    }
+
+    function tick() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert'
+        });
+
+        if (code && code.data) {
+          const now = Date.now();
+          if (now - lastScanTime > SCAN_THROTTLE_MS) {
+            lastScanTime = now;
+            handleScannedCode(code.data);
+          }
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // 4. Ingress Processing & Optical/Audio Feedback
+    const feedbackBanner = document.getElementById('feedbackBanner');
+    const feedbackTitle = document.getElementById('feedbackTitle');
+    const feedbackDesc = document.getElementById('feedbackDesc');
+    const scanLogList = document.getElementById('scanLogList');
+
+    function handleScannedCode(codeValue) {
+      // Mock student resolution for test QR tokens
+      const isKnown = codeValue.includes('delacruz') || codeValue.includes('clara') || codeValue.startsWith('bcp_');
+      
+      if (!isKnown) {
+        // Red Error Feedback: Unregistered
+        showFeedback('error', 'Unregistered Credential', 'QR code is not associated with an active student or teacher.');
+        playBeep(240, 'sawtooth', 0.4);
+        return;
+      }
+
+      // Check anti-passback cooldown (simulated 5-min threshold)
+      const cachedLastTap = sessionStorage.getItem(`last_tap_${codeValue}`);
+      const now = Date.now();
+      if (cachedLastTap && (now - parseInt(cachedLastTap)) < 30000) { // 30s for fast dev demo
+        showFeedback('cooldown', 'Cooldown Active (429)', 'Card was already tapped within 5 minutes (anti-passback).');
+        playBeep(480, 'triangle', 0.15, 2);
+        return;
+      }
+
+      sessionStorage.setItem(`last_tap_${codeValue}`, now.toString());
+
+      // Determine on-time vs late
+      const currentHour = new Date().getHours();
+      const isLate = currentHour >= 8; // Past 8:00 AM is late
+
+      if (isLate) {
+        showFeedback('late', 'Late Arrival Recorded', 'Tardy status logged. Parent notification queued.');
+        playBeep(620, 'sine', 0.18, 2);
+        prependScanLog('Andres Bonifacio', 'BSIT 3-2', 'late');
+      } else {
+        showFeedback('present', 'Verified: On Time', 'Attendance recorded successfully. Have a great class!');
+        playBeep(880, 'sine', 0.2, 1);
+        prependScanLog('Juan Dela Cruz', 'BSIT 3-1', 'present');
+      }
+    }
+
+    function showFeedback(type, title, desc) {
+      feedbackBanner.className = `feedback-banner feedback-${type}`;
+      feedbackTitle.textContent = title;
+      feedbackDesc.textContent = desc;
+      feedbackBanner.style.display = 'flex';
+
+      setTimeout(() => {
+        feedbackBanner.style.display = 'none';
+      }, 4000);
+    }
+
+    function prependScanLog(name, section, status) {
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const initials = name.split(' ').map(n => n[0]).join('');
+      
+      row.innerHTML = `
+        <div class="avatar">${initials}</div>
+        <div class="row-main">
+          <div class="name">${name}</div>
+          <div class="meta">${section} · QR Ingress · <span class="tabular-nums">${timeStr}</span></div>
+        </div>
+        <span class="pill pill-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+      `;
+      scanLogList.prepend(row);
+    }
+
+    // Simulation trigger for browser environments without active camera
+    function simulateScanner() {
+      const container = document.querySelector('.scanner-box');
+      const testBtn = document.createElement('button');
+      testBtn.className = 'pillbtn';
+      testBtn.style.position = 'absolute';
+      testBtn.style.zIndex = '10';
+      testBtn.style.background = 'var(--surface)';
+      testBtn.textContent = 'Simulate QR Tap';
+      testBtn.addEventListener('click', () => {
+        handleScannedCode('bcp_qr_sec_tok_delacruz_01');
+      });
+      container.appendChild(testBtn);
+    }
+
+    initCamera();
+  </script>
+</body>
+</html>

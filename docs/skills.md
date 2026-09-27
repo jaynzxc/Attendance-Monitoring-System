@@ -3,8 +3,8 @@
 ## Attendance Monitoring System (AMS) — Bestlink College of the Philippines
 **Subsystem of SMS 1 (School Management System)**  
 **Target Path:** `docs/skills.md` (Main Skills Document)  
-**Companion Documents:** `PRD.md`, `ARCHITECTURE.md`, `DATA.md`, `WORKFLOW.md`, `UI-UX_Architecture.md`, `UI-UX_BackendSpec.md`, `Security.md`, `planning.md`  
-**Version:** 2.0  
+**Companion Documents:** `PRD.md`, `ARCHITECTURE.md`, `DATA.md`, `WORKFLOW.md`, `MODULE_WORKFLOWS.md`, `DB_E2E_WORKFLOW.md`, `UI-UX_Architecture.md`, `UI-UX_BackendSpec.md`, `Security.md`, `planning.md`  
+**Version:** 2.1  
 **Date:** September 26, 2026  
 **Status:** Authoritative Single Source of Truth for Engineering Skills & Development Procedures  
 
@@ -18,7 +18,7 @@ It combines all high-level agent capability specifications with concrete, step-b
 
 ### 1.1 Engineering Mandate: Anti AI Slop Directive
 Every contribution to the Bestlink College AMS codebase must adhere to strict **Anti AI Slop** engineering standards:
-* **No Speculative or Hallucinated Logic:** Never invent ungrounded database columns, non-existent RPCs, fake endpoints, or unrequested features. Every piece of code must map to `docs/PRD.md`, `docs/DATA.md`, or confirmed specifications.
+* **No Speculative or Hallucinated Logic:** Never invent ungrounded database columns, non-existent RPCs, fake endpoints, or unrequested features. Every piece of code must map to `docs/PRD.md`, `docs/DATA.md`, `docs/MODULE_WORKFLOWS.md`, or confirmed specifications.
 * **No Filler Comments or Obvious Explanations:** Do not clutter code with trivial comments (e.g., `// loop through items`, `// return true`). Code must be self-documenting with clean, descriptive naming. Reserve comments solely for institutional invariants, edge-case rationale, and complex domain logic.
 * **No Incomplete / Placeholder Stubs:** Never leave stubbed functions, mock fake data, `TODO: implement later`, or unhandled promise rejections in production code. Write complete, functional, robust logic.
 * **No Bloated Abstractions:** Avoid unnecessary wrapper classes, deep inheritance hierarchies, or speculative indirection. Write lean, modular, purposeful ES6+ and PostgreSQL functions.
@@ -43,13 +43,13 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 | Skill Slug | Domain | Primary Documentation Authority | Primary Responsibility |
 |---|---|---|---|
-| **`ams-planning`** | Architecture & SOP | [`docs/planning.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/planning.md) | Multi-role impact analysis, 5-phase planning protocol, milestone roadmap. |
-| **`ams-ui-ux`** | Design System & Styling | [`docs/UI-UX_Architecture.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_Architecture.md) | Color Hunt palette enforcement, dual-theme switching, tabular numerals, KPI animations. |
-| **`ams-backend-contracts`** | Data Layer & APIs | [`docs/UI-UX_BackendSpec.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_BackendSpec.md) | PostgREST queries, Stored Procedures (RPCs), Realtime WebSocket listeners, Storage buckets. |
-| **`ams-security-rls`** | Authorization & Defense | [`docs/Security.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/Security.md) | PostgreSQL Row-Level Security policies, RBAC enforcement, credential protection. |
-| **`ams-hardware-ingress`** | Hardware & Fallbacks | [`docs/WORKFLOW.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/WORKFLOW.md) (§2) | ESP32 MFRC522 firmware, 5-min anti-passback cooldown, camera QR fallback scanner. |
-| **`ams-crons-sms`** | Background Automations | [`docs/WORKFLOW.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/WORKFLOW.md) (§3) | Nightly 8:00 PM absence cron, holiday filtering, Semaphore/Movider SMS parent alerts. |
-| **`ams-analytics-awards`** | BI & Award Engine | [`docs/PRD.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/PRD.md) (§4.8) | 5-week rolling trend charts, section watchlists, Perfect Attendance qualification engine. |
+| **`ams-planning`** | Architecture & SOP | [`planning.md`](planning.md), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) | Multi-role impact analysis, 5-phase planning protocol, milestone roadmap. |
+| **`ams-ui-ux`** | Design System & Styling | [`UI-UX_Architecture.md`](UI-UX_Architecture.md) | Color Hunt palette enforcement, dual-theme switching, tabular numerals, KPI animations. |
+| **`ams-backend-contracts`** | Data Layer & APIs | [`UI-UX_BackendSpec.md`](UI-UX_BackendSpec.md), [`DB_E2E_WORKFLOW.md`](DB_E2E_WORKFLOW.md) | PostgREST queries, Stored Procedures (RPCs), Realtime WebSocket listeners, Storage buckets. |
+| **`ams-security-rls`** | Authorization & Defense | [`Security.md`](Security.md) | PostgreSQL Row-Level Security policies, RBAC enforcement, credential protection. |
+| **`ams-hardware-ingress`** | Hardware & Fallbacks | [`WORKFLOW.md`](WORKFLOW.md) (§2), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) (§3) | ESP32 MFRC522 firmware, 5-min anti-passback cooldown, camera QR fallback scanner. |
+| **`ams-crons-sms`** | Background Automations | [`WORKFLOW.md`](WORKFLOW.md) (§3), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) (§4, §8) | Nightly 8:00 PM absence cron, holiday filtering, Semaphore/Movider SMS parent alerts. |
+| **`ams-analytics-awards`** | BI & Award Engine | [`PRD.md`](PRD.md) (§4.8), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) (§9, §10) | 5-week rolling trend charts, section watchlists, Perfect Attendance qualification engine. |
 
 ---
 
@@ -57,7 +57,7 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 ### 3.1 Skill: `ams-planning` (System Planning & Impact Protocol)
 * **Trigger Conditions:** Triggered on any non-trivial user request, new feature proposal, architectural refactoring, or multi-component bug fix.
-* **Input Context:** [`docs/planning.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/planning.md), [`docs/PRD.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/PRD.md), [`docs/CONTEXT.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/CONTEXT.md).
+* **Input Context:** [`planning.md`](planning.md), [`PRD.md`](PRD.md), [`CONTEXT.md`](CONTEXT.md), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md), [`DB_E2E_WORKFLOW.md`](DB_E2E_WORKFLOW.md).
 * **Execution Rules:**
   1. Execute the 5-phase protocol (Context Ingestion → Impact Mapping → Technical Blueprint → Edge Case Audit → Execution).
   2. Map changes across all 4 stakeholder tiers: Admin (`/admin/`), Teacher (`/teacher/`), Student (`/student/`), Parent (SMS Gateway).
@@ -67,7 +67,7 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 ### 3.2 Skill: `ams-ui-ux` (Design System & Color Hunt Aesthetics)
 * **Trigger Conditions:** Triggered when creating or modifying HTML templates, CSS stylesheets, Tailwind utility classes, or Chart.js visualizations.
-* **Input Context:** [`docs/UI-UX_Architecture.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_Architecture.md), [`AMS — Admin Overview Dashboard.html`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/AMS%20%E2%80%94%20Admin%20Overview%20Dashboard.html).
+* **Input Context:** [`UI-UX_Architecture.md`](UI-UX_Architecture.md), [`admin/dashboard.html`](../admin/dashboard.html).
 * **Design System Tokens:**
   ```css
   /* Color Hunt Blue Palette: https://colorhunt.co/palette/e3f2fd90caf92196f30d47a1 */
@@ -94,7 +94,7 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 ### 3.3 Skill: `ams-backend-contracts` (PostgREST, RPC & Realtime Synchronization)
 * **Trigger Conditions:** Triggered when developing database queries, stored procedures, client-side Supabase data fetching, or WebSocket listeners.
-* **Input Context:** [`docs/UI-UX_BackendSpec.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_BackendSpec.md), [`docs/DATA.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/DATA.md).
+* **Input Context:** [`UI-UX_BackendSpec.md`](UI-UX_BackendSpec.md), [`DATA.md`](DATA.md), [`DB_E2E_WORKFLOW.md`](DB_E2E_WORKFLOW.md).
 * **Execution Rules:**
   1. Separate UI rendering from Supabase data operations (`assets/js/api/` vs. `assets/js/pages/`).
   2. Always use transactional Stored Procedures (RPCs) for multi-row or atomic operations:
@@ -108,7 +108,7 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 ### 3.4 Skill: `ams-security-rls` (Zero-Trust Authorization & RLS Enforcement)
 * **Trigger Conditions:** Triggered when defining table schemas, writing Supabase policies, adding authentication checks, or handling user roles.
-* **Input Context:** [`docs/Security.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/Security.md), [`docs/DATA.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/DATA.md).
+* **Input Context:** [`Security.md`](Security.md), [`DATA.md`](DATA.md).
 * **Strict Security Mandates:**
   1. **Postgres RLS is Mandatory:** Client-side role checks in `rbac-guard.js` are for UI/UX convenience only. Database RLS policies using `auth.uid()` are the sole authoritative security boundary.
   2. **Zero Service-Role Leaks:** NEVER expose `SUPABASE_SERVICE_ROLE_KEY` in client-side HTML, JavaScript, or public repositories.
@@ -124,22 +124,26 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 ### 3.5 Skill: `ams-hardware-ingress` (ESP32 RFID & Camera QR Ingress Protocol)
 * **Trigger Conditions:** Triggered when modifying ESP32 firmware, scanner ingestion Edge functions, or camera QR fallback scanning views.
-* **Input Context:** [`docs/WORKFLOW.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/WORKFLOW.md) (§2), [`docs/UI-UX_BackendSpec.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_BackendSpec.md) (§4), `esp32-firmware/`.
+* **Input Context:** [`WORKFLOW.md`](WORKFLOW.md) (§2), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) (§3), [`UI-UX_BackendSpec.md`](UI-UX_BackendSpec.md) (§4), `esp32-firmware/`.
 * **Execution Rules:**
   1. **Hashed Device Authentication:** ESP32 devices must authenticate to `/functions/v1/scan-ingest` via the `x-device-key` header, verified against `scan_devices.api_key_hash`.
-  2. **Strict 5-Minute Anti-Passback Cooldown:** Scans for the same student within 5 minutes of their last tap must be rejected with HTTP `429 Too Many Requests` (`error: cooldown_active`) to prevent duplicate attendance logs.
-  3. **Low-Latency Feedback (<300ms):**
+  2. **Unified Ingress for Teachers & Students:**
+     * **Teacher Taps:** When a teacher scans in at the physical RFID reader, their attendance status (Present or Late based on schedule cutoff) automatically registers in the Admin system. The teacher also has access to their personal attendance log in the Teacher Portal (`/teacher/`) to keep track of their check-in/time-out history and punctuality.
+     * **Student Taps:** When students tap their RFID card on the scanner, a real-time record is generated indicating whether they are Present or Late. The status updates Admin live feeds, Teacher section roll calls, and the student's personal calendar in the Student Portal (`/student/`).
+     * **Dedicated Portal Log Access:** Both teachers and students have access to logs in their respective panels so they can continuously monitor their attendance.
+  3. **Strict 5-Minute Anti-Passback Cooldown:** Scans for the same user (student or teacher) within 5 minutes of their last tap must be rejected with HTTP `429 Too Many Requests` (`error: cooldown_active`) to prevent duplicate attendance logs.
+  4. **Low-Latency Feedback (<300ms):**
      * Green LED + Single Beep: Present / On-Time.
      * Amber LED + Double Beep: Late / Tardy.
      * Yellow LED + Triple Beep: Cooldown active (already recorded).
      * Red LED + Alarm Buzzer: Unregistered / Inactive card.
-  4. **Camera QR Fallback (`/shared/qr-scan.html`):** Uses client-side `jsQR` to decode student QR tokens and submits to `/scan-ingest` with `scan_method = "qr"`. Supports offline `IndexedDB` caching during network dropouts.
+  5. **Camera QR Fallback (`/shared/qr-scan.html`):** Uses client-side `jsQR` to decode student/teacher QR tokens and submits to `/scan-ingest` with `scan_method = "qr"`. Supports offline `IndexedDB` caching during network dropouts.
 
 ---
 
 ### 3.6 Skill: `ams-crons-sms` (Automated Absence Classification & Parent SMS Alerting)
 * **Trigger Conditions:** Triggered when configuring end-of-day scheduled tasks, parent communication pipelines, or SMS gateway integrations.
-* **Input Context:** [`docs/WORKFLOW.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/WORKFLOW.md) (§3), [`docs/PRD.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/PRD.md) (§4.7).
+* **Input Context:** [`WORKFLOW.md`](WORKFLOW.md) (§3), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) (§4, §8), [`PRD.md`](PRD.md) (§4.7).
 * **Execution Rules:**
   1. **Nightly 8:00 PM Absence Cron (`compute-daily-status`):**
      * Checks if current date is marked in `school_holidays`; if so, skips absence evaluation.
@@ -156,7 +160,7 @@ Every contribution to the Bestlink College AMS codebase must adhere to strict **
 
 ### 3.7 Skill: `ams-analytics-awards` (Executive Analytics & Awards Engine)
 * **Trigger Conditions:** Triggered when developing institutional analytics, section attendance watchlists, or Perfect Attendance awards generation.
-* **Input Context:** [`docs/PRD.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/PRD.md) (§4.8), [`docs/WORKFLOW.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/WORKFLOW.md) (§5).
+* **Input Context:** [`PRD.md`](PRD.md) (§4.8), [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md) (§9, §10), [`WORKFLOW.md`](WORKFLOW.md) (§5).
 * **Execution Rules:**
   1. **Institutional Analytics:** Compute institution-wide and section-level attendance percentages across configurable date ranges (last 7 days, 30 days, semester).
   2. **Risk Radar (Sections to Watch):** Query sections with highest absence/tardiness rates over the past 5 days to highlight intervention priorities on the Admin dashboard.

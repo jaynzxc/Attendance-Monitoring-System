@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Digital Excuse Slip Submission</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Modern Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Student Navigation">
+      <div class="brand">
+        <div class="mark">S</div>
+        <span>AMS Student</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a class="active" href="excuse-slip-submit.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
+          Submit Excuse Slip
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/><circle cx="18" cy="6" r="3"/></svg>
+          My Analytics & Honors
+        </a>
+      </nav>
+      
+      <div class="navgroup">Tools</div>
+      <nav class="nav">
+        <a href="../shared/qr-scan.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Fallback Scanner
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Student Attendance Portal
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light / Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">JD</div>
+          <div class="pf-info">
+            <div class="pf-name">Juan Dela Cruz</div>
+            <div class="pf-role">Student · BSIT 3-1</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Excuse Slip Content -->
+      <main class="main">
+        <div class="pagehead">
+          <div>
+            <h1>Submit Digital Excuse Slip</h1>
+            <p>Upload proof and request excuse for unavoidable absences</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Left: Submission Form (2 cols) -->
+          <div class="card p-6 lg:col-span-2">
+            <h2 class="text-base font-semibold mb-1">Absence Request Details</h2>
+            <p class="text-xs mb-5" style="color: var(--text-2);">
+              Requests are reviewed by your assigned section teacher and recorded in the SMS 1 database.
+            </p>
+
+            <form id="excuseSlipForm" class="space-y-4">
+              <!-- Reason Category -->
+              <div>
+                <label for="reasonCategory" class="block text-xs font-semibold mb-1" style="color: var(--text-2);">
+                  Reason Category *
+                </label>
+                <select id="reasonCategory" required class="w-full px-3 py-2 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+                  <option value="">Select Category...</option>
+                  <option value="Medical / Illness">Medical / Illness</option>
+                  <option value="Family Emergency">Family Emergency</option>
+                  <option value="Official School Activity">Official School Activity / Competition</option>
+                  <option value="Transportation / Severe Weather">Transportation / Severe Weather Disturbance</option>
+                  <option value="Other Legitimate Reason">Other Legitimate Reason</option>
+                </select>
+              </div>
+
+              <!-- Date Range -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="dateFrom" class="block text-xs font-semibold mb-1" style="color: var(--text-2);">
+                    Absence Start Date *
+                  </label>
+                  <input type="date" id="dateFrom" required class="w-full px-3 py-2 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+                </div>
+                <div>
+                  <label for="dateTo" class="block text-xs font-semibold mb-1" style="color: var(--text-2);">
+                    Absence End Date *
+                  </label>
+                  <input type="date" id="dateTo" required class="w-full px-3 py-2 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+                </div>
+              </div>
+
+              <!-- Detailed Reason Statement -->
+              <div>
+                <label for="reasonText" class="block text-xs font-semibold mb-1" style="color: var(--text-2);">
+                  Detailed Explanation / Narrative *
+                </label>
+                <textarea id="reasonText" required rows="3" placeholder="Provide a clear, truthful explanation of the circumstances preventing attendance..." class="w-full p-3 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);"></textarea>
+              </div>
+
+              <!-- Proof File Attachment -->
+              <div>
+                <label for="proofFileInput" class="block text-xs font-semibold mb-1" style="color: var(--text-2);">
+                  Supporting Document / Medical Certificate (Optional but Recommended)
+                </label>
+                <input type="file" id="proofFileInput" accept=".pdf,.jpg,.jpeg,.png" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950/40 dark:file:text-blue-300">
+                <p class="text-[11px] mt-1" style="color: var(--text-3);">Supported: PDF, JPG, PNG up to 5MB. Stored securely in campus storage bucket.</p>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="pt-2">
+                <button type="submit" id="submitSlipBtn" class="primary-btn text-xs font-semibold w-full sm:w-auto inline-flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Submit for Teacher Review
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right: Institutional Guidelines (1 col) -->
+          <div class="space-y-4 lg:col-span-1">
+            <div class="card p-5">
+              <h3 class="text-sm font-semibold mb-2" style="color: var(--accent);">Guidelines for Excuses</h3>
+              <ul class="text-xs space-y-2 list-disc list-inside leading-relaxed" style="color: var(--text-2);">
+                <li>Slips must be filed within <strong>48 hours</strong> of returning to campus.</li>
+                <li>Medical excuses exceeding 1 day require a valid medical certificate from an accredited clinic.</li>
+                <li>Approved excuse slips adjust your status from <em>Absent</em> to <em>Excused</em> and do not penalize your 85% requirement.</li>
+                <li>Teachers verify excuses directly in their Section Review Workbench.</li>
+              </ul>
+            </div>
+
+            <div class="card p-5" style="background: var(--raised);">
+              <div class="text-xs font-semibold mb-1" style="color: var(--text-1);">Need Immediate Help?</div>
+              <p class="text-[11px] leading-relaxed" style="color: var(--text-2);">
+                For prolonged hospitalization or emergencies, have your parent or guardian notify the Registrar's Office directly.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- History of Submitted Excuse Slips -->
+        <div class="card overflow-hidden">
+          <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
+            <div>
+              <h2 class="text-base font-semibold">My Submitted Excuse Slips</h2>
+              <p class="text-xs" style="color: var(--text-2);">Track approval status and teacher feedback</p>
+            </div>
+            <span class="text-xs font-mono" style="color: var(--text-3);" id="slipsHistoryBadge">0 Requests</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
+                  <th class="py-3 px-4">Date Filed</th>
+                  <th class="py-3 px-4">Dates Requested</th>
+                  <th class="py-3 px-4">Reason Category</th>
+                  <th class="py-3 px-4">Proof Attachment</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Teacher Feedback</th>
+                </tr>
+              </thead>
+              <tbody id="studentSlipsHistoryBody" class="divide-y" style="border-color: var(--border);">
+                <tr>
+                  <td colspan="6" class="py-10 text-center text-xs" style="color: var(--text-3);">
+                    Loading your excuse slips history...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Controller Script -->
+  <script type="module" src="../assets/js/pages/student/excuse-slip-submit.js"></script>
+</body>
+</html>

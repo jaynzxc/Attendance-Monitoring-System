@@ -16,7 +16,7 @@ The **AMS Planning Skill** defines the authoritative Standard Operating Procedur
 Whether operating in **VS Code + OpenCode** for high-level architectural planning or **Google Antigravity** for implementation, all agents and developers must execute this planning protocol to ensure academic rigor, architectural integrity, and zero regressions across the multi-role platform.
 
 ### 1.1 Core Directives
-1. **Specification First:** Never write code, execute DDL migrations, or alter UI components without cross-referencing authoritative specifications in `docs/` (`PRD.md`, `ARCHITECTURE.md`, `DATA.md`, `WORKFLOW.md`, `UI-UX_Architecture.md`, `UI-UX_BackendSpec.md`).
+1. **Specification First:** Never write code, execute DDL migrations, or alter UI components without cross-referencing authoritative specifications in `docs/` (`PRD.md`, `ARCHITECTURE.md`, `DATA.md`, `WORKFLOW.md`, `MODULE_WORKFLOWS.md`, `DB_E2E_WORKFLOW.md`, `Security.md`, `UI-UX_Architecture.md`, `UI-UX_BackendSpec.md`).
 2. **Defensive Blast Radius Assessment:** Every change in attendance capture, user status, or database schema has systemic ripple effects across Admin, Teacher, Student, Hardware, and Parent SMS layers. These impacts must be mapped before implementation.
 3. **No Hallucinated Business Logic:** Do not invent institution-specific policies (e.g., cutoff times, excuse slip escalation ladders, SMS templates). Rely strictly on confirmed specs or prompt the user for clarification.
 4. **Lightweight & Framework-Free Constraint:** Enforce the lightweight Vanilla JS (ES6+ modular) + Tailwind CSS + Supabase stack. Never propose React, Vue, Angular, Laravel, or full-stack SSR frameworks.
@@ -61,8 +61,11 @@ Before planning, locate and inspect the relevant sections of documentation:
 | **System Scope & Goals** | `docs/PRD.md` | `docs/CONTEXT.md` |
 | **System Boundaries & C4 Diagrams** | `docs/CONTEXT.md` | `docs/ARCHITECTURE.md` |
 | **Database Schema, DDL & Types** | `docs/DATA.md` | `docs/ARCHITECTURE.md` (§4) |
-| **Operational Workflows & Sequences** | `docs/WORKFLOW.md` | `docs/PRD.md` (§4) |
-| **UI Design System, Palette & Layout**| `docs/UI-UX_Architecture.md`| `AMS — Admin Overview Dashboard.html` |
+| **High-Level Operational Workflows** | `docs/WORKFLOW.md` | `docs/PRD.md` (§4) |
+| **Module-by-Module Workflows** | `docs/MODULE_WORKFLOWS.md` | `docs/PRD.md` (§4.1–§4.10) |
+| **End-to-End Database Lifecycle** | `docs/DB_E2E_WORKFLOW.md` | `docs/DATA.md` |
+| **Security Architecture, RLS & Ingress** | `docs/Security.md` | `docs/ARCHITECTURE.md` (§7) |
+| **UI Design System, Palette & Layout**| `docs/UI-UX_Architecture.md`| `admin/dashboard.html` |
 | **REST, RPC, Realtime & RLS Contracts**| `docs/UI-UX_BackendSpec.md` | `docs/ARCHITECTURE.md` (§5) |
 
 ---

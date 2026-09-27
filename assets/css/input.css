@@ -88,9 +88,32 @@
   --excused-soft: rgba(96, 165, 250, 0.18);
 }
 
+html {
+  background-color: var(--bg);
+  color: var(--text-1);
+}
+
+html[data-theme="dark"] {
+  background-color: #071324;
+  color: #E3F2FD;
+}
+
+html[data-theme="light"] {
+  background-color: #f4f8fc;
+  color: #0d47a1;
+}
+
 * {
   box-sizing: border-box;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+/* Smooth transition ONLY when user actively clicks theme toggle, not during navigation or initial render */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease !important;
+  transition-delay: 0s !important;
 }
 
 body {

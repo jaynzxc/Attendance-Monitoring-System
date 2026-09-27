@@ -14,6 +14,7 @@ This skill governs the pre-execution planning protocol for the **Bestlink Colleg
   - `docs/PRD.md` — Functional goals and requirements.
   - `docs/DATA.md` — Table schemas, constraints, and enums.
   - `docs/ARCHITECTURE.md` & `docs/CONTEXT.md` — C4 model and boundaries.
+  - `docs/WORKFLOW.md`, `docs/MODULE_WORKFLOWS.md` & `docs/DB_E2E_WORKFLOW.md` — Operational, module, and database workflows.
   - `docs/Security.md` — RLS policies and threat mitigations.
   - `docs/UI-UX_Architecture.md` — Color Hunt design tokens and styling rules.
 

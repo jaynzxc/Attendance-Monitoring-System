@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Faculty Dashboard</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Modern Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Faculty Navigation">
+      <div class="brand">
+        <div class="mark">T</div>
+        <span>AMS Faculty</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a class="active" href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Roll Call
+        </a>
+        <a href="my-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          My Attendance Log
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Section Analytics
+        </a>
+      </nav>
+      
+      <div class="navgroup">Tools</div>
+      <nav class="nav">
+        <a href="../shared/qr-scan.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Fallback Scanner
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Faculty Attendance Hub
+      </div>
+    </aside>
+
+    <!-- Main Column -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light / Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">TC</div>
+          <div class="pf-info">
+            <div class="pf-name">Prof. Teacher</div>
+            <div class="pf-role">Faculty Member</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Content -->
+      <main class="main">
+        <div class="pagehead">
+          <div>
+            <h1 id="greetingHeading">Welcome, Professor</h1>
+            <p id="currentDateSubtitle">Bestlink College of the Philippines · Faculty Portal</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="attendance.html" class="primary-btn inline-flex items-center gap-2">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Live Roll Call
+            </a>
+          </div>
+        </div>
+
+        <!-- Teacher's Personal RFID Check-in Status Banner -->
+        <section class="mb-6">
+          <div class="card p-5 border-l-4" id="teacherStatusBanner" style="border-left-color: var(--accent);">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" id="teacherStatusIconBg" style="background: var(--accent-soft);">
+                  <svg class="w-6 h-6" id="teacherStatusIcon" style="color: var(--accent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2.5">
+                    <span class="text-xs uppercase font-bold tracking-wider" style="color: var(--text-3);">My Gate Attendance Today</span>
+                    <span class="pill pill-pending" id="teacherStatusPill">Checking Status...</span>
+                  </div>
+                  <h3 class="text-base font-semibold mt-0.5" id="teacherStatusText">Verifying gate scan records...</h3>
+                  <p class="text-xs mt-0.5" style="color: var(--text-2);" id="teacherStatusDetail">
+                    Physical RFID tap at campus turnstiles automatically registers check-in with the Admin system.
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                <a href="my-logs.html" class="pillbtn text-xs">
+                  View My Attendance Log
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section Attendance KPIs -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="kpi-card">
+            <div class="kpi-label">Assigned Students</div>
+            <div class="kpi-val" id="kpiEnrolled">--</div>
+            <div class="kpi-sub">Across all your classes</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Present Today</div>
+            <div class="kpi-val" style="color: var(--present);" id="kpiPresent">--</div>
+            <div class="kpi-sub" id="kpiPresentRate">-- % attendance rate</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Late / Tardy</div>
+            <div class="kpi-val" style="color: var(--late);" id="kpiLate">--</div>
+            <div class="kpi-sub">Arrived after 08:00 AM</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Absent / Unmarked</div>
+            <div class="kpi-val" style="color: var(--absent);" id="kpiAbsent">--</div>
+            <div class="kpi-sub">Requires roll call check</div>
+          </div>
+        </section>
+
+        <!-- Two Columns: Assigned Sections Grid & Recent Scan Stream -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left: Assigned Sections List -->
+          <section class="lg:col-span-2">
+            <div class="card">
+              <div class="p-5 border-b flex items-center justify-between" style="border-color: var(--border);">
+                <div>
+                  <h2 class="text-base font-semibold">My Assigned Sections</h2>
+                  <p class="text-xs" style="color: var(--text-2);">Classes and schedules under your instruction</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background: var(--raised); color: var(--text-2);" id="sectionCountBadge">-- Sections</span>
+              </div>
+              
+              <div class="p-5 divide-y" style="border-color: var(--border);" id="assignedSectionsList">
+                <div class="py-8 text-center text-sm" style="color: var(--text-3);">
+                  Loading assigned sections...
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Right: Live Student Scans for My Sections -->
+          <section class="lg:col-span-1">
+            <div class="card h-full flex flex-col">
+              <div class="p-5 border-b flex items-center justify-between" style="border-color: var(--border);">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h2 class="text-base font-semibold">Live Gate Ingress</h2>
+                </div>
+                <span class="text-xs font-mono" style="color: var(--text-3);">Real-time</span>
+              </div>
+              
+              <div class="p-4 flex-1 overflow-y-auto max-h-[460px] space-y-3" id="liveScanFeed">
+                <div class="py-8 text-center text-xs" style="color: var(--text-3);">
+                  Waiting for RFID / QR student scans...
+                </div>
+              </div>
+              
+              <div class="p-3 border-t text-center" style="border-color: var(--border);">
+                <a href="attendance.html" class="text-xs font-medium" style="color: var(--accent);">
+                  Go to Live Section Roll Call &rarr;
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Controller Script -->
+  <script type="module" src="../assets/js/pages/teacher/dashboard.js"></script>
+</body>
+</html>

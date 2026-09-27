@@ -2,7 +2,9 @@
 
 ## Attendance Monitoring System (AMS) — Bestlink College of the Philippines
 
-**Companion to:** PRD.md, ARCHITECTURE.md **Version:** 1.0 **Date:** September 25, 2026
+**Companion to:** PRD.md, ARCHITECTURE.md, MODULE_WORKFLOWS.md, DB_E2E_WORKFLOW.md  
+**Version:** 1.1  
+**Date:** September 26, 2026  
 
 ---
 
@@ -10,37 +12,71 @@
 
 This document describes the operational workflows of the AMS — how data moves through the system for each core process, and how each RBAC role (Admin, Teacher, Student) interacts with it. Parents are included only as passive SMS recipients, consistent with the PRD.
 
+* For the **module-by-module breakdown** across all 10 PRD functional requirements, see [`MODULE_WORKFLOWS.md`](MODULE_WORKFLOWS.md).
+* For the **table-by-table end-to-end lifecycle** of a single attendance scan, see [`DB_E2E_WORKFLOW.md`](DB_E2E_WORKFLOW.md).
+
 ---
 
-## 2. Core Workflow: RFID/QR Scan → Attendance Record
+## 2. Core Workflow: RFID/QR Scan → Attendance Record (Teacher & Student)
 
-This is the system's primary, highest-frequency workflow.
+This is the system's primary, highest-frequency workflow. The physical RFID hardware (ESP32 + RC522) provides unified ingress scanning for both **Students** and **Teachers**.
 
 ```mermaid
 flowchart TD
-    A[Student taps RFID card at ESP32 scanner] --> B{Card UID recognized?}
+    A[Teacher or Student taps RFID card at ESP32 scanner] --> B{Card UID recognized?}
     B -- No --> B1[Reject scan / red LED + buzzer]
     B1 --> B2[Log unregistered_card event to audit_log]
     B -- Yes --> C{Within 5-min cooldown of last scan?}
     C -- Yes --> C1[Reject as duplicate / distinct beep]
-    C -- No --> D[Resolve card_uid to user_id]
-    D --> E{Existing time_in today?}
-    E -- No --> F[Record as time_in]
-    E -- Yes --> G[Record as time_out]
-    F --> H{Scanned after cutoff time?}
-    H -- Yes --> I[Status = Late]
-    H -- No --> J[Status = Present]
-    I --> K[Insert attendance_logs row]
-    J --> K
-    G --> K
-    K --> L[Supabase Realtime broadcasts change]
-    L --> M[Dashboards update live: Admin / Teacher / Student]
-    I --> N[Queue SMS alert to parent: Tardy]
-    N --> O[send-sms-alert function dispatches SMS]
-    O --> P[Log result to alerts_log]
+    C -- No --> D[Resolve card_uid to user record]
+    D --> E{User Role?}
+    
+    %% Teacher Flow
+    E -- Teacher --> T1{Existing time_in today?}
+    T1 -- No --> T2[Record as time_in]
+    T1 -- Yes --> T3[Record as time_out]
+    T2 --> T4{Scanned after teacher cutoff?}
+    T4 -- Yes --> T5[Status = Late]
+    T4 -- No --> T6[Status = Present]
+    T5 --> T7[Insert attendance_logs: teacher_id]
+    T6 --> T7
+    T3 --> T7
+    T7 --> T8[Upsert attendance_summary for teacher]
+    T8 --> T9[Supabase Realtime Broadcast]
+    T9 --> T10[Admin Dashboard: Teacher arrival automatically registered]
+    T9 --> T11[Teacher Portal: Personal Attendance Log updated live]
+
+    %% Student Flow
+    E -- Student --> S1{Existing time_in today?}
+    S1 -- No --> S2[Record as time_in]
+    S1 -- Yes --> S3[Record as time_out]
+    S2 --> S4{Scanned after cutoff e.g. 08:00 AM?}
+    S4 -- Yes --> S5[Status = Late]
+    S4 -- No --> S6[Status = Present]
+    S5 --> S7[Insert attendance_logs: student_id + section_id]
+    S6 --> S7
+    S3 --> S7
+    S7 --> S8[Upsert attendance_summary for student]
+    S8 --> S9[Supabase Realtime Broadcast]
+    S9 --> S10[Admin Dashboard: Live Ingress Stream & Section KPIs update]
+    S9 --> S11[Teacher Panel: Live Section Roll Call reflects student arrival]
+    S9 --> S12[Student Portal: Personal Attendance Calendar & Logs update]
+    S5 --> S13[Queue SMS alert to parent: Tardy]
+    S13 --> S14[send-sms-alert function dispatches SMS]
+    S14 --> S15[Log result to alerts_log]
 ```
 
-**Fallback path — QR scanning:** If RFID hardware is unavailable, the student opens the QR scan page (`/shared/qr-scan.html`) on any device with a camera, scans their personal QR code, and the same validation/cooldown/status logic applies, submitting to the same `scan-ingest` function with `scan_method = "qr"`.
+### 2.1 Role-Specific Portal Log Access
+Both teachers and students have dedicated access to attendance logs in their respective portals to keep track of their attendance:
+* **Teacher Portal (`/teacher/`):**
+  * **Personal Attendance Log:** Teachers view their own check-in/time-out timestamps, punctuality rate, and total teaching days.
+  * **Section Roll Call Log:** Teachers view real-time student taps for their assigned advisory/subject sections.
+* **Student Portal (`/student/`):**
+  * **Personal Attendance Timeline & Calendar:** Students track their daily scan timestamps (Time-In/Time-Out), gate terminals, punctuality rate, and excused status.
+* **Admin Portal (`/admin/`):**
+  * **Unified Attendance Logs:** The Registrar monitors all scans across both teachers and students, with role-based filtering, CSV export, and manual overrides.
+
+**Fallback path — QR scanning:** If RFID hardware is unavailable, the user opens the QR scan page (`/shared/qr-scan.html`) on any device with a camera, scans their personal QR code, and the same validation/cooldown/status logic applies, submitting to the same `scan-ingest` function with `scan_method = "qr"`.
 
 **Fallback path — Manual marking:** If both RFID and QR are unavailable, the Teacher marks attendance manually from the Teacher Panel for their section. This bypasses `scan-ingest` and instead calls the `fn_manual_attendance_override` RPC directly (authenticated as the teacher, scoped by RLS to their own sections), which logs the override to `audit_log` with `created_by`.
 

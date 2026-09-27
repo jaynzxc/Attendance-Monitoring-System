@@ -1,0 +1,64 @@
+/**
+ * config.h.example - ESP32 Hardware Configuration Template
+ * Bestlink College of the Philippines - Attendance Monitoring System (AMS)
+ * Subsystem of SMS 1 (School Management System)
+ * 
+ * Instructions:
+ * 1. Duplicate this file and rename it to 'config.h'
+ * 2. Fill in your campus Wi-Fi credentials and Supabase Edge Function endpoint
+ * 3. Never commit 'config.h' containing production credentials to version control
+ */
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// ==========================================
+// 1. Wi-Fi Network Credentials
+// ==========================================
+const char* WIFI_SSID     = "BCP_Campus_WiFi";
+const char* WIFI_PASSWORD = "Your_WiFi_Password_Here";
+
+// ==========================================
+// 2. Supabase Backend Ingress Configuration
+// ==========================================
+// Base URL of your Supabase Edge Functions endpoint (without trailing slash)
+// Example: "https://your-project-ref.supabase.co/functions/v1"
+const char* SUPABASE_BASE_URL = "https://your-project-ref.supabase.co/functions/v1";
+
+// Device Identification & Pre-Shared Secret Key
+// The device key must match the SHA-256 hash registered in public.scan_devices
+const char* DEVICE_CODE = "GATE-01-ESP32";
+const char* DEVICE_KEY  = "esp32_dev_secret_gate01";
+
+// Turnstile / Gate Physical Location Name
+const char* GATE_LOCATION = "Main Gate Turnstile A";
+
+// ==========================================
+// 3. Hardware Pin Mapping (ESP32 DevKit v1)
+// ==========================================
+// MFRC522 SPI Pins
+#define SS_PIN          5   // RFID SDA / SS
+#define RST_PIN         22  // RFID Reset
+#define SCK_PIN         18  // SPI SCK
+#define MISO_PIN        19  // SPI MISO
+#define MOSI_PIN        23  // SPI MOSI
+
+// Optical Feedback LEDs
+#define LED_GREEN_PIN   2   // On-time check-in (Present)
+#define LED_AMBER_PIN   4   // Tardy arrival (Late) or Anti-passback cooldown
+#define LED_RED_PIN     15  // Card error, network failure, or unregistered
+#define LED_BLUE_PIN    13  // Wi-Fi connected / System Heartbeat
+
+// Auditory Feedback (Piezo Buzzer)
+#define BUZZER_PIN      12  // Active/Passive Piezo Buzzer
+
+// ==========================================
+// 4. Timing & Anti-Passback Parameters
+// ==========================================
+// Local Anti-Passback cooldown in milliseconds (5 minutes = 300,000ms)
+#define LOCAL_COOLDOWN_MS 300000UL
+
+// Scanner Heartbeat Interval (60 seconds)
+#define HEARTBEAT_INTERVAL_MS 60000UL
+
+#endif // CONFIG_H

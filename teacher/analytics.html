@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Section Attendance Analytics</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Modern Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Faculty Navigation">
+      <div class="brand">
+        <div class="mark">T</div>
+        <span>AMS Faculty</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Roll Call
+        </a>
+        <a href="my-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          My Attendance Log
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a class="active" href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Section Analytics
+        </a>
+      </nav>
+      
+      <div class="navgroup">Tools</div>
+      <nav class="nav">
+        <a href="../shared/qr-scan.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Fallback Scanner
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Faculty Attendance Hub
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light / Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">TC</div>
+          <div class="pf-info">
+            <div class="pf-name">Prof. Teacher</div>
+            <div class="pf-role">Faculty Member</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Analytics Content -->
+      <main class="main">
+        <div class="pagehead">
+          <div>
+            <h1>Section Performance Analytics</h1>
+            <p>Class attendance rates, punctuality curves, and student retention radar</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="pill pill-present text-xs" id="termSpanBadge">1st Semester · 2026-2027</span>
+          </div>
+        </div>
+
+        <!-- Section Highlights KPIs -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="kpi-card">
+            <div class="kpi-label">Average Class Attendance</div>
+            <div class="kpi-val" style="color: var(--accent);" id="kpiAvgAttendance">--%</div>
+            <div class="kpi-sub">Across all your classes</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Best Performing Section</div>
+            <div class="kpi-val text-lg font-bold truncate mt-1" style="color: var(--present);" id="kpiBestSection">--</div>
+            <div class="kpi-sub" id="kpiBestRate">--% attendance</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Tardiness Ratio</div>
+            <div class="kpi-val" style="color: var(--late);" id="kpiTardinessRatio">--%</div>
+            <div class="kpi-sub">Students arriving post-08:00 AM</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">At-Risk Students</div>
+            <div class="kpi-val" style="color: var(--absent);" id="kpiAtRiskCount">0</div>
+            <div class="kpi-sub">&ge; 3 unexcused absences</div>
+          </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <!-- Left: Section Comparison Bar Chart (2 cols) -->
+          <div class="card p-5 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-base font-semibold">Attendance Rate by Section</h2>
+                <p class="text-xs" style="color: var(--text-2);">Benchmarking assigned sections against 85% institutional target</p>
+              </div>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="sectionComparisonChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Overall Status Breakdown Donut Chart (1 col) -->
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-base font-semibold">Status Composition</h2>
+                <p class="text-xs" style="color: var(--text-2);">Total attendance distribution</p>
+              </div>
+            </div>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="statusDonutChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Day-of-Week Trend & At-Risk Radar -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Weekly Day-of-Week Curve (1 col) -->
+          <div class="card p-5 lg:col-span-1">
+            <div class="mb-4">
+              <h2 class="text-base font-semibold">Day-of-Week Punctuality</h2>
+              <p class="text-xs" style="color: var(--text-2);">Average attendance by weekday</p>
+            </div>
+            <div class="h-60 relative">
+              <canvas id="weekdayTrendChart"></canvas>
+            </div>
+          </div>
+
+          <!-- At-Risk Student Radar Table (2 cols) -->
+          <div class="card overflow-hidden lg:col-span-2">
+            <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
+              <div>
+                <h2 class="text-base font-semibold text-rose-600 dark:text-rose-400">At-Risk Student Intervention Radar</h2>
+                <p class="text-xs" style="color: var(--text-2);">Students with 3+ absences requiring faculty advising</p>
+              </div>
+              <span class="text-xs font-mono font-semibold text-rose-500" id="atRiskBadge">0 Students</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
+                    <th class="py-3 px-4">Student</th>
+                    <th class="py-3 px-4">Section</th>
+                    <th class="py-3 px-4">Absences</th>
+                    <th class="py-3 px-4">Attendance Rate</th>
+                    <th class="py-3 px-4">Risk Level</th>
+                    <th class="py-3 px-4 text-right">Advisory Action</th>
+                  </tr>
+                </thead>
+                <tbody id="atRiskTableBody" class="divide-y" style="border-color: var(--border);">
+                  <tr>
+                    <td colspan="6" class="py-12 text-center text-sm" style="color: var(--text-3);">
+                      Loading student attendance records...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Page Controller Script -->
+  <script type="module" src="../assets/js/pages/teacher/analytics.js"></script>
+</body>
+</html>

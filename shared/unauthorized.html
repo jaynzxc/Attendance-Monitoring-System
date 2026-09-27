@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — 403 Access Denied | Bestlink College</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  
+  <style>
+    .denied-canvas {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--bg);
+    }
+    .denied-card {
+      max-width: 480px;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+    }
+    .denied-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--absent-soft);
+      border: 1px solid var(--absent);
+      color: var(--absent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .denied-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--ch-500) 0%, var(--ch-900) 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(13, 71, 161, 0.2);
+    }
+    .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      margin-left: 10px;
+    }
+    .btn-secondary:hover {
+      background: var(--raised);
+      color: var(--text-1);
+    }
+  </style>
+</head>
+<body>
+  <div class="denied-canvas">
+    <div class="denied-card">
+      <div class="denied-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 700; color: var(--absent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+        HTTP 403 · Access Forbidden
+      </div>
+      <h1 style="font-size: 22px; font-weight: 700; color: var(--text-1); margin: 0 0 10px;">Restricted Institutional Portal</h1>
+      <p style="font-size: 13.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 28px;">
+        Your authenticated account does not possess the required role permissions to access this view. System access is strictly partitioned across Administrator, Teacher, and Student boundaries.
+      </p>
+
+      <div>
+        <a id="portalBtn" href="../index.html" class="action-btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Return to My Dashboard
+        </a>
+        <button id="logoutBtn" type="button" class="action-btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { logout, getRoleDashboardPath } from '../assets/js/lib/auth.js';
+    import { initThemeToggle } from '../assets/js/lib/rbac-guard.js';
+
+    initThemeToggle();
+
+    const role = sessionStorage.getItem('ams_cached_role');
+    const portalBtn = document.getElementById('portalBtn');
+    if (role && portalBtn) {
+      portalBtn.href = getRoleDashboardPath(role);
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      logout();
+    });
+  </script>
+</body>
+</html>

@@ -33,9 +33,9 @@ The system enforces strict **Role-Based Access Control (RBAC)** across three aut
 
 | Role | Portal / Route | Description & Privileges |
 |---|---|---|
-| **Admin** | `/admin/` | Registrar / Attendance Officer. Full system configuration, user management (students/teachers), RFID/QR device hub, section scheduling, excuse slip escalation, institution-wide analytics, awards tool, report export, and SMS alert templates. |
-| **Teacher** | `/teacher/` | Subject / Advisory Teacher. Check-in/time-out, live section roll call, manual fallback attendance marking, excuse slip review/approval for assigned sections, and section performance analytics. |
-| **Student** | `/student/` | Enrolled Student. Personal RFID/QR credential owner. Views personal attendance calendar, daily scan timeline, attendance rate, and submits digital excuse slips with proof attachments. |
+| **Admin** | `/admin/` | Registrar / Attendance Officer. Full system configuration, user management (students/teachers), RFID/QR device hub, section scheduling, excuse slip escalation, institution-wide analytics, awards tool, report export, and SMS alert templates. Real-time monitoring of all teacher and student RFID ingress. |
+| **Teacher** | `/teacher/` | Subject / Advisory Teacher. Physical RFID card check-in/time-out automatically registered in Admin; personal attendance log tracking; live section roll call, manual fallback attendance marking, excuse slip review/approval for assigned sections, and section performance analytics. |
+| **Student** | `/student/` | Enrolled Student. Personal RFID/QR credential owner. Taps RFID card on scanner to generate real-time Present/Late records; tracks daily scan timeline and monthly attendance calendar in portal; submits digital excuse slips with proof attachments. |
 | **Parent / Guardian** | *No Portal (SMS Only)* | Linked via student profile mobile number. Receives automated, real-time SMS notifications for tardiness and absences. No login or dashboard credentials. |
 
 ---
@@ -59,14 +59,18 @@ Before writing or modifying ANY code, you MUST execute the following checks:
 
 ### 5.1 Read Authoritative Documentation
 Always consult the relevant specifications in `docs/`:
-- Read [`docs/PRD.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/PRD.md) to understand WHAT the feature should do.
-- Read [`docs/DATA.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/DATA.md) to understand table schemas, types, and constraints.
-- Read [`docs/ARCHITECTURE.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/ARCHITECTURE.md) to understand system architecture and deployment.
-- Read [`docs/UI-UX_Architecture.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_Architecture.md) to follow the Color Hunt design system.
-- Read [`docs/UI-UX_BackendSpec.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_BackendSpec.md) to follow REST, RPC, and Realtime contracts.
-- Read [`docs/Security.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/Security.md) to understand RLS, anti-passback, and token rules.
-- Read [`docs/planning.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/planning.md) to execute the 5-phase planning protocol.
-- Read [`docs/skills.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/skills.md) to follow established domain skill protocols.
+- Read [`docs/PRD.md`](docs/PRD.md) to understand WHAT the feature should do.
+- Read [`docs/DATA.md`](docs/DATA.md) to understand table schemas, types, and constraints.
+- Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) to understand system architecture and deployment.
+- Read [`docs/CONTEXT.md`](docs/CONTEXT.md) to understand system boundaries and external integrations.
+- Read [`docs/WORKFLOW.md`](docs/WORKFLOW.md) to understand high-level operational workflows.
+- Read [`docs/MODULE_WORKFLOWS.md`](docs/MODULE_WORKFLOWS.md) to follow the step-by-step module-by-module flow.
+- Read [`docs/DB_E2E_WORKFLOW.md`](docs/DB_E2E_WORKFLOW.md) to trace the end-to-end database lifecycle for scans.
+- Read [`docs/UI-UX_Architecture.md`](docs/UI-UX_Architecture.md) to follow the Color Hunt design system.
+- Read [`docs/UI-UX_BackendSpec.md`](docs/UI-UX_BackendSpec.md) to follow REST, RPC, and Realtime contracts.
+- Read [`docs/Security.md`](docs/Security.md) to understand RLS, anti-passback, and token rules.
+- Read [`docs/planning.md`](docs/planning.md) to execute the 5-phase planning protocol.
+- Read [`docs/skills.md`](docs/skills.md) to follow established domain skill protocols.
 
 ### 5.2 Inspect Existing Code
 - Locate all files related to the feature or bug fix.
@@ -88,16 +92,18 @@ Always consult the relevant specifications in `docs/`:
 
 All architectural, data, security, and planning specifications reside in the `docs/` directory:
 
-* [`docs/PRD.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/PRD.md) — Product Requirements Document (Goals, functional requirements FR-1 to FR-10, constraints).
-* [`docs/ARCHITECTURE.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/ARCHITECTURE.md) — System Architecture (C4 model, DDL database schema, deployment topology, security).
-* [`docs/CONTEXT.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/CONTEXT.md) — System Context (C4 Level 1 diagram, boundary statements, external system integrations).
-* [`docs/WORKFLOW.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/WORKFLOW.md) — Operational Workflows (Ingress sequence, absence cron, excuse slips, awards engine).
-* [`docs/DATA.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/DATA.md) — Authoritative Data Dictionary (Table schemas, foreign keys, enumerations, ERD).
-* [`docs/UI-UX_Architecture.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_Architecture.md) — UI/UX Architecture & Design System (Color Hunt palette, tokens, sitemap, screen specs).
-* [`docs/UI-UX_BackendSpec.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/UI-UX_BackendSpec.md) — UI-to-Backend Technical Specification (REST queries, RPCs, Edge functions, Realtime channels, RLS).
-* [`docs/planning.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/planning.md) — Planning Skill Specification (5-phase planning protocol, impact checklists, milestones roadmap).
-* [`docs/skills.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/skills.md) — System Skills Specification (Master skills matrix, operational protocols, constraints).
-* [`docs/Security.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/Security.md) — Security Architecture & Threat Model (RLS policies, ESP32 API auth, anti-passback cooldown).
+* [`docs/PRD.md`](docs/PRD.md) — Product Requirements Document (Goals, functional requirements FR-1 to FR-10, constraints).
+* [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — System Architecture (C4 model, DDL database schema, deployment topology, security).
+* [`docs/CONTEXT.md`](docs/CONTEXT.md) — System Context (C4 Level 1 diagram, boundary statements, external system integrations).
+* [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — Operational Workflows (Ingress sequence, absence cron, excuse slips, awards engine).
+* [`docs/MODULE_WORKFLOWS.md`](docs/MODULE_WORKFLOWS.md) — Module-by-Module Workflows (10 PRD modules step-by-step, triggers, table impacts, exit states).
+* [`docs/DB_E2E_WORKFLOW.md`](docs/DB_E2E_WORKFLOW.md) — End-to-End Database Lifecycle (Single scan transaction flow, table lifecycle matrix, consistency rules).
+* [`docs/DATA.md`](docs/DATA.md) — Authoritative Data Dictionary (Table schemas, foreign keys, enumerations, ERD).
+* [`docs/UI-UX_Architecture.md`](docs/UI-UX_Architecture.md) — UI/UX Architecture & Design System (Color Hunt palette, tokens, sitemap, screen specs).
+* [`docs/UI-UX_BackendSpec.md`](docs/UI-UX_BackendSpec.md) — UI-to-Backend Technical Specification (REST queries, RPCs, Edge functions, Realtime channels, RLS).
+* [`docs/planning.md`](docs/planning.md) — Planning Skill Specification (5-phase planning protocol, impact checklists, milestones roadmap).
+* [`docs/skills.md`](docs/skills.md) — System Skills Specification (Master skills matrix, operational protocols, constraints).
+* [`docs/Security.md`](docs/Security.md) — Security Architecture & Threat Model (RLS policies, ESP32 API auth, anti-passback cooldown).
 
 ---
 
@@ -110,6 +116,8 @@ Attendance Monitoring System/
 │   ├── ARCHITECTURE.md
 │   ├── CONTEXT.md
 │   ├── WORKFLOW.md
+│   ├── MODULE_WORKFLOWS.md
+│   ├── DB_E2E_WORKFLOW.md
 │   ├── DATA.md
 │   ├── UI-UX_Architecture.md
 │   ├── UI-UX_BackendSpec.md
@@ -230,7 +238,11 @@ Every view supports an authoritative **Light Mode** (`data-theme="light"`, defau
 
 ### 9.5 Hardware & Ingress Protocol
 * ESP32 devices authenticate to `/functions/v1/scan-ingest` using a hashed secret key (`x-device-key`).
-* Enforce a strict **5-minute anti-passback cooldown window** to prevent duplicate time-in taps.
+* **Unified Ingress for Teachers & Students:**
+  * When a **teacher** scans in, their attendance status (Present or Late against the teacher shift cutoff) automatically registers in the Admin system in real time. Teachers track their own history in their dedicated **Personal Attendance Log** in `/teacher/`.
+  * When a **student** scans in, a real-time record is generated (Present or Late against the cutoff e.g. 08:00 AM), updating Admin live streams, Teacher live section roll calls, and the student's personal calendar in `/student/`.
+  * Both teachers and students have continuous access to logs in their respective portal panels to keep track of their attendance.
+* Enforce a strict **5-minute anti-passback cooldown window** to prevent duplicate time-in taps for both students and teachers.
 * Gate hardware triggers optical (Green/Amber/Red LED) and auditory (piezo beeps) feedback within <300ms.
 
 ---
@@ -245,7 +257,7 @@ For any change involving:
 - New API endpoints or Edge Functions
 - Core attendance classification rules
 
-You MUST execute the 5-phase planning protocol defined in [`docs/planning.md`](file:///c:/Users/jaync/Desktop/Attendance%20Monitoring%20System/docs/planning.md):
+You MUST execute the 5-phase planning protocol defined in [`docs/planning.md`](docs/planning.md):
 1. **Context Ingestion:** Read relevant docs.
 2. **Impact Mapping:** Map changes across Admin, Teacher, Student, Parent, and Hardware.
 3. **Technical Blueprint:** Draft DDL, RPCs, tokens, and endpoints.

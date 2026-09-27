@@ -83,6 +83,8 @@ The system uses **Role-Based Access Control (RBAC)** with three authenticated pa
 - FR-4.1: System shall allow teachers to log their own time-in/time-out via RFID/QR or manual login-based check-in.
 - FR-4.2: System shall track teacher tardiness/absence separately from student records.
 - FR-4.3: System shall generate teacher attendance summaries for HR reporting (future integration point with Academic HR Management module).
+- FR-4.4: System shall automatically register teacher attendance status (Present or Late based on shift cutoff) in the Admin system in real time upon physical RFID tap.
+- FR-4.5: System shall provide teachers with a dedicated personal attendance log in the Teacher Portal (`/teacher/`) to track their own check-in/time-out history and punctuality.
 
 ### 4.5 Excuse Slip Submission
 - FR-5.1: Students/parents shall be able to submit a digital excuse slip (reason, date(s), optional file/document attachment) for an absence or tardy.

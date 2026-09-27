@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — System Settings & Schedule Cutoffs</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Main Navigation">
+      <div class="brand">
+        <div class="mark">A</div>
+        <span>AMS Admin</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview
+        </a>
+        <a href="attendance-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          Attendance Logs
+        </a>
+        <a href="sections.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16"/></svg>
+          Sections
+        </a>
+        <a href="users.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.8 14.2c2.4.4 4.2 2.5 4.2 5"/></svg>
+          Users
+        </a>
+        <a href="devices.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+          Devices
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Analytics
+        </a>
+        <a href="awards.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-2.5L17 21l-1.5-8.5"/></svg>
+          Awards
+        </a>
+      </nav>
+      
+      <div class="navgroup">System</div>
+      <nav class="nav">
+        <a href="reports.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+          Reports
+        </a>
+        <a class="active" href="settings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          Settings
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Attendance Monitoring System
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="main-col">
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">RC</div>
+          <div class="pf-info">
+            <div class="pf-name">Rosario Cruz</div>
+            <div class="pf-role">Admin · Registrar</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <main class="main">
+        <div class="pagehead">
+          <div>
+            <h1>System Settings & Operational Policy</h1>
+            <p>Schedule cutoffs, anti-passback cooldowns, parent SMS templates, and academic holidays</p>
+          </div>
+          <button id="btnSaveAllSettings" class="btn-primary">
+            Save All Settings
+          </button>
+        </div>
+
+        <!-- Settings Cards Layout -->
+        <div style="display:flex; flex-direction:column; gap:20px;">
+          <!-- 1. Schedule Cutoffs -->
+          <div class="table-card" style="padding:22px;">
+            <h3 style="margin:0 0 4px; font-size:15px; font-weight:700; color:var(--text-1);">Attendance Schedule Cutoff Thresholds</h3>
+            <p style="font-size:12.5px; color:var(--text-2); margin:0 0 18px;">
+              Configures the exact time thresholds used by ESP32 Gate and QR fallback scanners to classify arrivals as Present, Late, or Absent.
+            </p>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+              <div>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Morning Late Cutoff (Tardy)</label>
+                <input type="time" id="setMorningLate" class="input-field" style="width:100%;" value="08:00">
+                <span style="font-size:11px; color:var(--text-3);">Arrivals after this time marked as Late</span>
+              </div>
+
+              <div>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Morning Absent Cutoff</label>
+                <input type="time" id="setMorningAbsent" class="input-field" style="width:100%;" value="09:00">
+                <span style="font-size:11px; color:var(--text-3);">Arrivals after this time marked Absent</span>
+              </div>
+
+              <div>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Afternoon Late Cutoff</label>
+                <input type="time" id="setAfternoonLate" class="input-field" style="width:100%;" value="13:00">
+                <span style="font-size:11px; color:var(--text-3);">Afternoon section late threshold</span>
+              </div>
+
+              <div>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Anti-Passback Cooldown (Minutes)</label>
+                <input type="number" id="setCooldown" class="input-field" style="width:100%;" min="1" max="60" value="5">
+                <span style="font-size:11px; color:var(--text-3);">Rejects rapid duplicate scans (HTTP 429)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Parent SMS Templates -->
+          <div class="table-card" style="padding:22px;">
+            <h3 style="margin:0 0 4px; font-size:15px; font-weight:700; color:var(--text-1);">Parent SMS Notification Gateway</h3>
+            <p style="font-size:12.5px; color:var(--text-2); margin:0 0 18px;">
+              Automated SMS alerts dispatched to registered parent contacts via Semaphore / Movider gateway.
+            </p>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Tardiness SMS Template</label>
+                <textarea id="setTardyTemplate" class="input-field" style="width:100%; height:75px; resize:none;">Bestlink College Notice: Your student {student_name} arrived late at {time} at {gate}. Please guide your child on punctuality.</textarea>
+                <span style="font-size:11px; color:var(--text-3);">Available variables: {student_name}, {time}, {gate}, {date}</span>
+              </div>
+
+              <div>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Absence SMS Alert Template</label>
+                <textarea id="setAbsentTemplate" class="input-field" style="width:100%; height:75px; resize:none;">Bestlink College Alert: Your student {student_name} was recorded ABSENT on {date}. If valid, please submit an excuse slip via the AMS student portal.</textarea>
+                <span style="font-size:11px; color:var(--text-3);">Available variables: {student_name}, {date}, {section}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Academic Calendar & Holidays -->
+          <div class="table-card" style="padding:22px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <div>
+                <h3 style="margin:0 0 4px; font-size:15px; font-weight:700; color:var(--text-1);">Exempt Institutional Holidays</h3>
+                <p style="font-size:12.5px; color:var(--text-2); margin:0;">
+                  Official non-class dates exempt from absence cron calculations and scan ingress.
+                </p>
+              </div>
+              <button id="btnAddHoliday" class="btn-secondary" style="padding:6px 12px; font-size:12px;">
+                + Add Holiday
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Holiday Title</th>
+                    <th>Category</th>
+                    <th style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="holidaysTableBody">
+                  <tr>
+                    <td colspan="4" style="text-align:center; padding:24px;">Loading calendar holidays...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/pages/admin/settings.js"></script>
+</body>
+</html>
