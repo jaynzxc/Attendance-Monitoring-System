@@ -196,11 +196,28 @@ flowchart TD
   - Quick action keyboard triggers (`[A]` to Approve, `[R]` to Reject, `[E]` to Escalate).
   - Approving instantly mutates underlying `attendance_summary` rows to `Excused` and triggers a real-time toast notification.
 
-### 4.4 Student Attendance Calendar (`/student/attendance-calendar.html`)
-- **Interactive Monthly Grid:**
-  - Clear visual grid representing school days. Weekends and institutional holidays are distinctly patterned.
-  - Each day cell houses a circular status dot or badge: Green (Present), Amber (Late), Red (Absent), Sky Blue (Excused).
-  - Clicking any date drawer reveals precise scan timestamps (`Time-In: 07:42 AM at Gate 1`, `Time-Out: 05:15 PM at Gate 2`).
+### 4.4 Attendance Calendars (Multi-Role Screen Architecture)
+
+- **Admin Schedule & Event Manager (`/admin/attendance-calendar.html`):**
+  - **Purpose:** Academic calendar manager and non-working schedule orchestrator.
+  - **Interface:** Monthly 7-column calendar grid with month/year navigation controls and `[+ Add Non-Class Day / Event]` action button.
+  - **Visual Badges:** Days display color-coded event markers: Amber (`No Classes`), Rose (`Legal Holiday`), Blue (`School Event`), Purple (`Exam Period`), Orange (`Suspension`).
+  - **No Manual Percentages:** Admin sees pure schedule clarity, not manual attendance numbers or percentages.
+  - **Schedule Entry Modal:** Form to enter Event Title, Event Type, Date Range (Start/End Date), Scope, and Description. Once saved, automatically broadcasts across Teacher and Student calendars.
+
+- **Teacher Faculty Attendance & Schedule Calendar (`/teacher/attendance-calendar.html`):**
+  - **Purpose:** Personal faculty duty tracking and schedule awareness.
+  - **Interface:** Monthly 7-column calendar grid showing personal attendance records and Admin-scheduled non-class days.
+  - **Day Cell Details:** Displays resolved status badge (Present, Late, Absent, Excused) with specific **Time-In and Time-Out timestamps** clearly rendered underneath (e.g., `IN: 07:42 AM · OUT: 05:15 PM`).
+  - **Event Banners:** Displays non-class day and holiday event ribbons set by the Admin.
+  - **Drill-Down Modal:** Clicking a day reveals gate scanner device details, scan verification method, and total duty duration.
+
+- **Student Attendance Status Monitor (`/student/attendance-calendar.html`):**
+  - **Purpose:** Personal daily attendance monitoring and institutional schedule awareness.
+  - **Interface:** Clean monthly 7-column grid displaying resolved status pills: Green (`Present`), Amber (`Tardy`), Red (`Absent`), Sky Blue (`Excused`).
+  - **No Time-Out Display:** Single-event Time-Out and Time-In timestamps are strictly excluded to accurately accommodate **Octoberian** and **Irregular** modular students taking multi-subject schedules throughout the day.
+  - **Event Banners:** Displays school event, holiday, and no-class markers directly on the affected day cells.
+  - **Excuse Action:** Absent tiles provide one-click jump to digital excuse slip submission for that date.
 
 ### 4.5 Perfect Attendance Awards Engine (`/admin/awards.html`)
 - **Qualification Configuration:** Selection of semester, grading term, and permissible excused slip threshold.

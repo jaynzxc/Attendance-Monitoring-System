@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS &mdash; Faculty Attendance Calendar</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <style>
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .calendar-header-day {
+      background: var(--surface-hover);
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .calendar-day-cell {
+      background: var(--surface);
+      min-height: 120px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      position: relative;
+    }
+    .calendar-day-cell:hover {
+      background: var(--surface-hover);
+    }
+    .calendar-day-cell.other-month {
+      background: var(--bg);
+      opacity: 0.45;
+      cursor: default;
+    }
+    .calendar-day-cell.today {
+      box-shadow: inset 0 0 0 2px var(--accent);
+    }
+    .calendar-day-number {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+    }
+    .calendar-day-cell.today .calendar-day-number {
+      background: var(--accent);
+      color: #ffffff;
+    }
+    .status-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2.5px 7px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      line-height: 1.25;
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      gap: 4px;
+    }
+    .status-present {
+      background: var(--present-soft);
+      color: var(--present);
+    }
+    .status-late {
+      background: var(--late-soft);
+      color: var(--late);
+    }
+    .status-absent {
+      background: var(--absent-soft);
+      color: var(--absent);
+    }
+    .status-excused {
+      background: var(--excused-soft);
+      color: var(--excused);
+    }
+    .time-stamps-box {
+      font-size: 10.5px;
+      font-family: var(--font-mono, monospace);
+      margin-top: 4px;
+      line-height: 1.35;
+      color: var(--text-1);
+      background: var(--raised);
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+    .event-ribbon {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2.5px 6px;
+      border-radius: 5px;
+      margin-top: 4px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .event-holiday {
+      background: var(--absent-soft);
+      color: var(--absent);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .event-no-class {
+      background: var(--late-soft);
+      color: var(--late);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .event-school {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border-strong);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Main Navigation">
+      <div class="brand">
+        <div class="mark">T</div>
+        <span>AMS Faculty</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Roll Call
+        </a>
+        <a class="active" href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a href="my-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          My Attendance Log
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Section Analytics
+        </a>
+      </nav>
+      
+      <div class="navgroup">Tools</div>
+      <nav class="nav">
+        <a href="qr-attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Attendance
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 &middot; Bestlink College<br>
+        Faculty Attendance Hub
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-col">
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">MD</div>
+          <div class="pf-info">
+            <div class="pf-name">Prof. Marco Dela Cruz</div>
+            <div class="pf-role">Faculty &middot; BSIT Department</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <main class="main">
+        <!-- Page Title & Duty Subtitle -->
+        <div class="pagehead" style="margin-bottom:18px;">
+          <div>
+            <h1>Faculty Attendance Calendar</h1>
+            <p>Personal check-in/out duty log, punctuality metrics, and academic schedule awareness</p>
+          </div>
+        </div>
+
+        <!-- Month Navigation Bar -->
+        <div class="card" style="padding:14px 18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="btnPrevMonth" class="pillbtn" style="padding:6px 12px;" aria-label="Previous Month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <h2 id="calendarTitle" style="margin:0; font-size:16px; font-weight:700; color:var(--text-1); min-width:180px; text-align:center;">
+              September 2026
+            </h2>
+            <button id="btnNextMonth" class="pillbtn" style="padding:6px 12px;" aria-label="Next Month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <button id="btnToday" class="pillbtn" style="padding:6px 12px; margin-left:6px; font-size:12px;">
+              Today
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; font-size:12px;">
+            <span style="display:inline-flex; align-items:center; gap:5px; color:var(--text-2);">
+              <span class="status-badge status-present" style="margin-bottom:0; font-size:9.5px;">Present</span> On-Time
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:5px; color:var(--text-2);">
+              <span class="status-badge status-late" style="margin-bottom:0; font-size:9.5px;">Late</span> Tardy Tap
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:5px; color:var(--text-2);">
+              <span class="event-ribbon event-holiday" style="margin-top:0; font-size:9.5px;">Holiday</span> No Class
+            </span>
+          </div>
+        </div>
+
+        <!-- 7-Column Monthly Calendar Grid -->
+        <div class="calendar-grid" id="teacherCalendarGrid">
+          <!-- Weekday Headers -->
+          <div class="calendar-header-day">Sun</div>
+          <div class="calendar-header-day">Mon</div>
+          <div class="calendar-header-day">Tue</div>
+          <div class="calendar-header-day">Wed</div>
+          <div class="calendar-header-day">Thu</div>
+          <div class="calendar-header-day">Fri</div>
+          <div class="calendar-header-day">Sat</div>
+          <!-- Days populated dynamically by JS -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Day Detail Modal -->
+  <div id="dutyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-sm w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+        <div>
+          <h3 id="modalDateTitle" style="margin:0; font-size:15px; font-weight:700; color:var(--text-1);">Date Title</h3>
+          <p style="margin:2px 0 0; font-size:12px; color:var(--text-2);">Faculty Daily Ingress Record</p>
+        </div>
+        <button id="btnCloseModal" style="background:transparent; border:none; color:var(--text-2); cursor:pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-radius:8px; background:var(--raised);">
+          <span style="font-weight:600; color:var(--text-2);">Attendance Status</span>
+          <span id="modalStatusBadge" class="status-badge status-present">Present</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+          <span style="color:var(--text-2);">Time In:</span>
+          <span id="modalTimeIn" style="font-family:var(--font-mono, monospace); font-weight:700; color:var(--text-1);">&#8212;</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+          <span style="color:var(--text-2);">Time Out:</span>
+          <span id="modalTimeOut" style="font-family:var(--font-mono, monospace); font-weight:700; color:var(--text-1);">&#8212;</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+          <span style="color:var(--text-2);">Verification Method:</span>
+          <span id="modalMethod" style="font-weight:600; color:var(--accent);">RFID Tap</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; padding:8px 0;">
+          <span style="color:var(--text-2);">Scanner Device:</span>
+          <span id="modalDevice" style="font-weight:600; color:var(--text-1);">Faculty Gate Turnstile A</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/pages/teacher/attendance-calendar.js"></script>
+</body>
+</html>

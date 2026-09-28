@@ -139,19 +139,43 @@ flowchart LR
 
 ## 7. Module 6 — Attendance Calendar
 
-**Actors:** Student, Teacher, Admin (read-only view module — writes nothing).
-**Trigger:** User opens the calendar view.
+**Actors:** 
+- **Admin:** Sets and manages institutional academic schedules (no classes, holidays, school events, suspensions). Does not enter manual attendance percentages.
+- **Teacher:** Views personal faculty duty log (status: Present/Late/Absent/Excused with specific Time-In & Time-Out timestamps) and institutional events.
+- **Student:** Monitors daily resolved status (Present/Tardy/Absent/Excused) and institutional events. Time-Out is excluded to accommodate Octoberian and Irregular modular schedules.
+
+**Triggers:** 
+- User opens calendar view (`/admin/attendance-calendar.html`, `/teacher/attendance-calendar.html`, `/student/attendance-calendar.html`).
+- Admin adds, edits, or deletes an academic schedule / non-class event.
 
 ```mermaid
-flowchart LR
-    A[User opens Attendance Calendar] --> B[Query attendance_summary<br/>filtered by user_id/section_id + month range]
-    B --> C[Query holidays for the same range]
-    C --> D[Render calendar: 1 cell = 1 day,<br/>color = status token]
-    D --> E[Hover/tap a day → fetch matching attendance_logs<br/>for exact time_in/time_out]
+flowchart TD
+    subgraph Admin_Workflow["Admin Workflow (Schedule Manager)"]
+        A1[Admin opens Calendar] --> A2[Query academic_schedules / holidays]
+        A2 --> A3[Admin clicks date → Sets No-Class Day / Holiday / Event]
+        A3 --> A4[(Insert/Update academic_schedules)]
+        A4 --> A5[Propagates to all calendars & bypasses nightly absence cron]
+    end
+
+    subgraph Teacher_Workflow["Teacher Workflow (Faculty Log)"]
+        T1[Teacher opens Calendar] --> T2[Query personal attendance_summary & logs]
+        T2 --> T3[Query academic_schedules for month]
+        T3 --> T4[Render daily tiles: Status Pill + Specific Time-In & Time-Out]
+        T4 --> T5[Reflect No-Class / Holiday / Event Banners]
+    end
+
+    subgraph Student_Workflow["Student Workflow (Status Monitor)"]
+        S1[Student opens Calendar] --> S2[Query personal attendance_summary]
+        S2 --> S3[Query academic_schedules for month]
+        S3 --> S4[Render daily tiles: Status Pill only - No Time-Out]
+        S4 --> S5[Reflect No-Class / Holiday / Event Banners]
+    end
 ```
 
-**Tables touched:** `attendance_summary` (read), `holidays` (read), `attendance_logs` (read, drill-down only).
-**Exit state:** Read-only visualization; no data mutation. RLS scopes results automatically per role (student sees own, teacher sees their sections, admin sees all).
+**Tables touched:** `academic_schedules` (read/write by Admin), `attendance_summary` (read), `attendance_logs` (read for Teacher Time-In/Time-Out).
+**Exit state:** 
+- Admin: Mutates `academic_schedules` (which alters downstream nightly cron absence generation).
+- Teacher & Student: Read-only visualization with role-scoped RLS.
 
 ---
 

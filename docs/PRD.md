@@ -59,7 +59,7 @@ The system uses **Role-Based Access Control (RBAC)** with three authenticated pa
 ## 4. System Modules & Functional Requirements
 
 ### 4.1 Daily Attendance Marking
-- FR-1.1: System shall record time-in and time-out for each student per school day.
+- FR-1.1: System shall record daily attendance status (Present, Late, Absent, Excused). For teachers, specific Time-In and Time-Out timestamps are tracked. For students (including Octoberian and Irregular students with modular, multi-subject schedules), the system tracks resolved daily status without requiring single-event Time-Out timestamps.
 - FR-1.2: System shall support manual attendance marking by teachers as a fallback when RFID/QR scanning is unavailable.
 - FR-1.3: System shall timestamp every attendance record with date/time (Asia/Manila timezone).
 - FR-1.4: System shall prevent duplicate time-in entries within a configurable cooldown window (e.g., 5 minutes) to avoid double-taps.
@@ -92,10 +92,12 @@ The system uses **Role-Based Access Control (RBAC)** with three authenticated pa
 - FR-5.3: Approved excuse slips shall automatically update the corresponding attendance record status to "Excused."
 - FR-5.4: System shall maintain a status history (Pending, Approved, Rejected) with timestamps and reviewer identity.
 
-### 4.6 Attendance Calendar
-- FR-6.1: System shall display a calendar view of attendance per student/section, color-coded by status (Present/Late/Absent/Excused).
-- FR-6.2: System shall allow filtering the calendar by student, section, subject, or date range.
-- FR-6.3: Admins shall be able to mark school holidays/no-class days, which the system excludes from absence calculations.
+### 4.6 Attendance Calendar (Multi-Role Specification)
+- FR-6.1: **Student Portal (`/student/attendance-calendar.html`):** System shall display a monthly color-coded attendance grid showing personal daily attendance status (Present, Tardy, Absent, Excused). Time-Out is strictly excluded to support Octoberian and Irregular students attending multi-subject modular schedules. The calendar reflects non-class days, holidays, and school events provided by the SMS 1 event subsystem or Admin schedule.
+- FR-6.2: **Teacher Portal (`/teacher/attendance-calendar.html`):** System shall display the teacher's personal monthly attendance duty log. Each day tile displays resolved status (Present, Late, Absent, Excused) and explicitly renders specific **Time-In and Time-Out** timestamps under the status badge. It also reflects non-class days, holidays, and school events.
+- FR-6.3: **Admin Portal (`/admin/attendance-calendar.html`):** System shall provide an interactive Academic Schedule & Non-Working Days Manager. Admins enter non-class days, legal holidays, weather suspensions, and institutional events. The Admin does not manually enter attendance percentages, lateness, or absences on the calendar.
+- FR-6.4: **Automated Schedule Propagation:** Any non-class day, holiday, or school event entered by the Admin or school event subsystem shall immediately reflect on Teacher and Student calendars and automatically exempt affected users from nightly absence evaluation (`compute-daily-status`).
+- FR-6.5: System shall provide month/year navigation controls and clickable day drill-downs tailored to the authenticated role.
 
 ### 4.7 Alerts to Parents (SMS Notifications)
 - FR-7.1: System shall automatically send an **SMS notification** to the parent/guardian's registered mobile number when a student is marked late or absent. Parents have no login/panel — SMS is the sole notification channel.

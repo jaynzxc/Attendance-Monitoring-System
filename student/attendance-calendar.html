@@ -184,14 +184,9 @@
           <span class="pill" id="modalDayStatusPill">Present</span>
         </div>
 
-        <div class="flex items-center justify-between py-1.5 border-b" style="border-color: var(--border);">
-          <span style="color: var(--text-2);">Time In</span>
-          <span class="font-mono font-semibold tabular-nums" style="color: var(--text-1);" id="modalDayTimeIn">—</span>
-        </div>
-
-        <div class="flex items-center justify-between py-1.5 border-b" style="border-color: var(--border);">
-          <span style="color: var(--text-2);">Time Out</span>
-          <span class="font-mono font-semibold tabular-nums" style="color: var(--text-1);" id="modalDayTimeOut">—</span>
+        <div id="modalDayEventBox" class="hidden p-2.5 rounded-lg border text-xs" style="background: var(--surface-hover); border-color: var(--border);">
+          <span class="font-bold text-[11px] block" id="modalDayEventTitle" style="color: var(--text-1);">Institutional Event</span>
+          <span class="text-[10px] text-gray-500 block" id="modalDayEventDesc">Non-working schedule / Holiday</span>
         </div>
 
         <div class="flex items-center justify-between py-1.5 border-b" style="border-color: var(--border);">

@@ -66,17 +66,17 @@ flowchart TD
     S14 --> S15[Log result to alerts_log]
 ```
 
-### 2.1 Role-Specific Portal Log Access
-Both teachers and students have dedicated access to attendance logs in their respective portals to keep track of their attendance:
+### 2.1 Role-Specific Portal Log & Calendar Access
+Both teachers and students have dedicated access to attendance logs and monthly calendars in their respective portals:
 * **Teacher Portal (`/teacher/`):**
-  * **Personal Attendance Log:** Teachers view their own check-in/time-out timestamps, punctuality rate, and total teaching days.
+  * **Personal Attendance Log & Calendar:** Teachers view their own check-in/time-out timestamps. On their Attendance Calendar, each day tile displays their resolved status (Present, Late, Absent, Excused) with specific **Time-In and Time-Out** times explicitly listed. Teachers also see all non-class days, holidays, and school events set by the Admin.
   * **Section Roll Call Log:** Teachers view real-time student taps for their assigned advisory/subject sections.
 * **Student Portal (`/student/`):**
-  * **Personal Attendance Timeline & Calendar:** Students track their daily scan timestamps (Time-In/Time-Out), gate terminals, punctuality rate, and excused status.
+  * **Personal Attendance Timeline & Calendar:** Students track their daily resolved status (Present, Tardy, Absent, Excused) and institutional non-class days/events. Single Time-Out records are excluded to accommodate **Octoberian** and **Irregular** modular students taking multi-subject schedules throughout the day.
 * **Admin Portal (`/admin/`):**
-  * **Unified Attendance Logs:** The Registrar monitors all scans across both teachers and students, with role-based filtering, CSV export, and manual overrides.
+  * **Unified Attendance Logs & Calendar Management:** The Registrar monitors all scans across teachers and students, and manages the Academic Calendar (setting non-class days, legal holidays, weather suspensions, and school events). The Admin does not manually input attendance percentages on the calendar.
 
-**Fallback path — QR scanning:** If RFID hardware is unavailable, the user opens the QR scan page (`/shared/qr-scan.html`) on any device with a camera, scans their personal QR code, and the same validation/cooldown/status logic applies, submitting to the same `scan-ingest` function with `scan_method = "qr"`.
+**Fallback path — QR scanning:** If RFID hardware is unavailable, the user opens the QR scan page (`/shared/qr-scan.html` or `/teacher/qr-attendance.html`), scans their personal QR code, and the same validation/cooldown/status logic applies, submitting to the same `scan-ingest` function with `scan_method = "qr"`.
 
 **Fallback path — Manual marking:** If both RFID and QR are unavailable, the Teacher marks attendance manually from the Teacher Panel for their section. This bypasses `scan-ingest` and instead calls the `fn_manual_attendance_override` RPC directly (authenticated as the teacher, scoped by RLS to their own sections), which logs the override to `audit_log` with `created_by`.
 
@@ -89,8 +89,8 @@ Runs automatically every school night via the `compute-daily-status` cron functi
 ```mermaid
 flowchart TD
     A[Cron triggers at 8:00 PM daily] --> B[Get list of active students/teachers]
-    B --> C{Is today a holiday?}
-    C -- Yes --> C1[Skip — no attendance required]
+    B --> C{Is today a holiday or non-class day in academic_schedules?}
+    C -- Yes --> C1[Skip — no attendance required, event recorded]
     C -- No --> D{Time_in recorded today?}
     D -- Yes --> D1[Status already set: Present/Late — no change]
     D -- No --> E{Approved excuse slip covers today?}

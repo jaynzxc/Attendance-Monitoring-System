@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS &mdash; Academic Schedule &amp; Attendance Calendar</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <style>
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .calendar-header-day {
+      background: var(--surface-hover);
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .calendar-day-cell {
+      background: var(--surface);
+      min-height: 115px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      position: relative;
+    }
+    .calendar-day-cell:hover {
+      background: var(--surface-hover);
+    }
+    .calendar-day-cell.other-month {
+      background: var(--bg);
+      opacity: 0.45;
+      cursor: default;
+    }
+    .calendar-day-cell.today {
+      box-shadow: inset 0 0 0 2px var(--accent);
+    }
+    .calendar-day-number {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+    }
+    .calendar-day-cell.today .calendar-day-number {
+      background: var(--accent);
+      color: #ffffff;
+    }
+    .event-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 6px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-no-class {
+      background: var(--late-soft);
+      color: var(--late);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .badge-holiday {
+      background: var(--absent-soft);
+      color: var(--absent);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .badge-school-event {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border-strong);
+    }
+    .badge-exam {
+      background: rgba(147, 51, 234, 0.15);
+      color: #9333ea;
+      border: 1px solid rgba(147, 51, 234, 0.25);
+    }
+    .badge-suspension {
+      background: rgba(234, 88, 12, 0.15);
+      color: #ea580c;
+      border: 1px solid rgba(234, 88, 12, 0.25);
+    }
+    [data-theme="dark"] .badge-exam {
+      background: rgba(168, 85, 247, 0.22);
+      color: #c084fc;
+      border-color: rgba(168, 85, 247, 0.35);
+    }
+    [data-theme="dark"] .badge-suspension {
+      background: rgba(249, 115, 22, 0.22);
+      color: #fb923c;
+      border-color: rgba(249, 115, 22, 0.35);
+    }
+    .filter-chip-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .filter-chip-btn:hover {
+      background: var(--raised);
+      color: var(--text-1);
+    }
+    .filter-chip-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--border-strong);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Main Navigation">
+      <div class="brand">
+        <div class="mark">A</div>
+        <span>AMS Admin</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview
+        </a>
+        <a href="attendance-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          Attendance Logs
+        </a>
+        <a class="active" href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a href="sections.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16"/></svg>
+          Sections
+        </a>
+        <a href="users.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.8 14.2c2.4.4 4.2 2.5 4.2 5"/></svg>
+          Users
+        </a>
+        <a href="devices.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+          Devices
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Analytics
+        </a>
+        <a href="parent-alerts.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.9a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.27Z"/></svg>
+          Parent Alerts
+        </a>
+        <a href="awards.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-2.5L17 21l-1.5-8.5"/></svg>
+          Awards
+        </a>
+      </nav>
+      
+      <div class="navgroup">System</div>
+      <nav class="nav">
+        <a href="reports.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+          Reports
+        </a>
+        <a href="settings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          Settings
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 &middot; Bestlink College<br>
+        Attendance Monitoring System
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="main-col">
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">RC</div>
+          <div class="pf-info">
+            <div class="pf-name">Rosario Cruz</div>
+            <div class="pf-role">Admin &middot; Registrar</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <main class="main">
+        <!-- Page Title & Primary Actions -->
+        <div class="pagehead" style="margin-bottom:18px;">
+          <div>
+            <h1>Academic Schedule &amp; Attendance Calendar</h1>
+            <p>Manage non-class days, institutional holidays, school events, and weather suspensions</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button id="btnOpenAddModal" class="btn-primary" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Add Schedule / Event
+            </button>
+          </div>
+        </div>
+
+        <!-- Month Navigation Bar & Filter Chips -->
+        <div class="card" style="padding:14px 18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="btnPrevMonth" class="pillbtn" style="padding:6px 12px;" aria-label="Previous Month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <h2 id="calendarTitle" style="margin:0; font-size:16px; font-weight:700; color:var(--text-1); min-width:180px; text-align:center;">
+              September 2026
+            </h2>
+            <button id="btnNextMonth" class="pillbtn" style="padding:6px 12px;" aria-label="Next Month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <button id="btnToday" class="pillbtn" style="padding:6px 12px; margin-left:6px; font-size:12px;">
+              Today
+            </button>
+          </div>
+
+          <!-- Schedule Type Filters -->
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button class="filter-chip-btn active" data-filter="all">All Events</button>
+            <button class="filter-chip-btn" data-filter="no_classes">No Classes</button>
+            <button class="filter-chip-btn" data-filter="holiday">Holidays</button>
+            <button class="filter-chip-btn" data-filter="school_event">School Events</button>
+            <button class="filter-chip-btn" data-filter="exam_week">Exam Weeks</button>
+            <button class="filter-chip-btn" data-filter="suspension">Suspensions</button>
+          </div>
+        </div>
+
+        <!-- 7-Column Monthly Calendar Grid -->
+        <div class="calendar-grid" id="adminCalendarGrid">
+          <!-- Weekday Headers -->
+          <div class="calendar-header-day">Sun</div>
+          <div class="calendar-header-day">Mon</div>
+          <div class="calendar-header-day">Tue</div>
+          <div class="calendar-header-day">Wed</div>
+          <div class="calendar-header-day">Thu</div>
+          <div class="calendar-header-day">Fri</div>
+          <div class="calendar-header-day">Sat</div>
+          <!-- Days populated dynamically by JS -->
+        </div>
+
+        <!-- Notice / Legend Footer -->
+        <div class="card" style="margin-top:16px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:12px;">
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-no-class" style="width:10px; height:10px; border-radius:3px;"></span> No Classes / In-Service
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-holiday" style="width:10px; height:10px; border-radius:3px;"></span> Legal Holiday
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-school-event" style="width:10px; height:10px; border-radius:3px;"></span> School Event
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-exam" style="width:10px; height:10px; border-radius:3px;"></span> Exam Week
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-suspension" style="width:10px; height:10px; border-radius:3px;"></span> Class Suspension
+            </span>
+          </div>
+          <div style="color:var(--text-3); font-size:11.5px;">
+            Entries automatically sync to Teacher &amp; Student calendars and exempt users from nightly absence evaluation.
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add / Edit Schedule Entry Modal -->
+  <div id="scheduleModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-lg w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+        <div>
+          <h3 id="scheduleModalTitle" style="margin:0; font-size:15px; font-weight:700; color:var(--text-1);">Add Academic Schedule Entry</h3>
+          <p style="margin:2px 0 0; font-size:12px; color:var(--text-2);">Designate non-class days, holidays, or events</p>
+        </div>
+        <button id="btnCloseModal" style="background:transparent; border:none; color:var(--text-2); cursor:pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="scheduleForm" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" id="editScheduleId" value="">
+
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Title / Reason *</label>
+          <input type="text" id="scheduleTitle" class="input-field" placeholder="e.g., University Foundation Week or Bonifacio Day" required style="width:100%;">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Classification *</label>
+            <select id="scheduleType" class="select-field" required style="width:100%;">
+              <option value="no_classes">No Classes (In-Service/Break)</option>
+              <option value="holiday">Legal / National Holiday</option>
+              <option value="school_event">Official School Event</option>
+              <option value="exam_week">Examination Week</option>
+              <option value="suspension">Weather / Calamity Suspension</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Affected Scope</label>
+            <select id="scheduleScope" class="select-field" style="width:100%;">
+              <option value="all">All Campuses &amp; Departments</option>
+              <option value="college">College Department Only</option>
+              <option value="shs">Senior High School Only</option>
+              <option value="faculty_only">Faculty In-Service Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Start Date *</label>
+            <input type="date" id="scheduleStartDate" class="input-field" required style="width:100%;">
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">End Date *</label>
+            <input type="date" id="scheduleEndDate" class="input-field" required style="width:100%;">
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Description / Memo Details</label>
+          <textarea id="scheduleDescription" class="input-field" rows="3" placeholder="Additional institutional guidelines or proclamation reference..." style="width:100%; resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:12px; border-top:1px solid var(--border);">
+          <button type="button" id="btnDeleteSchedule" class="btn-secondary" style="display:none; color:var(--absent); border-color:rgba(239, 68, 68, 0.3);">
+            Delete Entry
+          </button>
+          <div style="display:flex; gap:8px; margin-left:auto;">
+            <button type="button" id="btnCancelModal" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-primary">Save Schedule</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/pages/admin/attendance-calendar.js"></script>
+</body>
+</html>

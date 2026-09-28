@@ -7,12 +7,14 @@
 import { requireRole } from '../../lib/rbac-guard.js';
 import { getCurrentUser } from '../../lib/auth.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
+import { getSupabase } from '../../lib/supabaseClient.js';
 
 let currentStudent = null;
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth(); // 0-indexed (0 = Jan)
 let monthlySummaries = new Map();
 let monthlyLogs = new Map();
+let academicSchedules = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce Student Role Guard
@@ -106,7 +108,7 @@ async function loadAndRenderCalendar() {
     monthlySummaries.clear();
     summaries.forEach(s => monthlySummaries.set(s.summary_date, s));
 
-    // 2. Fetch specific logs for gate and time details
+    // 2. Fetch specific logs for verification details
     const { data: logs } = await attendanceApi.getAttendanceLogs({
       studentId: currentStudent.id,
       dateFrom: startDateStr,
@@ -120,6 +122,22 @@ async function loadAndRenderCalendar() {
         monthlyLogs.set(d, l);
       }
     });
+
+    // 3. Fetch academic schedules (holidays, no-classes, events)
+    const sb = getSupabase();
+    if (sb) {
+      try {
+        const { data: schedData } = await sb
+          .from('academic_schedules')
+          .select('*')
+          .order('start_date', { ascending: true });
+        if (schedData && schedData.length > 0) {
+          academicSchedules = schedData;
+        }
+      } catch (err) {
+        console.warn('[StudentCalendar] Failed loading schedules:', err);
+      }
+    }
 
     renderCalendarGrid(firstDayOfMonth, lastDayOfMonth);
     updateMonthlySummaryCounters();
@@ -164,6 +182,9 @@ function renderCalendarGrid(firstDay, lastDay) {
     const summary = monthlySummaries.get(dateStr);
     const log = monthlyLogs.get(dateStr);
 
+    // Check if designated as a non-class day, holiday, or event by Admin
+    const matchingSchedule = academicSchedules.find(s => s.start_date <= dateStr && s.end_date >= dateStr);
+
     let status = isFuture ? null : (summary?.status || (log?.status || (isWeekend ? 'weekend' : 'present')));
     if (isWeekend) status = 'weekend';
 
@@ -173,40 +194,42 @@ function renderCalendarGrid(firstDay, lastDay) {
     if (isToday) cell.style.border = '2px solid var(--accent)';
 
     let badgeHtml = '';
-    if (isWeekend) {
+    if (matchingSchedule) {
+      const isHoliday = matchingSchedule.schedule_type === 'holiday';
+      const eventClass = isHoliday 
+        ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300' 
+        : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300';
+      badgeHtml = `
+        <div class="px-1.5 py-1 rounded ${eventClass} font-semibold text-[10px] leading-tight truncate" title="${matchingSchedule.title}">
+          <span>${matchingSchedule.title}</span>
+        </div>
+      `;
+    } else if (isWeekend) {
       badgeHtml = `<span class="text-[10px] font-semibold tracking-wider uppercase opacity-40" style="color: var(--text-3);">Weekend</span>`;
     } else if (isFuture) {
       badgeHtml = ``;
     } else if (status === 'present') {
-      const timeIn = log?.scanned_at
-        ? new Date(log.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-        : '07:46 AM';
       badgeHtml = `
         <div class="px-1.5 py-1 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 font-semibold text-[10px] leading-tight">
           <div class="flex items-center gap-1">
             <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             <span>Present</span>
           </div>
-          <div class="tabular-nums font-mono opacity-80 mt-0.5 text-[9px]">${timeIn}</div>
         </div>
       `;
     } else if (status === 'late') {
-      const timeIn = log?.scanned_at
-        ? new Date(log.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-        : '08:14 AM';
       badgeHtml = `
         <div class="px-1.5 py-1 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 font-semibold text-[10px] leading-tight">
           <div class="flex items-center gap-1">
             <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Late</span>
+            <span>Tardy</span>
           </div>
-          <div class="tabular-nums font-mono opacity-80 mt-0.5 text-[9px]">${timeIn}</div>
         </div>
       `;
     } else if (status === 'excused') {
       badgeHtml = `
         <div class="px-1.5 py-1 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 font-semibold text-[10px]">
-          Excused Slip
+          Excused
         </div>
       `;
     } else if (status === 'absent') {
@@ -239,7 +262,8 @@ function renderCalendarGrid(firstDay, lastDay) {
         isWeekend,
         isFuture,
         log,
-        summary
+        summary,
+        schedule: matchingSchedule
       });
     });
 
@@ -308,23 +332,31 @@ function openDayModal(info) {
   const modal = document.getElementById('dayDetailModal');
   const dateTitle = document.getElementById('modalDayDate');
   const pill = document.getElementById('modalDayStatusPill');
-  const timeInEl = document.getElementById('modalDayTimeIn');
-  const timeOutEl = document.getElementById('modalDayTimeOut');
+  const eventBox = document.getElementById('modalDayEventBox');
+  const eventTitle = document.getElementById('modalDayEventTitle');
+  const eventDesc = document.getElementById('modalDayEventDesc');
   const methodEl = document.getElementById('modalDayMethod');
   const deviceEl = document.getElementById('modalDayDevice');
   const excusePrompt = document.getElementById('modalDayExcusePrompt');
 
-  const formattedDate = new Date(info.dateStr).toLocaleDateString('en-US', {
+  const formattedDate = new Date(info.dateStr + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
   });
 
   if (dateTitle) dateTitle.textContent = formattedDate;
 
+  // Handle Event / Holiday
+  if (info.schedule && eventBox && eventTitle && eventDesc) {
+    eventBox.classList.remove('hidden');
+    eventTitle.textContent = info.schedule.title;
+    eventDesc.textContent = info.schedule.description || 'Institutional Non-Class Day / Event';
+  } else if (eventBox) {
+    eventBox.classList.add('hidden');
+  }
+
   if (info.isWeekend) {
     pill.className = 'pill';
     pill.textContent = 'Weekend';
-    timeInEl.textContent = '—';
-    timeOutEl.textContent = '—';
     methodEl.textContent = 'Campus Closed';
     deviceEl.textContent = '—';
     if (excusePrompt) excusePrompt.classList.add('hidden');
@@ -335,9 +367,7 @@ function openDayModal(info) {
   if (info.isFuture) {
     pill.className = 'pill';
     pill.textContent = 'Upcoming Date';
-    timeInEl.textContent = '—';
-    timeOutEl.textContent = '—';
-    methodEl.textContent = 'Scheduled';
+    methodEl.textContent = 'Scheduled Class Day';
     deviceEl.textContent = '—';
     if (excusePrompt) excusePrompt.classList.add('hidden');
     modal.classList.remove('hidden');
@@ -364,14 +394,8 @@ function openDayModal(info) {
   }
 
   const log = info.log;
-  const timeIn = log?.scanned_at
-    ? new Date(log.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
-    : (status === 'present' ? '07:46:12 AM' : status === 'late' ? '08:14:05 AM' : '—');
-
-  timeInEl.textContent = timeIn;
-  timeOutEl.textContent = log?.event_type === 'time_out' ? timeIn : '—';
   methodEl.textContent = (log?.scan_method || 'rfid').toUpperCase() + ' Tap';
-  deviceEl.textContent = log?.device ? `${log.device.device_code} (${log.device.location})` : 'Main Gate Turnstile A';
+  deviceEl.textContent = log?.device ? `${log.device.device_code} (${log.device.location})` : 'Turnstile Ingress Verified';
 
   modal.classList.remove('hidden');
 }

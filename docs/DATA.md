@@ -185,13 +185,27 @@ Pre-aggregated, one-row-per-user-per-day status used for fast analytics, calenda
 
 ---
 
-### 3.11 `holidays`
+### 3.11 `holidays` & `academic_schedules`
 
+#### `holidays`
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `holiday_date` | `date` | `unique`, `not null` | |
-| `description` | `text` | nullable | |
+| `id` | `uuid` | PK, default `gen_random_uuid()` | Primary Key |
+| `holiday_date` | `date` | `unique`, `not null` | Legal holiday date |
+| `description` | `text` | nullable | Holiday name / proclamation |
+
+#### `academic_schedules` (Multi-Role Calendar Events)
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `uuid` | PK, default `gen_random_uuid()` | Primary Key |
+| `title` | `text` | `not null` | Event or non-class title |
+| `schedule_type` | `text` | `not null`, check in (`holiday`,`no_classes`,`school_event`,`suspension`,`exam_week`) | Classification of calendar entry |
+| `start_date` | `date` | `not null` | Effective start date |
+| `end_date` | `date` | `not null` | Effective end date |
+| `description` | `text` | nullable | Details or administrative notes |
+| `affected_scope` | `text` | `not null`, default `'all'`, check in (`all`,`college`,`shs`,`faculty_only`) | Scope of affected participants |
+| `created_by` | `uuid` | FK → `users(id)`, nullable | Administrator who registered the schedule |
+| `created_at` | `timestamptz` | default `now()`, `not null` | Record creation timestamp |
 
 ---
 
