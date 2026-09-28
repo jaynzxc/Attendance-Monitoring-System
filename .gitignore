@@ -4,31 +4,72 @@ package-lock.json.bak
 .pnp
 .pnp.js
 
-# Environment variables & local secrets
+# Environment variables & secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.env
+.env.*
 !.env.example
+*.env
+*.env.*
+.envrc
+.env.vault
+.env.backup
+.env.bak
+
+# API keys, tokens & credentials
+secrets.json
+secrets.js
+secrets.ts
+credentials.json
+serviceAccountKey.json
+service-account*.json
+firebase*.json
+google-services.json
+client_secret*.json
+*.key
+*.pem
+*.cer
+*.crt
+*.pfx
+*.p12
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+.aws/
+.semaphore*
+semaphore.json
 
 # Hardware & Microcontroller local credentials (ESP32)
 esp32-firmware/config.h
 !esp32-firmware/config.h.example
+*.bin
+*.hex
+*.elf
 .pio/
+.arduino15/
 .vscode/.browse.c_cpp.db*
 
 # Supabase local environment & storage
+.supabase/
 .branches/
 supabase/.temp/
 supabase/.branches/
+
+# Local databases, dumps & backups
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+*.dump
+*.backup
+*.sql.bak
 
 # Production builds & temporary files
 dist/
 build/
 tmp/
 temp/
+scratch/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -36,7 +77,12 @@ yarn-error.log*
 
 # Operating System files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
 desktop.ini
 
 # IDE & Editor specific files
@@ -46,3 +92,4 @@ desktop.ini
 !.vscode/settings.json
 *.sublime-workspace
 *.sublime-project
+.history/
