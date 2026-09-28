@@ -3,8 +3,8 @@
 // Authoritative Reference: docs/UI-UX_BackendSpec.md, docs/Security.md
 
 // Default configuration with browser runtime support and fallback storage
-const DEFAULT_SUPABASE_URL = 'https://mock-bcp-ams.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.mock_key';
+const DEFAULT_SUPABASE_URL = 'https://lbgrhbayadehorjixibx.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_iKVipoPe2iik-q_jyP8eYA_Ow0izfzs';
 
 // Read from window runtime config if injected, or local storage, or default
 const isBrowser = typeof window !== 'undefined';
@@ -16,7 +16,6 @@ let clientInstance = null;
 export function isSupabaseConfigured() {
   return isBrowser &&
     Boolean(supabaseUrl) &&
-    supabaseUrl !== DEFAULT_SUPABASE_URL &&
     !supabaseUrl.includes('mock-bcp-ams') &&
     !supabaseUrl.includes('your-project-ref');
 }
