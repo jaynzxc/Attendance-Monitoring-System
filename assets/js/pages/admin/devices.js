@@ -12,6 +12,12 @@ import { subscribeToDeviceStatus } from '../../lib/realtime.js';
 let devicesList = [];
 let telemetrySubscription = null;
 
+// ─── QR Session State ───────────────────────────────────────────────────────
+let qrSessionToken    = null;
+let qrExpiryTimer     = null;
+let qrCountdownTimer  = null;
+const QR_SESSION_MINUTES = 30;  // Session QR valid for 30 minutes
+
 /**
  * Checks if a device is online based on heartbeat timestamp within 3 minutes
  */
@@ -295,12 +301,155 @@ function openEditDeviceModal(devId) {
 }
 
 /**
+ * Generates a random session token string
+ */
+function generateToken() {
+  return 'AMS-QR-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+/**
+ * Draws a simple QR placeholder on the canvas.
+ * In production this is replaced by a proper qrcode library (e.g. qrcode.js).
+ * The admin screen shows the canvas for faculty to scan via their QR Attendance module.
+ */
+function drawQROnCanvas(token) {
+  const canvas = document.getElementById('qrCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = 180;
+  ctx.clearRect(0, 0, size, size);
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // If qrcode.js is available on the page, use it
+  if (window.QRCode) {
+    canvas.width = canvas.height = 180;
+    new window.QRCode(canvas, { text: token, width: 180, height: 180, correctLevel: window.QRCode.CorrectLevel.M });
+    return;
+  }
+
+  // Fallback: draw a recognisable placeholder pattern
+  ctx.fillStyle = '#0D47A1';
+  const cells = 8;
+  const cell  = size / cells;
+  // Finder pattern (top-left)
+  for (let r = 0; r < cells; r++) {
+    for (let c = 0; c < cells; c++) {
+      if ((r < 3 || r > 4) && (c < 3 || c > 4)) {
+        if ((r + c) % 2 === 0) ctx.fillRect(c * cell, r * cell, cell - 1, cell - 1);
+      } else {
+        ctx.fillRect(c * cell, r * cell, cell - 1, cell - 1);
+      }
+    }
+  }
+
+  // Token text in center
+  ctx.fillStyle = '#0D47A1';
+  ctx.font = 'bold 7px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('AMS SESSION QR', size / 2, size - 14);
+  ctx.fillStyle = '#2196F3';
+  ctx.font = '6px monospace';
+  ctx.fillText(token.substring(0, 20), size / 2, size - 6);
+}
+
+/**
+ * Starts a new QR session: generates token, draws QR, shows panel, starts countdown
+ */
+function startQRSession() {
+  // Clear any existing session
+  if (qrExpiryTimer)    clearTimeout(qrExpiryTimer);
+  if (qrCountdownTimer) clearInterval(qrCountdownTimer);
+
+  qrSessionToken = generateToken();
+  const expiresAt = new Date(Date.now() + QR_SESSION_MINUTES * 60 * 1000);
+
+  // Show the panel
+  const panel = document.getElementById('qrSessionPanel');
+  if (panel) panel.style.display = 'block';
+
+  // Activate badge
+  const badge = document.getElementById('qrActiveBadge');
+  if (badge) badge.style.opacity = '1';
+
+  // Reset scan log
+  const scanLog = document.getElementById('qrScanLog');
+  if (scanLog) scanLog.innerHTML = '<div style="font-size:12.5px; color:var(--text-3);">No faculty scans yet for this QR session.</div>';
+
+  // Draw QR
+  drawQROnCanvas(qrSessionToken);
+
+  // Countdown display
+  function updateExpiry() {
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) { closeQRSession(); return; }
+    const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
+    const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
+    const el = document.getElementById('qrExpiry');
+    if (el) el.textContent = `${m}:${s}`;
+  }
+  updateExpiry();
+  qrCountdownTimer = setInterval(updateExpiry, 1000);
+
+  // Auto-expire
+  qrExpiryTimer = setTimeout(closeQRSession, QR_SESSION_MINUTES * 60 * 1000);
+
+  toast.show(`QR session generated. Valid for ${QR_SESSION_MINUTES} minutes.`, 'success');
+
+  // Subscribe to Supabase Realtime for faculty who scan this token (placeholder)
+  // subscribeToQrScans(qrSessionToken, onFacultyScan);
+}
+
+/**
+ * Closes and invalidates the current QR session
+ */
+function closeQRSession() {
+  if (qrExpiryTimer)    { clearTimeout(qrExpiryTimer);    qrExpiryTimer    = null; }
+  if (qrCountdownTimer) { clearInterval(qrCountdownTimer); qrCountdownTimer = null; }
+  qrSessionToken = null;
+
+  const panel = document.getElementById('qrSessionPanel');
+  if (panel) panel.style.display = 'none';
+
+  toast.show('QR session closed.', 'info');
+}
+
+/**
+ * Appends a faculty scan event to the QR session scan log
+ */
+function addQrScanEntry(name, eventType, status) {
+  const log = document.getElementById('qrScanLog');
+  if (!log) return;
+
+  // Remove placeholder
+  const placeholder = log.querySelector('div');
+  if (placeholder && placeholder.textContent.includes('No faculty')) placeholder.remove();
+
+  const time  = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const color = status === 'present' ? 'var(--present)' : 'var(--late)';
+  const row   = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;';
+  row.innerHTML = `
+    <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+    <span style="flex:1;font-weight:600;color:var(--text-1);">${name}</span>
+    <span style="color:var(--text-2);font-variant-numeric:tabular-nums;">${eventType === 'time_in' ? 'Time-In' : 'Time-Out'} · ${time}</span>
+    <span style="font-size:10.5px;background:${color}1e;color:${color};border-radius:20px;padding:2px 8px;font-weight:600;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+  `;
+  log.insertBefore(row, log.firstChild);
+}
+
+/**
  * Initializes Devices view
  */
 async function init() {
   await requireRole(['admin']);
 
   document.getElementById('btnRegisterDevice')?.addEventListener('click', openRegisterDeviceModal);
+  document.getElementById('btnGenerateQR')?.addEventListener('click',  startQRSession);
+  document.getElementById('btnRegenQR')?.addEventListener('click',    startQRSession);
+  document.getElementById('btnCloseQR')?.addEventListener('click',    closeQRSession);
 
   // Subscribe to live device heartbeat telemetry
   telemetrySubscription = subscribeToDeviceStatus(() => {
