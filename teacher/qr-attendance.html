@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Faculty QR Code Attendance</title>
+  <meta name="description" content="Scan the session QR code with your camera to record your attendance at Bestlink College of the Philippines.">
+
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <!-- jsQR for camera-based QR decoding -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
+  <style>
+    .qr-viewfinder {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 1;
+    }
+    #cameraVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .scan-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .scan-guide {
+      width: 220px;
+      height: 220px;
+      border: 2px solid rgba(33, 150, 243, 0.8);
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+      position: relative;
+    }
+    /* Corner brackets */
+    .scan-guide::before,
+    .scan-guide::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: #2196F3;
+      border-style: solid;
+    }
+    .scan-guide::before {
+      top: -2px; left: -2px;
+      border-width: 3px 0 0 3px;
+      border-radius: 4px 0 0 0;
+    }
+    .scan-guide::after {
+      bottom: -2px; right: -2px;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 4px 0;
+    }
+    /* Animated scan line */
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #2196F3, transparent);
+      animation: scanMove 2s ease-in-out infinite;
+    }
+    @keyframes scanMove {
+      0%   { top: 10%; }
+      50%  { top: 85%; }
+      100% { top: 10%; }
+    }
+    /* Scan result overlay */
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 14px;
+      transition: opacity 0.3s;
+    }
+    .result-overlay.hidden { opacity: 0; pointer-events: none; }
+    .result-overlay.visible { opacity: 1; }
+    .result-icon {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .status-banner {
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid var(--border);
+    }
+    .status-banner.present { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); }
+    .status-banner.late    { background: rgba(245,158,11,0.1);  border-color: rgba(245,158,11,0.3); }
+    .status-banner.timeout { background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.3); }
+    .status-banner.default { background: var(--raised); }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Faculty Navigation">
+      <div class="brand">
+        <div class="mark">T</div>
+        <span>AMS Faculty</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Roll Call
+        </a>
+        <a href="my-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          My Attendance Log
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Section Analytics
+        </a>
+      </nav>
+
+      <div class="navgroup">Tools</div>
+      <nav class="nav">
+        <a class="active" href="qr-attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Attendance
+        </a>
+      </nav>
+
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Faculty Attendance Hub
+      </div>
+    </aside>
+
+    <!-- Main Column -->
+    <div class="main-col">
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light / Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="divider"></div>
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">TC</div>
+          <div class="pf-info">
+            <div class="pf-name">Prof. Teacher</div>
+            <div class="pf-role">Faculty Member</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <main class="main">
+        <div class="pagehead">
+          <div>
+            <h1>QR Code Attendance</h1>
+            <p>Point your camera at the session QR code displayed by the Admin to record your attendance</p>
+          </div>
+          <a href="my-logs.html" class="pillbtn" style="display:inline-flex;align-items:center;gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            View My Logs
+          </a>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start;">
+
+          <!-- Camera Viewfinder Card -->
+          <div class="card" style="padding:24px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <div>
+                <h3 style="margin:0 0 2px;">Camera Scanner</h3>
+                <div class="sub">Scan the session QR code to record Time-In or Time-Out</div>
+              </div>
+              <span id="scannerStatusBadge" class="live-badge" style="opacity:0.4;">
+                <span class="live-dot" style="background:var(--text-3);"></span>
+                Camera Off
+              </span>
+            </div>
+
+            <div class="qr-viewfinder" id="viewfinderContainer">
+              <!-- Idle placeholder before camera starts -->
+              <div id="cameraPlaceholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--raised);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:52px;height:52px;color:var(--text-3);"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span style="font-size:13px; color:var(--text-3);">Camera not started</span>
+              </div>
+              <video id="cameraVideo" autoplay playsinline muted style="display:none;"></video>
+              <canvas id="scanCanvas" style="display:none;"></canvas>
+              <div class="scan-overlay" id="scanGuideOverlay" style="display:none;">
+                <div class="scan-guide">
+                  <div class="scan-line"></div>
+                </div>
+              </div>
+              <!-- Result flash overlay -->
+              <div class="result-overlay hidden" id="resultOverlay">
+                <div class="result-icon" id="resultIcon"></div>
+                <div id="resultLabel" style="font-size:18px; font-weight:700; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+                <div id="resultSub" style="font-size:13px; color:rgba(255,255,255,0.85);"></div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:16px;">
+              <button id="btnStartCamera" class="btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7 16 12 23 17V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                Start Camera
+              </button>
+              <button id="btnStopCamera" class="btn-secondary" style="display:flex; align-items:center; gap:6px;" disabled>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>
+                Stop
+              </button>
+            </div>
+          </div>
+
+          <!-- Status Panel -->
+          <div style="display:flex; flex-direction:column; gap:14px;">
+
+            <!-- Today's Attendance Status -->
+            <div class="card" style="padding:20px;">
+              <h3 style="margin:0 0 14px; font-size:13.5px;">My Attendance Today</h3>
+
+              <div class="status-banner default" id="statusBannerTimeIn" style="margin-bottom:10px;">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--raised);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3);"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.06em;">Time-In</div>
+                  <div id="timeInValue" style="font-size:15px; font-weight:700; color:var(--text-1); font-variant-numeric:tabular-nums;">--:-- --</div>
+                  <div id="timeInStatus" style="font-size:11.5px; color:var(--text-2);">Not scanned yet</div>
+                </div>
+              </div>
+
+              <div class="status-banner default" id="statusBannerTimeOut">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--raised);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3);"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.06em;">Time-Out</div>
+                  <div id="timeOutValue" style="font-size:15px; font-weight:700; color:var(--text-1); font-variant-numeric:tabular-nums;">--:-- --</div>
+                  <div id="timeOutStatus" style="font-size:11.5px; color:var(--text-2);">Scan again to check out</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card" style="padding:18px;">
+              <h3 style="margin:0 0 12px; font-size:13px;">How to use</h3>
+              <ol style="padding-left:16px; margin:0; display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--text-2); line-height:1.5;">
+                <li>Click <strong style="color:var(--text-1);">Start Camera</strong> to activate your device camera.</li>
+                <li>Hold the Admin-generated QR code in front of the camera within the blue guide box.</li>
+                <li>The system will instantly record your <strong style="color:var(--text-1);">Time-In</strong>.</li>
+                <li>Scan again at the end of the day to record your <strong style="color:var(--text-1);">Time-Out</strong>.</li>
+                <li>Your attendance will immediately appear in <strong style="color:var(--text-1);">My Attendance Log</strong>.</li>
+              </ol>
+            </div>
+
+            <!-- Scan Log -->
+            <div class="card" style="padding:0; overflow:hidden;">
+              <div style="padding:14px 18px; border-bottom:1px solid var(--border);">
+                <h3 style="margin:0; font-size:13px; font-weight:700; color:var(--text-1);">Scan Log</h3>
+              </div>
+              <div id="scanLog" style="max-height:200px; overflow-y:auto; padding:8px 0;">
+                <div style="padding:16px 18px; text-align:center; color:var(--text-3); font-size:12px;">No scans recorded yet.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <script type="module" src="../assets/js/pages/teacher/qr-attendance.js"></script>
+</body>
+</html>
