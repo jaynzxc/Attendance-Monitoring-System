@@ -105,7 +105,7 @@
         <div class="pagehead">
           <div>
             <h1>My Attendance Log</h1>
-            <p>Personal gate ingress records, paired Time-In/Time-Out history & punctuality rate</p>
+            <p id="myLogsSubtitle">Prof. Ricardo Santos · Employee ID: <strong id="facultyEmpNum">EMP-2018-042</strong> · RFID UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="facultyRfidUid">99887766</strong> · Cutoff: 08:00 AM</p>
           </div>
           <div class="flex items-center gap-3">
             <button id="btnViewQrPass" class="pillbtn text-xs inline-flex items-center gap-2" style="background: var(--surface-hover); border-color: var(--border);">
@@ -119,56 +119,44 @@
           </div>
         </div>
 
-        <!-- Faculty Credential Profile Card -->
-        <div class="card p-5 mb-6">
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0" style="background: linear-gradient(135deg, var(--ch-500) 0%, var(--ch-900) 100%); color: #fff;">
-                <span id="facultyInitials">PT</span>
-              </div>
-              <div>
-                <div class="flex items-center gap-2.5">
-                  <h2 class="text-base font-bold" id="facultyNameDisplay">Prof. Ricardo Santos</h2>
-                  <span class="pill pill-present text-[10px] uppercase font-bold tracking-wider">Active Faculty</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-4 text-xs mt-1 tabular-nums" style="color: var(--text-2);">
-                  <span>Employee ID: <strong class="font-mono" style="color: var(--text-1);" id="facultyEmpNum">EMP-2018-042</strong></span>
-                  <span>RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="facultyRfidUid">99887766</strong></span>
-                  <span>Official Cutoff: <strong style="color: var(--text-1);">08:00 AM</strong></span>
-                </div>
-              </div>
+        <!-- Personal Monthly Statistics -->
+        <div class="kpis" style="margin-bottom: 20px;">
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
             </div>
-            
-            <div class="text-xs px-3 py-2 rounded-lg border flex items-center gap-2" style="background: var(--surface-hover); border-color: var(--border);">
-              <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>5-Min Anti-Passback Protected</span>
+            <div class="label">Days Present (This Month)</div>
+            <div class="num tabular-nums" style="color:var(--present);" id="myDaysPresent">--</div>
+            <span class="chip chip-good">Verified Ingress</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
+            <div class="label">On-Time Punctuality Rate</div>
+            <div class="num tabular-nums" style="color:var(--accent);" id="myPunctualityRate">--%</div>
+            <span class="chip chip-good">Before 08:00 AM</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div class="label">Tardy / Late Check-ins</div>
+            <div class="num tabular-nums" style="color:var(--late);" id="myDaysLate">--</div>
+            <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="label">Latest Check-in Recorded</div>
+            <div class="num tabular-nums text-lg" style="color:var(--text-1);" id="myLatestTap">--</div>
+            <span class="chip" style="background:var(--raised); color:var(--text-2);" id="myLatestLocation">Gate Ingress</span>
           </div>
         </div>
-
-        <!-- Personal Monthly Statistics -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="kpi-card">
-            <div class="kpi-label">Days Present (This Month)</div>
-            <div class="kpi-val" style="color: var(--present);" id="myDaysPresent">--</div>
-            <div class="kpi-sub">Verified campus gate check-ins</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">On-Time Punctuality Rate</div>
-            <div class="kpi-val" style="color: var(--accent);" id="myPunctualityRate">--%</div>
-            <div class="kpi-sub">Arrived before 08:00 AM</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Tardy / Late Check-ins</div>
-            <div class="kpi-val" style="color: var(--late);" id="myDaysLate">--</div>
-            <div class="kpi-sub">Turnstile tap > 08:00 AM</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Latest Check-in Recorded</div>
-            <div class="kpi-val text-sm font-semibold mt-2" style="color: var(--text-1);" id="myLatestTap">--</div>
-            <div class="kpi-sub" id="myLatestLocation">Main Gate Turnstile A</div>
-          </div>
-        </section>
 
         <!-- Filters & History Table -->
         <div class="card overflow-hidden">

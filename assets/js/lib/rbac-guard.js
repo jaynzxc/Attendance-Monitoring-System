@@ -23,7 +23,19 @@ export async function requireRole(allowedRoles) {
   const sb = getSupabase();
   if (!sb) {
     console.warn('[AMS RBAC] Supabase client unavailable, skipping live guard.');
-    initLayoutBindings({ first_name: 'Elena', last_name: 'Bautista', role: roles[0] });
+    const userRole = roles[0];
+    const defaultProfile = userRole === 'teacher'
+      ? { first_name: 'Ricardo', last_name: 'Santos', role: 'teacher' }
+      : userRole === 'student'
+      ? { first_name: 'Juan', last_name: 'Dela Cruz', role: 'student' }
+      : { first_name: 'Elena', last_name: 'Bautista', role: 'admin' };
+
+    let profile = defaultProfile;
+    const cachedUser = sessionStorage.getItem('ams_cached_user');
+    if (cachedUser) {
+      try { profile = JSON.parse(cachedUser); } catch (e) {}
+    }
+    initLayoutBindings(profile);
     return;
   }
 

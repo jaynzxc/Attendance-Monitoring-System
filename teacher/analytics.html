@@ -116,28 +116,43 @@
         </div>
 
         <!-- Section Highlights KPIs -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="kpi-card">
-            <div class="kpi-label">Average Class Attendance</div>
-            <div class="kpi-val" style="color: var(--accent);" id="kpiAvgAttendance">--%</div>
-            <div class="kpi-sub">Across all your classes</div>
+        <div class="kpis" style="margin-bottom: 20px;">
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="label">Average Class Attendance</div>
+            <div class="num tabular-nums" style="color:var(--accent);" id="kpiAvgAttendance">--%</div>
+            <span class="chip chip-good">All Assigned Classes</span>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Best Performing Section</div>
-            <div class="kpi-val text-lg font-bold truncate mt-1" style="color: var(--present);" id="kpiBestSection">--</div>
-            <div class="kpi-sub" id="kpiBestRate">--% attendance</div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            </div>
+            <div class="label">Best Performing Section</div>
+            <div class="num tabular-nums text-lg font-bold truncate mt-1" style="color:var(--present);" id="kpiBestSection">--</div>
+            <span class="chip chip-good" id="kpiBestRate">--% attendance</span>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Tardiness Ratio</div>
-            <div class="kpi-val" style="color: var(--late);" id="kpiTardinessRatio">--%</div>
-            <div class="kpi-sub">Students arriving post-08:00 AM</div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div class="label">Tardiness Ratio</div>
+            <div class="num tabular-nums" style="color:var(--late);" id="kpiTardinessRatio">--%</div>
+            <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-label">At-Risk Students</div>
-            <div class="kpi-val" style="color: var(--absent);" id="kpiAtRiskCount">0</div>
-            <div class="kpi-sub">&ge; 3 unexcused absences</div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="label">At-Risk Students</div>
+            <div class="num tabular-nums" style="color:var(--absent);" id="kpiAtRiskCount">0</div>
+            <span class="chip chip-bad">&ge; 3 Absences</span>
           </div>
-        </section>
+        </div>
 
         <!-- Charts Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

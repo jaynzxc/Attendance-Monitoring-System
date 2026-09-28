@@ -7,17 +7,31 @@ const DEFAULT_SUPABASE_URL = 'https://mock-bcp-ams.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.mock_key';
 
 // Read from window runtime config if injected, or local storage, or default
-const supabaseUrl = window.__AMS_CONFIG__?.SUPABASE_URL || localStorage.getItem('ams_supabase_url') || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = window.__AMS_CONFIG__?.SUPABASE_ANON_KEY || localStorage.getItem('ams_supabase_anon_key') || DEFAULT_SUPABASE_ANON_KEY;
+const isBrowser = typeof window !== 'undefined';
+const supabaseUrl = (isBrowser && (window.__AMS_CONFIG__?.SUPABASE_URL || window.localStorage?.getItem('ams_supabase_url'))) || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = (isBrowser && (window.__AMS_CONFIG__?.SUPABASE_ANON_KEY || window.localStorage?.getItem('ams_supabase_anon_key'))) || DEFAULT_SUPABASE_ANON_KEY;
 
 let clientInstance = null;
+
+export function isSupabaseConfigured() {
+  return isBrowser &&
+    Boolean(supabaseUrl) &&
+    supabaseUrl !== DEFAULT_SUPABASE_URL &&
+    !supabaseUrl.includes('mock-bcp-ams') &&
+    !supabaseUrl.includes('your-project-ref');
+}
 
 export function getSupabase() {
   if (clientInstance) {
     return clientInstance;
   }
 
-  if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+  // If Supabase URL is placeholder, operate in local offline/mock mode
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
+  if (typeof window !== 'undefined' && typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
     clientInstance = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
