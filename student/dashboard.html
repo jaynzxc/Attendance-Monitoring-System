@@ -97,105 +97,67 @@
         <div class="pagehead">
           <div>
             <h1 id="greetingHeading">Welcome back, Student</h1>
-            <p id="currentDateSubtitle">Bestlink College of the Philippines · Student Attendance Portal</p>
+            <p id="currentDateSubtitle">BSIT 3-1 · Student ID: <strong id="studentIdDisplay">2024-IT-00101</strong> · RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="studentRfidDisplay">E2806894</strong></p>
           </div>
           <div class="flex items-center gap-3">
-            <a href="excuse-slip-submit.html" class="primary-btn text-xs inline-flex items-center gap-2">
+            <a href="attendance-calendar.html" class="pillbtn text-xs inline-flex items-center gap-2">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              View Full Calendar
+            </a>
+            <a href="excuse-slip-submit.html" class="pillbtn text-xs inline-flex items-center gap-2">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Submit Excuse Slip
             </a>
           </div>
         </div>
 
-        <!-- Student Credential & RFID Card Info -->
-        <div class="card p-5 mb-6">
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0" style="background: linear-gradient(135deg, var(--ch-500) 0%, var(--ch-900) 100%); color: #fff;">
-                <span id="studentAvatarInitials">JD</span>
-              </div>
-              <div>
-                <div class="flex items-center gap-2.5">
-                  <h2 class="text-base font-bold" id="studentFullName">Juan Dela Cruz</h2>
-                  <span class="pill pill-present text-[10px] uppercase font-bold tracking-wider">Regular Student</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-4 text-xs mt-1 tabular-nums" style="color: var(--text-2);">
-                  <span>Student ID: <strong class="font-mono" style="color: var(--text-1);" id="studentIdDisplay">2024-IT-00101</strong></span>
-                  <span>Section: <strong style="color: var(--accent);" id="studentSectionDisplay">BSIT 3-1</strong></span>
-                  <span>RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="studentRfidDisplay">E2806894</strong></span>
-                </div>
-              </div>
+        <!-- Personal Attendance KPIs (Executive Standard) -->
+        <div class="kpis" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;">
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
+            <div class="label">Attendance Rate</div>
+            <div class="num tabular-nums" style="color:var(--accent);" id="kpiAttendanceRate">--%</div>
+            <span class="chip chip-good" id="kpiAttendanceChip">Target &ge; 85%</span>
+          </div>
 
-            <!-- Ingress Anti-Passback Badge -->
-            <div class="text-xs px-3 py-2 rounded-lg border flex items-center gap-2" style="background: var(--surface-hover); border-color: var(--border);">
-              <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>5-Min Anti-Passback Protected</span>
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
             </div>
+            <div class="label">Days Present</div>
+            <div class="num tabular-nums" style="color:var(--present);" id="kpiPresentDays">--</div>
+            <span class="chip chip-good">Verified Ingress</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div class="label">Tardy / Late</div>
+            <div class="num tabular-nums" style="color:var(--late);" id="kpiLateDays">--</div>
+            <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="label">Unexcused Absences</div>
+            <div class="num tabular-nums" style="color:var(--absent);" id="kpiAbsentDays">--</div>
+            <span class="chip chip-bad" id="kpiAbsentChip">Max Allowed: 3</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </div>
+            <div class="label">Active Streak</div>
+            <div class="num tabular-nums" style="color:#6366F1;" id="kpiStreakDays">--</div>
+            <span class="chip" style="background:rgba(99,102,241,0.12); color:#6366F1;">Consecutive</span>
           </div>
         </div>
-
-        <!-- Today's Campus Gate Ingress Status Banner -->
-        <section class="mb-6">
-          <div class="card p-5 border-l-4" id="studentTodayStatusBanner" style="border-left-color: var(--accent);">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" id="studentStatusIconBg" style="background: var(--accent-soft);">
-                  <svg class="w-6 h-6" id="studentStatusIcon" style="color: var(--accent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2.5">
-                    <span class="text-xs uppercase font-bold tracking-wider" style="color: var(--text-3);">Today's Campus Gate Tap</span>
-                    <span class="pill pill-pending" id="todayStatusPill">Checking...</span>
-                  </div>
-                  <h3 class="text-base font-semibold mt-0.5" id="todayStatusTitle">Verifying entrance scan records...</h3>
-                  <p class="text-xs mt-0.5" style="color: var(--text-2);" id="todayStatusDetail">
-                    Your physical RFID card tap at the turnstiles automatically marks your attendance.
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
-                <a href="attendance-calendar.html" class="pillbtn text-xs">
-                  View Full Calendar
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Personal Attendance KPIs -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          <div class="kpi-card">
-            <div class="kpi-label">Attendance Rate</div>
-            <div class="kpi-val" style="color: var(--accent);" id="kpiAttendanceRate">--%</div>
-            <div class="kpi-sub">Target: &ge; 85% required</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Days Present</div>
-            <div class="kpi-val" style="color: var(--present);" id="kpiPresentDays">--</div>
-            <div class="kpi-sub">On-time turnstile taps</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Tardy / Late</div>
-            <div class="kpi-val" style="color: var(--late);" id="kpiLateDays">--</div>
-            <div class="kpi-sub">Taps post-08:00 AM</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Unexcused Absences</div>
-            <div class="kpi-val" style="color: var(--absent);" id="kpiAbsentDays">--</div>
-            <div class="kpi-sub">Max allowed: 3</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Active Streak</div>
-            <div class="kpi-val" style="color: #6366F1;" id="kpiStreakDays">--</div>
-            <div class="kpi-sub">Consecutive attended days</div>
-          </div>
-        </section>
 
         <!-- Two Columns: Recent Ingress Taps & Attendance Quick Notice -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

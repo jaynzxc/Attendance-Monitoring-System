@@ -52,9 +52,6 @@ window.addEventListener('beforeunload', () => {
 function initStudentProfile(user) {
   const greetingEl = document.getElementById('greetingHeading');
   const dateEl = document.getElementById('currentDateSubtitle');
-  const nameEl = document.getElementById('studentFullName');
-  const idEl = document.getElementById('studentIdDisplay');
-  const initialsEl = document.getElementById('studentAvatarInitials');
 
   const now = new Date();
   const hours = now.getHours();
@@ -65,16 +62,11 @@ function initStudentProfile(user) {
   const name = user.first_name || 'Student';
   if (greetingEl) greetingEl.textContent = `${timeGreeting}, ${name}!`;
 
+  const studentNum = user.student_number || '2024-IT-00101';
+  const sectionName = user.section_name || 'BSIT 3-1';
   if (dateEl) {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    dateEl.textContent = `${now.toLocaleDateString('en-US', options)} · Bestlink College of the Philippines`;
+    dateEl.innerHTML = `${sectionName} · Student ID: <strong id="studentIdDisplay">${studentNum}</strong> · RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="studentRfidDisplay">E2806894</strong>`;
   }
-
-  if (nameEl) nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Juan Dela Cruz';
-  if (idEl) idEl.textContent = user.student_number || '2024-IT-00101';
-
-  const initials = `${(user.first_name || 'J')[0]}${(user.last_name || 'D')[0] || ''}`.toUpperCase();
-  if (initialsEl) initialsEl.textContent = initials;
 
   // Query RFID Card UID from database
   loadStudentRfidUid(user.id);
@@ -97,8 +89,8 @@ async function loadStudentRfidUid(userId) {
       .limit(1)
       .maybeSingle();
 
-    if (rfidEl) {
-      rfidEl.textContent = data ? data.card_uid : 'E2806894';
+    if (rfidEl && data?.card_uid) {
+      rfidEl.textContent = data.card_uid;
     }
   } catch (err) {
     if (rfidEl) rfidEl.textContent = 'E2806894';
@@ -109,12 +101,12 @@ async function loadStudentRfidUid(userId) {
  * Loads today's gate ingress tap for this student
  */
 async function loadTodayIngressStatus(studentId) {
-  const banner = document.getElementById('studentTodayStatusBanner');
   const pill = document.getElementById('todayStatusPill');
   const title = document.getElementById('todayStatusTitle');
   const detail = document.getElementById('todayStatusDetail');
   const icon = document.getElementById('studentStatusIcon');
   const iconBg = document.getElementById('studentStatusIconBg');
+  if (!pill && !title) return;
 
   try {
     const statusData = await attendanceApi.getStudentTodayStatus(studentId);
@@ -127,31 +119,23 @@ async function loadTodayIngressStatus(studentId) {
       const location = log.device ? `${log.device.device_code} (${log.device.location})` : 'Main Gate Turnstile A';
       const method = (log.scan_method || 'rfid').toUpperCase();
 
-      if (log.status === 'present') {
-        banner.style.borderLeftColor = 'var(--present)';
-        pill.className = 'pill pill-present';
-        pill.textContent = 'Present (On-Time)';
-        title.textContent = `Checked In at ${scanTime}`;
-        detail.textContent = `Verified via ${method} at ${location}. Real-time record reflected in Admin & Section Roll Call.`;
-        iconBg.style.background = 'var(--present-soft)';
-        icon.style.color = 'var(--present)';
-      } else if (log.status === 'late') {
-        banner.style.borderLeftColor = 'var(--late)';
-        pill.className = 'pill pill-late';
-        pill.textContent = 'Late / Tardy';
-        title.textContent = `Checked In at ${scanTime} (Tardy)`;
-        detail.textContent = `Recorded via ${method} at ${location}. Arrival was registered after 08:00 AM cutoff.`;
-        iconBg.style.background = 'var(--late-soft)';
-        icon.style.color = 'var(--late)';
+      if (pill) {
+        pill.className = log.status === 'present' ? 'pill pill-present' : 'pill pill-late';
+        pill.textContent = log.status === 'present' ? 'Present (On-Time)' : 'Late / Tardy';
       }
+      if (title) title.textContent = `Checked In at ${scanTime}`;
+      if (detail) detail.textContent = `Verified via ${method} at ${location}.`;
+      if (iconBg) iconBg.style.background = log.status === 'present' ? 'var(--present-soft)' : 'var(--late-soft)';
+      if (icon) icon.style.color = log.status === 'present' ? 'var(--present)' : 'var(--late)';
     } else {
-      banner.style.borderLeftColor = 'var(--border-strong)';
-      pill.className = 'pill pill-absent';
-      pill.textContent = 'Not Yet Scanned';
-      title.textContent = 'No campus gate tap recorded today';
-      detail.textContent = 'Please tap your physical RFID card on the gate turnstile scanner to record your arrival.';
-      iconBg.style.background = 'var(--absent-soft)';
-      icon.style.color = 'var(--absent)';
+      if (pill) {
+        pill.className = 'pill pill-absent';
+        pill.textContent = 'Not Yet Scanned';
+      }
+      if (title) title.textContent = 'No campus gate tap recorded today';
+      if (detail) detail.textContent = 'Please tap your physical RFID card on the gate turnstile scanner to record your arrival.';
+      if (iconBg) iconBg.style.background = 'var(--absent-soft)';
+      if (icon) icon.style.color = 'var(--absent)';
     }
   } catch (err) {
     console.warn('[AMS Student Dashboard] Status load error:', err);

@@ -7,7 +7,9 @@
 class ToastManager {
   constructor() {
     this.container = null;
-    this.init();
+    if (typeof document !== 'undefined') {
+      this.init();
+    }
   }
 
   init() {
@@ -88,8 +90,6 @@ class ToastManager {
       </button>
     `;
 
-    toast.style.borderLeft = `4px solid ${accentColor}`;
-
     const closeBtn = toast.querySelector('button');
     closeBtn.addEventListener('click', () => this.dismiss(toast));
 
@@ -119,3 +119,20 @@ class ToastManager {
 }
 
 export const toast = new ToastManager();
+
+/**
+ * Universal showToast helper used across AMS portal pages
+ * Accepts either an options object { title, message, type, duration } or (message, type, duration)
+ */
+export function showToast(optionsOrMessage, type = 'info', duration = 4000) {
+  if (typeof optionsOrMessage === 'object' && optionsOrMessage !== null) {
+    const title = optionsOrMessage.title ? `<strong>${optionsOrMessage.title}</strong>` : '';
+    const text = optionsOrMessage.message || optionsOrMessage.text || '';
+    const body = title && text ? `${title}<div style="font-size:12px;margin-top:2px;">${text}</div>` : (title || text);
+    const t = optionsOrMessage.type || 'info';
+    const d = optionsOrMessage.duration || 4000;
+    toast.show(body, t, d);
+  } else {
+    toast.show(String(optionsOrMessage), type, duration);
+  }
+}
