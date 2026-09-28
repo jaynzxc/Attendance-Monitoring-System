@@ -28,14 +28,6 @@ export function countUp(id, end, suffix = '') {
   }, 16);
 }
 
-/**
- * Formats ISO timestamp to institutional local time: HH:MM:SS AM/PM
- */
-function formatTime(isoString) {
-  if (!isoString) return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const d = new Date(isoString);
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
 
 /**
  * Renders (or re-renders on theme change) the Today's Status Breakdown donut chart.
@@ -142,63 +134,6 @@ async function loadTrendChart() {
     console.error('[Dashboard] Error loading trend chart:', err);
     renderTrendChart('trendChart');
   }
-}
-
-/**
- * Loads initial recent scans and subscribes to Realtime websocket
- */
-async function setupLiveScanStream() {
-  const container = document.getElementById('liveScanList');
-  if (!container) return;
-
-  try {
-    const recentLogs = await attendanceApi.getRecentLogs(6);
-    if (recentLogs && recentLogs.length > 0) {
-      container.innerHTML = '';
-      recentLogs.forEach(log => {
-        const person = log.student || log.teacher || {};
-        const isTeacher = !!log.teacher_id || person.role === 'teacher';
-        const first = person.first_name || '';
-        const last = person.last_name || '';
-        const fullName = `${first} ${last}`.trim() || (isTeacher ? 'Faculty Member' : 'Student');
-        const initials = `${(first[0] || (isTeacher ? 'T' : 'S'))}${(last[0] || '')}`.toUpperCase();
-        const gate = log.scan_devices?.location || 'Gate Scanner';
-        const time = formatTime(log.scanned_at);
-        const status = log.status || 'present';
-        const roleLabel = isTeacher ? 'Faculty' : (log.sections?.name || 'Student');
-
-        prependLiveScan({
-          initials,
-          name: `${fullName} · ${roleLabel}`,
-          time,
-          gate: `${gate} (${(log.scan_method || 'rfid').toUpperCase()})`,
-          status
-        });
-      });
-    }
-  } catch (err) {
-    console.error('[Dashboard] Error loading initial scans:', err);
-  }
-
-  // Subscribe to Realtime INSERTs
-  realtimeChannel = subscribeToAttendanceLogs(async (newLog) => {
-    const isTeacher = !!newLog.teacher_id;
-    const time = formatTime(newLog.scanned_at);
-    prependLiveScan({
-      initials: isTeacher ? 'FC' : 'ST',
-      name: isTeacher ? 'Faculty Check-in · Gate Ingress' : 'Student Tap · Gate Ingress',
-      time,
-      gate: (newLog.scan_method || 'RFID').toUpperCase(),
-      status: newLog.status || 'present'
-    });
-
-    // Increment current Present count smoothly if on-time
-    const k1 = document.getElementById('k1');
-    if (k1 && (newLog.status || 'present').toLowerCase() === 'present') {
-      const current = parseInt(k1.textContent, 10) || 0;
-      k1.textContent = current + 1;
-    }
-  });
 }
 
 /**
