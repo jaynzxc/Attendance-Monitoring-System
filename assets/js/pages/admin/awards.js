@@ -108,9 +108,13 @@ function previewCertificate(name, num, sec) {
   const certEl = document.getElementById('printableCertificate');
   const certName = document.getElementById('certStudentName');
   const certMeta = document.getElementById('certStudentMeta');
+  const certTerm = document.getElementById('certTermLabel');
+  const termSelect = document.getElementById('awardTerm');
+  const selectedTermText = termSelect?.options[termSelect.selectedIndex]?.text || '1st Semester (2026-2027)';
 
   if (certName) certName.textContent = name;
   if (certMeta) certMeta.textContent = `${sec} · Student ID: ${num}`;
+  if (certTerm) certTerm.textContent = selectedTermText;
 
   const certHtml = certEl ? certEl.outerHTML.replace('display:none;', 'display:block;') : '';
 
@@ -152,6 +156,12 @@ async function init() {
   await requireRole(['admin']);
 
   document.getElementById('btnEvaluate')?.addEventListener('click', evaluateCandidates);
+  document.getElementById('awardTerm')?.addEventListener('change', () => {
+    toast.show('Evaluating roster for selected semester...', 'info');
+    evaluateCandidates();
+  });
+  document.getElementById('awardProgram')?.addEventListener('change', evaluateCandidates);
+  document.getElementById('awardMaxExcused')?.addEventListener('change', evaluateCandidates);
 
   document.getElementById('btnPrintBatch')?.addEventListener('click', () => {
     if (qualifiedCandidates.length === 0) {

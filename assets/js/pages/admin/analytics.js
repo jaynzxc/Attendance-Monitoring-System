@@ -36,18 +36,19 @@ function renderProgramChart() {
           '#90CAF9',
           '#1976D2'
         ],
-        borderRadius: 6
+        borderRadius: 6,
+        maxBarThickness: 54
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false }
       },
       scales: {
         x: {
-          ticks: { color: textColor, font: { size: 11 } },
+          ticks: { color: textColor, font: { size: 11.5, weight: '600' } },
           grid: { display: false }
         },
         y: {
@@ -92,7 +93,7 @@ function renderArrivalCurve() {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false }
       },
@@ -111,78 +112,6 @@ function renderArrivalCurve() {
 }
 
 /**
- * Loads at-risk student leaderboard
- */
-async function loadAtRiskStudents() {
-  const tbody = document.getElementById('riskTableBody');
-  if (!tbody) return;
-
-  const sb = getSupabase();
-  let atRiskData = [];
-
-  try {
-    if (sb) {
-      const { data: students } = await sb
-        .from('users')
-        .select(`
-          id, first_name, last_name, student_number,
-          sections:section_id (name)
-        `)
-        .eq('role', 'student')
-        .limit(6);
-
-      if (students && students.length > 0) {
-        atRiskData = [
-          { name: 'John Reyes', num: '2024-00109', section: 'BSIT 3-1', absent: 4, tardy: 6, rate: 82.5, priority: 'High' },
-          { name: 'Maria Santos', num: '2024-00102', section: 'BSIT 3-1', absent: 3, tardy: 5, rate: 86.0, priority: 'High' },
-          { name: 'Kevin De Vera', num: '2024-00103', section: 'BSIS 2-1', absent: 3, tardy: 4, rate: 88.2, priority: 'Moderate' },
-          { name: 'Angela Lim', num: '2024-00104', section: 'BSIT 3-2', absent: 2, tardy: 7, rate: 89.1, priority: 'Moderate' }
-        ];
-      }
-    }
-  } catch (err) {
-    console.warn('[Analytics] Error loading risk data:', err);
-  }
-
-  if (atRiskData.length === 0) {
-    atRiskData = [
-      { name: 'John Reyes', num: '2024-00109', section: 'BSIT 3-1', absent: 4, tardy: 6, rate: 82.5, priority: 'High' },
-      { name: 'Maria Santos', num: '2024-00102', section: 'BSIT 3-1', absent: 3, tardy: 5, rate: 86.0, priority: 'High' },
-      { name: 'Kevin De Vera', num: '2024-00103', section: 'BSIS 2-1', absent: 3, tardy: 4, rate: 88.2, priority: 'Moderate' },
-      { name: 'Angela Lim', num: '2024-00104', section: 'BSIT 3-2', absent: 2, tardy: 7, rate: 89.1, priority: 'Moderate' }
-    ];
-  }
-
-  tbody.innerHTML = atRiskData.map(st => {
-    const priorityBadge = st.priority === 'High' ? 'badge-absent' : 'badge-late';
-
-    return `
-      <tr>
-        <td style="font-weight:700; color:var(--text-1);">${st.name}</td>
-        <td><span style="font-family:monospace; font-weight:600;">${st.num}</span></td>
-        <td><span style="font-weight:600;">${st.section}</span></td>
-        <td><span style="font-weight:700; color:var(--absent);">${st.absent}</span></td>
-        <td><span style="font-weight:700; color:var(--late);">${st.tardy}</span></td>
-        <td><span style="font-weight:700; color:var(--text-1);">${st.rate}%</span></td>
-        <td><span class="badge ${priorityBadge}">${st.priority} Priority</span></td>
-        <td style="text-align:right;">
-          <button class="btn-secondary btn-notify" data-name="${st.name}" style="padding:4px 8px; font-size:11.5px;">
-            Send SMS Alert
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  document.querySelectorAll('.btn-notify').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const name = e.currentTarget.getAttribute('data-name');
-      toast.show(`Parent SMS attendance alert queued for ${name}.`, 'success');
-    });
-  });
-}
-
-/**
  * Initializes Analytics view
  */
 async function init() {
@@ -190,7 +119,6 @@ async function init() {
 
   renderProgramChart();
   renderArrivalCurve();
-  loadAtRiskStudents();
 
   window.addEventListener('ams-theme-changed', () => {
     renderProgramChart();
