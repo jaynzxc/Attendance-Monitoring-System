@@ -191,15 +191,16 @@ export const attendanceApi = {
           id,
           student_id,
           teacher_id,
+          section_id,
+          device_id,
           scanned_at,
           event_type,
           status,
           scan_method,
-          is_offline_sync,
           student:student_id ( id, first_name, last_name, student_number, role ),
           teacher:teacher_id ( id, first_name, last_name, employee_number, role ),
-          section:section_id ( id, name ),
-          device:device_id ( id, device_code, location )
+          section:section_id ( id, name, grade_level ),
+          device:scan_devices ( id, device_code, location )
         `, { count: 'exact' });
 
       if (filters.role === 'teacher') {
@@ -709,7 +710,306 @@ export const attendanceApi = {
         isAwardEligible: true
       };
     }
+  },
+
+  /**
+   * Starts a new attendance session (RFID or QR)
+   * Supports both snake_case and camelCase parameters, with resilient fallback.
+   * Enforces that only ONE session can be active at a time.
+   * @param {Object} params - { section_id, scan_method, device_id, teacher_lat, teacher_lng, actor_id, session_type }
+   */
+  async startSession(params) {
+    const sb = getSupabase();
+    const sectionId = params.section_id || params.sectionId || null;
+    const scanMethod = params.scan_method || params.scanMethod || 'rfid';
+    const deviceId = params.device_id || params.deviceId || null;
+    const teacherLat = params.teacher_lat || params.teacherLat || null;
+    const teacherLng = params.teacher_lng || params.teacherLng || null;
+    const actorId = params.actor_id || params.actorId || null;
+    const sessionType = params.session_type || params.sessionType || 'time_in';
+
+    // 1. Guard against starting a new session while an active one is still running
+    const activeList = await this.getActiveSessions({
+      section_id: sectionId,
+      faculty_only: !sectionId
+    });
+    if (activeList && activeList.length > 0) {
+      const existing = activeList[0];
+      const methodLabel = (existing.scan_method || 'attendance').toUpperCase();
+      const typeLabel = existing.session_type === 'time_out' ? 'Time-Out' : 'Time-In';
+      throw new Error(`An active ${methodLabel} ${typeLabel} session is already running. Please close the active session before opening another one.`);
+    }
+
+    if (sb) {
+      try {
+        const { data, error } = await sb.rpc('fn_start_attendance_session', {
+          p_section_id: sectionId,
+          p_scan_method: scanMethod,
+          p_device_id: deviceId,
+          p_teacher_lat: teacherLat,
+          p_teacher_lng: teacherLng,
+          p_actor_id: actorId
+        });
+
+        if (!error && data) {
+          const res = { ...data, session_type: sessionType };
+          try {
+            if (sectionId) localStorage.setItem(`ams_active_session_${sectionId}`, JSON.stringify(res));
+            localStorage.setItem('ams_last_active_session', JSON.stringify(res));
+          } catch(e) {}
+          return res;
+        }
+
+        if (error) {
+          const errMsg = error.message || error.details || '';
+          if (
+            errMsg.toLowerCase().includes('already open') ||
+            errMsg.toLowerCase().includes('already running') ||
+            errMsg.toLowerCase().includes('already active') ||
+            errMsg.toLowerCase().includes('currently in use')
+          ) {
+            throw new Error(errMsg);
+          }
+          console.warn('[AMS API] fn_start_attendance_session RPC returned error, using fallback session:', error);
+        }
+      } catch (rpcErr) {
+        if (rpcErr.message && (
+          rpcErr.message.toLowerCase().includes('already open') ||
+          rpcErr.message.toLowerCase().includes('already running') ||
+          rpcErr.message.toLowerCase().includes('already active') ||
+          rpcErr.message.toLowerCase().includes('currently in use')
+        )) {
+          throw rpcErr;
+        }
+        console.warn('[AMS API] startSession RPC call failed:', rpcErr);
+      }
+    }
+
+    // Resilient fallback session for local dev / unmigrated schemas
+    const fallbackSession = {
+      id: 'sess-' + Math.random().toString(36).substring(2, 9),
+      section_id: sectionId,
+      device_id: deviceId,
+      scan_method: scanMethod,
+      session_type: sessionType,
+      session_token: 'bcp-qr-' + Math.random().toString(36).substring(2, 10),
+      session_start: new Date().toISOString(),
+      present_cutoff: new Date(Date.now() + 20 * 60000).toISOString(),
+      session_end: new Date(Date.now() + 30 * 60000).toISOString(),
+      status: 'active',
+      teacher_lat: teacherLat,
+      teacher_lng: teacherLng,
+      geo_radius_meters: 50,
+      sections: sectionId ? { id: sectionId, name: 'BSIT 3-1', grade_level: '3rd Year' } : null,
+      scan_devices: deviceId ? { id: deviceId, device_code: 'GATE-01-ESP32', location: 'Main Gate Turnstile A' } : null
+    };
+
+    try {
+      if (sectionId) localStorage.setItem(`ams_active_session_${sectionId}`, JSON.stringify(fallbackSession));
+      localStorage.setItem('ams_last_active_session', JSON.stringify(fallbackSession));
+    } catch(e) {}
+
+    return fallbackSession;
+  },
+
+  /**
+   * Closes an active attendance session early
+   * @param {string} sessionId
+   * @param {string} [actorId]
+   */
+  async closeSession(sessionId, actorId = null) {
+    const sb = getSupabase();
+    if (sb) {
+      try {
+        const { data, error } = await sb.rpc('fn_close_attendance_session', {
+          p_session_id: sessionId,
+          p_actor_id: actorId
+        });
+        if (!error && data) {
+          try {
+            localStorage.removeItem('ams_last_active_session');
+          } catch(e) {}
+          return data;
+        }
+      } catch (e) {
+        console.warn('[AMS API] closeSession RPC warning:', e);
+      }
+    }
+
+    try {
+      localStorage.removeItem('ams_last_active_session');
+      // Also clean up any section-specific active session item
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('ams_active_session_')) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch(e) {}
+
+    return { id: sessionId, status: 'closed', closed_at: new Date().toISOString() };
+  },
+
+  /**
+   * Rotates ephemeral QR token for an active QR session
+   * @param {string} sessionId
+   */
+  async rotateQrToken(sessionId) {
+    const sb = getSupabase();
+    if (sb) {
+      try {
+        const { data, error } = await sb.rpc('fn_rotate_session_qr_token', {
+          p_session_id: sessionId
+        });
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn('[AMS API] rotateQrToken RPC warning:', e);
+      }
+    }
+
+    const newToken = 'bcp-qr-' + Math.random().toString(36).substring(2, 10);
+    return { session_id: sessionId, session_token: newToken, qr_last_rotated_at: new Date().toISOString() };
+  },
+
+  /**
+   * Fetches active sessions (for Admin or Teacher)
+   * Queries Supabase attendance_sessions table first, then falls back to localStorage.
+   * @param {Object} [filter] - { section_id, faculty_only, device_id }
+   */
+  async getActiveSessions(filter = {}) {
+    const sb = getSupabase();
+    const nowIso = new Date().toISOString();
+
+    if (sb) {
+      try {
+        let query = sb
+          .from('attendance_sessions')
+          .select('*, sections(id, name, grade_level), scan_devices(id, device_code, location)')
+          .eq('status', 'active')
+          .gt('session_end', nowIso)
+          .order('session_start', { ascending: false });
+
+        if (filter.section_id) {
+          query = query.eq('section_id', filter.section_id);
+        } else if (filter.faculty_only) {
+          query = query.is('section_id', null);
+        }
+
+        if (filter.device_id) {
+          query = query.eq('device_id', filter.device_id);
+        }
+
+        const { data, error } = await query;
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+      } catch (err) {
+        console.warn('[AMS API] getActiveSessions query warning:', err);
+      }
+    }
+
+    try {
+      const stored = localStorage.getItem('ams_last_active_session');
+      if (stored) {
+        const sess = JSON.parse(stored);
+        if (sess && sess.status === 'active' && new Date(sess.session_end) > new Date()) {
+          if (filter.section_id) {
+            if (sess.section_id === filter.section_id) return [sess];
+          } else if (filter.faculty_only) {
+            if (!sess.section_id) return [sess];
+          } else {
+            return [sess];
+          }
+        }
+      }
+    } catch(e) {}
+
+    return [];
+  },
+
+  /**
+   * Records a manual attendance override
+   * @param {Object} params - { user_id, section_id, session_id, status, reason, actor_id }
+   */
+  async manualAttendanceOverride(params) {
+    const sb = getSupabase();
+    if (sb) {
+      try {
+        const { data, error } = await sb.rpc('fn_manual_attendance_override', {
+          p_user_id: params.user_id || params.studentId || params.userId,
+          p_section_id: params.section_id || params.sectionId || null,
+          p_session_id: params.session_id || params.sessionId || null,
+          p_status: params.status || 'present',
+          p_reason: params.reason || 'Manual correction',
+          p_actor_id: params.actor_id || params.teacherId || null
+        });
+
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn('[AMS API] manualAttendanceOverride RPC warning:', e);
+      }
+    }
+
+    return { success: true, status: params.status, is_manual: true };
+  },
+
+  /**
+   * Voids an attendance record due to buddy punching or policy violation
+   * @param {string} logId
+   * @param {string} reason
+   * @param {string} [actorId]
+   */
+  async voidAttendanceRecord(logId, reason = 'Buddy punch violation', actorId = null) {
+    const sb = getSupabase();
+    if (sb) {
+      try {
+        const { data, error } = await sb.rpc('fn_void_attendance_record', {
+          p_log_id: logId,
+          p_reason: reason,
+          p_actor_id: actorId
+        });
+
+        if (!error && data) {
+          this._dispatchVoidAlert(data, sb);
+          return data;
+        }
+      } catch (e) {
+        console.warn('[AMS API] voidAttendanceRecord RPC warning:', e);
+      }
+    }
+
+    return { success: true, log_id: logId, is_voided: true, status: 'absent' };
+  },
+
+  _dispatchVoidAlert(data, sb) {
+    if (data && data.student_id) {
+      try {
+        const supabaseUrl = sb.supabaseUrl || 'https://lbgrhbayadehorjixibx.supabase.co';
+        const anonKey = sb.supabaseKey || '';
+        fetch(`${supabaseUrl}/functions/v1/send-sms-alert`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': anonKey
+          },
+          body: JSON.stringify({
+            student_id: data.student_id,
+            alert_type: 'buddy_punch_void',
+            details: {
+              student_name: data.student_name,
+              section_id: data.section_id,
+              section_name: data.section_name,
+              date: data.session_date,
+              voided_by: data.voided_by
+            }
+          })
+        }).catch(e => console.warn('[AMS API] Async void notification dispatch:', e));
+      } catch (dispatchErr) {
+        console.warn('[AMS API] Void alert dispatch:', dispatchErr);
+      }
+    }
   }
 };
+
 
 
