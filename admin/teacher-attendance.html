@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Faculty & Teacher Attendance</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- QRCode Generator CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .stream-feed {
+      max-height: 480px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    /* Faculty QR Modal Split Layout */
+    .qr-modal-container {
+      width: 100%;
+      max-width: 440px;
+      transition: max-width 0.2s ease;
+    }
+    .qr-modal-container.is-active-session {
+      max-width: 720px;
+    }
+    .qr-columns-split {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      align-items: stretch;
+    }
+    .qr-left-pane {
+      width: 250px;
+      min-width: 250px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .qr-right-pane {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-sim-thin {
+      height: 28px !important;
+      min-height: 28px !important;
+      max-height: 28px !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
+      line-height: 26px !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      background: var(--raised) !important;
+      color: var(--text-2) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      width: 100% !important;
+      cursor: pointer !important;
+      box-sizing: border-box !important;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+    }
+    .btn-sim-thin:hover {
+      background: var(--surface-hover) !important;
+      border-color: var(--border-strong) !important;
+      color: var(--text-1) !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+            <aside class="sidebar" aria-label="Main Navigation">
+      <div class="brand">
+        <div class="mark">A</div>
+        <span>AMS Admin</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview
+        </a>
+        <a href="attendance-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          Attendance Logs
+        </a>
+        <a class="active" href="teacher-attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Teacher Attendance
+        </a>
+        <a href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a href="sections.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16"/></svg>
+          Sections
+        </a>
+        <a href="users.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.8 14.2c2.4.4 4.2 2.5 4.2 5"/></svg>
+          Users
+        </a>
+        <a href="devices.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+          Devices
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Analytics
+        </a>
+        <a href="parent-alerts.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.9a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.27Z"/></svg>
+          Parent Alerts
+        </a>
+        <a href="awards.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-2.5L17 21l-1.5-8.5"/></svg>
+          Awards
+        </a>
+      </nav>
+
+      <div class="navgroup">System</div>
+      <nav class="nav">
+        <a href="reports.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+          Reports
+        </a>
+        <a href="settings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Attendance Monitoring System
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">RC</div>
+          <div class="pf-info">
+            <div class="pf-name">Rosario Cruz</div>
+            <div class="pf-role">Admin · Registrar</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Teacher Attendance Content -->
+      <main class="main">
+        <!-- Page Header -->
+        <div class="pagehead">
+          <div>
+            <h1>Teacher Attendance</h1>
+            <p>Faculty card tap monitoring, class schedule tracking & institutional logs</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="btnAdminStartTeacherRfid" class="btn-primary text-xs inline-flex items-center gap-2" style="background:var(--ch-900); padding:8px 16px; border-radius:8px;">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              <span id="btnAdminRfidLabel">Faculty RFID Session</span>
+            </button>
+            <button id="btnAdminStartTeacherQr" class="btn-secondary text-xs inline-flex items-center gap-2" style="padding:8px 14px; border-radius:8px;">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span id="btnAdminQrLabel">Faculty QR Pass</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Faculty Session Banner -->
+        <div id="activeFacultySessionCard" class="card p-4 mb-6" style="display:none;">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-bold text-sm" id="facultySessionTitle">Active Faculty Attendance Session</h4>
+                  <span id="facultySessionMethodBadge" class="badge" style="background:var(--ch-100); color:var(--ch-900); font-size:10px; font-weight:700;">RFID</span>
+                  <span id="facultySessionTypeBadge" class="badge" style="background:var(--ch-100); color:var(--ch-900); font-size:10px; font-weight:700;">TIME-IN</span>
+                </div>
+                <div class="text-xs mt-0.5" style="color:var(--text-2);" id="facultySessionDetails">
+                  ESP32 hardware reader is actively capturing faculty taps.
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 self-end sm:self-center">
+              <div class="text-right">
+                <div class="text-[10px] uppercase font-bold tracking-wider" style="color:var(--text-3);">Session Time Remaining</div>
+                <div id="facultySessionCountdown" class="text-base font-bold font-mono text-amber-500 tabular-nums">--:--</div>
+              </div>
+              <button id="btnReopenRfidModal" type="button" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); padding:6px 14px; border-radius:6px;">
+                View Live Tapping
+              </button>
+              <button id="btnAdminCloseFacultySession" type="button" class="btn-secondary text-xs" style="color:var(--absent); border-color:rgba(239, 68, 68, 0.3); padding:6px 12px; border-radius:6px;">
+                Close Session
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Faculty Attendance KPIs -->
+        <div class="kpis" style="margin-bottom: 20px;">
+          <div class="card kpi">
+            <div class="label">Total Faculty</div>
+            <div class="num tabular-nums" style="color:var(--ch-900);" id="kpiTotalTeachers">0</div>
+            <span class="chip" style="background:var(--raised); color:var(--text-2);">Active Roster</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Time-In (Present)</div>
+            <div class="num tabular-nums" style="color:var(--present);" id="kpiPresentTeachers">0</div>
+            <span class="chip chip-good" id="kpiPresentPct">0% Checked In</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Time-Out Recorded</div>
+            <div class="num tabular-nums" style="color:var(--ch-500);" id="kpiLateTeachers">0</div>
+            <span class="chip" style="background:var(--ch-100); color:var(--ch-900);">Faculty Egress</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Unmarked / Absent</div>
+            <div class="num tabular-nums" style="color:var(--absent);" id="kpiAbsentTeachers">0</div>
+            <span class="chip chip-bad">Pending Ingress</span>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="card p-4 mb-6">
+          <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Attendance Date -->
+              <div class="flex flex-col gap-1">
+                <label for="filterTeacherDate" class="text-xs font-semibold" style="color:var(--text-2);">Date</label>
+                <input type="date" id="filterTeacherDate" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1);">
+              </div>
+
+              <!-- Status Filter -->
+              <div class="flex flex-col gap-1">
+                <label for="filterTeacherStatus" class="text-xs font-semibold" style="color:var(--text-2);">Status</label>
+                <select id="filterTeacherStatus" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1); min-width: 140px;">
+                  <option value="">All Statuses</option>
+                  <option value="present">Present (Time-In)</option>
+                  <option value="absent">Absent / Unmarked</option>
+                  <option value="excused">Excused</option>
+                </select>
+              </div>
+
+              <!-- Scan Method Filter -->
+              <div class="flex flex-col gap-1">
+                <label for="filterTeacherMethod" class="text-xs font-semibold" style="color:var(--text-2);">Scan Method</label>
+                <select id="filterTeacherMethod" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1); min-width: 130px;">
+                  <option value="">All Methods</option>
+                  <option value="rfid">RFID Card</option>
+                  <option value="qr">QR Code</option>
+                  <option value="manual">Manual Fallback</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Search Teacher -->
+            <div class="flex flex-col gap-1 w-full md:w-64">
+              <label for="searchTeacherInput" class="text-xs font-semibold" style="color:var(--text-2);">Search Faculty</label>
+              <div class="relative">
+                <input type="text" id="searchTeacherInput" placeholder="Name or Employee ID..." class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1);">
+                <svg class="w-4 h-4 absolute left-3 top-2.5" style="color:var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consolidated Faculty Attendance Ledger (Full Width) -->
+        <div class="card overflow-hidden">
+          <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--border);">
+            <div>
+              <h2 class="text-base font-semibold" id="tableHeaderTitle">Faculty Daily Records</h2>
+              <p class="text-xs" style="color:var(--text-2);" id="tableHeaderSubtitle">Showing verified teacher time-in & time-out logs</p>
+            </div>
+            <div class="text-xs font-mono" style="color:var(--text-3);" id="teacherCountBadge">
+              0 Records
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background:var(--surface-hover); border-color:var(--border); color:var(--text-2);">
+                  <th class="py-3 px-4">Faculty Member</th>
+                  <th class="py-3 px-4">Section & Subject</th>
+                  <th class="py-3 px-4">Class Schedule</th>
+                  <th class="py-3 px-4">Time In</th>
+                  <th class="py-3 px-4">Time Out</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Rendered</th>
+                  <th class="py-3 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="teacherRecordsTableBody" class="divide-y" style="border-color:var(--border);">
+                <tr>
+                  <td colspan="8" class="py-12 text-center text-sm" style="color:var(--text-3);">
+                    Loading faculty attendance records...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="p-3 border-t flex items-center justify-between text-xs" style="border-color:var(--border);">
+            <div style="color:var(--text-2);" id="paginationInfo">Page 1 of 1</div>
+            <div class="flex gap-2">
+              <button id="btnPrevPage" class="btn-secondary" style="padding:4px 10px; font-size:11px;" disabled>Previous</button>
+              <button id="btnNextPage" class="btn-secondary" style="padding:4px 10px; font-size:11px;" disabled>Next</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Start Faculty RFID Session Modal -->
+  <div id="adminRfidSessionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-lg w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong);">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <h3 class="text-base font-semibold" id="rfidModalTitle">Faculty RFID Attendance Session</h3>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span id="rfidReadyLabel" class="badge hidden" style="background:rgba(16, 185, 129, 0.15); color:var(--present); border:1px solid rgba(16, 185, 129, 0.35); font-size:11px; font-weight:700; padding:2px 10px; border-radius:12px;">Active</span>
+          <button id="closeRfidModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" aria-label="Close Modal">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+            <!-- State 1: Session Type Selection Modal Form (Before Session Starts) -->
+      <div id="rfidConfigSection" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-2" style="color:var(--text-2);">Select Session Type</label>
+          <div class="grid grid-cols-2 gap-3" id="rfidSessionTypeGroup">
+            <!-- Time-In Option Card -->
+            <button type="button" data-type="time_in" class="rfid-type-btn p-3.5 rounded-xl border text-left transition-all flex flex-col gap-2 relative cursor-pointer" style="background:var(--ch-100); border-color:var(--ch-500); color:var(--ch-900);">
+              <div class="flex items-center justify-between">
+                <div class="type-icon-box w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs" style="background:rgba(33, 150, 243, 0.15); color:var(--ch-900);">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                </div>
+                <span class="rfid-type-check w-4 h-4 rounded-full flex items-center justify-center shrink-0" style="background:var(--ch-500); color:#fff;">
+                  <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </div>
+              <div>
+                <div class="font-bold text-sm">Time-In</div>
+                <div class="text-[11px] opacity-80 mt-0.5">Faculty check-in & morning ingress</div>
+              </div>
+            </button>
+
+            <!-- Time-Out Option Card -->
+            <button type="button" data-type="time_out" class="rfid-type-btn p-3.5 rounded-xl border text-left transition-all flex flex-col gap-2 relative cursor-pointer" style="background:var(--surface); border-color:var(--border); color:var(--text-2);">
+              <div class="flex items-center justify-between">
+                <div class="type-icon-box w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs" style="background:var(--raised); color:var(--text-2);">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </div>
+                <span class="rfid-type-check w-4 h-4 rounded-full hidden flex items-center justify-center shrink-0" style="background:var(--ch-500); color:#fff;">
+                  <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </div>
+              <div>
+                <div class="font-bold text-sm">Time-Out</div>
+                <div class="text-[11px] opacity-80 mt-0.5">Faculty check-out & shift egress</div>
+              </div>
+            </button>
+          </div>
+          <input type="hidden" id="rfidSessionType" value="time_in">
+        </div>
+
+        <!-- 30-Minute Automatic Window Callout -->
+        <div class="p-3 rounded-xl border flex items-center gap-3" style="background:var(--raised); border-color:var(--border);">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="text-xs">
+            <div class="font-semibold text-[var(--text-1)]">30 Minutes Automatic Window</div>
+            <div style="color:var(--text-2);" class="text-[11px] mt-0.5">Session opens automatically for 30 minutes. Faculty card taps on the ESP32 reader will be captured live.</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="cancelRfidModalBtn" class="pillbtn text-xs">Cancel</button>
+          <button type="button" id="confirmStartRfidBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 18px; border-radius:8px;">
+            Start 30-Min Time-In Session
+          </button>
+        </div>
+      </div>
+
+      <!-- State 2: Active RFID Session Live Tap View (Ready for Card Tapping) -->
+      <div id="rfidActiveSection" class="space-y-4 hidden">
+        <!-- Telemetry Cards -->
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="py-3.5 px-3 rounded-xl border flex flex-col justify-center" style="background:var(--raised); border-color:var(--border); min-height:68px;">
+            <div class="text-[10px] uppercase font-bold tracking-wider mb-1" style="color:var(--text-3);">Session Remaining</div>
+            <div id="modalRfidCountdown" class="text-lg font-bold font-mono text-amber-500 tabular-nums">--:--</div>
+            <div class="w-full h-1.5 rounded-full overflow-hidden mt-1.5" style="background:rgba(16, 185, 129, 0.18);">
+              <div id="modalRfidProgressBar" class="h-full rounded-full transition-all duration-500" style="background:var(--present); width:100%;"></div>
+            </div>
+          </div>
+          <div class="py-3.5 px-3 rounded-xl border flex flex-col justify-center" style="background:var(--raised); border-color:var(--border); min-height:68px;">
+            <div class="text-[10px] uppercase font-bold tracking-wider mb-1" style="color:var(--text-3);">Faculty Checked In</div>
+            <div id="modalRfidTapCount" class="text-lg font-bold font-mono tabular-nums" style="color:var(--present);">0 Tapped</div>
+          </div>
+        </div>
+
+        <!-- Live Teacher Ingress List -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5 px-0.5">
+            <span class="text-xs font-semibold text-[var(--text-1)]" id="rfidFeedLabel">Live Teacher Ingress Feed</span>
+            <span class="text-[10px] text-[var(--text-3)] font-mono">ESP32 Hardware Stream</span>
+          </div>
+
+          <div id="modalRfidTapFeed" class="space-y-2 p-2.5 rounded-lg border" style="background:var(--surface); border-color:var(--border); max-height:240px; overflow-y:auto; min-height:160px;">
+            <div id="modalRfidEmptyFeed" class="py-10 text-center text-xs" style="color:var(--text-3);">
+              Waiting for faculty RFID card tap on the ESP32 reader...
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick ESP32 Demo / Simulate Tap Trigger -->
+        <button type="button" id="btnSimulateEsp32Tap" class="w-full py-2 px-3 text-xs rounded-lg border flex items-center justify-center gap-2 hover:bg-[var(--surface-hover)] transition-colors" style="border-color:var(--border); color:var(--text-2);">
+          <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Simulate ESP32 Card Tap (Test / Demonstration)
+        </button>
+
+        <!-- Session Controls (Centered Close Button) -->
+        <div class="flex items-center justify-center pt-2 border-t" style="border-color:var(--border);">
+          <button type="button" id="btnCloseAndRecordRfidBtn" class="btn-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5" style="background:var(--ch-900); color:#fff; padding:8px 24px; border-radius:8px;">
+            Close Session
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Faculty QR Session Modal (Dynamic Rotated Token Display) -->
+  <div id="adminQrSessionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div id="qrModalCard" class="card qr-modal-container p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border:1px solid var(--border);">
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <h3 class="text-base font-semibold" id="qrModalTitle">Faculty QR Attendance Session</h3>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span id="qrReadyLabel" class="badge hidden" style="background:rgba(16, 185, 129, 0.15); color:var(--present); border:1px solid rgba(16, 185, 129, 0.35); font-size:11px; font-weight:700; padding:2px 10px; border-radius:12px;">Active</span>
+          <button id="closeQrModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" aria-label="Close Modal">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- State 1: Session Type Selection Modal Form (QR) -->
+      <div id="qrConfigSection" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-2" style="color:var(--text-2);">Select Session Type</label>
+          <div class="grid grid-cols-2 gap-3" id="qrSessionTypeGroup">
+            <!-- Time-In Option Card -->
+            <button type="button" data-type="time_in" class="qr-type-btn p-3.5 rounded-xl border text-left transition-all flex flex-col gap-2 relative cursor-pointer" style="background:var(--ch-100); border-color:var(--ch-500); color:var(--ch-900);">
+              <div class="flex items-center justify-between">
+                <div class="type-icon-box w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs" style="background:rgba(33, 150, 243, 0.15); color:var(--ch-900);">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                </div>
+                <span class="qr-type-check w-4 h-4 rounded-full flex items-center justify-center shrink-0" style="background:var(--ch-500); color:#fff;">
+                  <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </div>
+              <div>
+                <div class="font-bold text-sm">Time-In</div>
+                <div class="text-[11px] opacity-80 mt-0.5">Faculty check-in pass</div>
+              </div>
+            </button>
+
+            <!-- Time-Out Option Card -->
+            <button type="button" data-type="time_out" class="qr-type-btn p-3.5 rounded-xl border text-left transition-all flex flex-col gap-2 relative cursor-pointer" style="background:var(--surface); border-color:var(--border); color:var(--text-2);">
+              <div class="flex items-center justify-between">
+                <div class="type-icon-box w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs" style="background:var(--raised); color:var(--text-2);">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </div>
+                <span class="qr-type-check w-4 h-4 rounded-full hidden flex items-center justify-center shrink-0" style="background:var(--ch-500); color:#fff;">
+                  <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </div>
+              <div>
+                <div class="font-bold text-sm">Time-Out</div>
+                <div class="text-[11px] opacity-80 mt-0.5">Faculty check-out pass</div>
+              </div>
+            </button>
+          </div>
+          <input type="hidden" id="qrSessionType" value="time_in">
+        </div>
+
+        <!-- 30-Minute Window Callout -->
+        <div class="p-3 rounded-xl border flex items-center gap-3" style="background:var(--raised); border-color:var(--border);">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="text-xs">
+            <div class="font-semibold text-[var(--text-1)]">30 Minutes Automatic Window</div>
+            <div style="color:var(--text-2);" class="text-[11px] mt-0.5">Dynamic QR token rotates every 30 seconds for 30 minutes.</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="cancelQrModalBtn" class="pillbtn text-xs">Cancel</button>
+          <button type="button" id="confirmStartQrBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 18px; border-radius:8px;">
+            Start 30-Min Time-In QR Pass
+          </button>
+        </div>
+      </div>
+
+      <!-- State 2: Active QR Display (Split 2-Column View) -->
+      <div id="qrActiveSection" class="hidden space-y-2.5">
+        <div class="qr-columns-split">
+          
+          <!-- LEFT SIDE: QR Code Canvas, 30-Min Duration Loading Phase, Auto-Rotate & Token -->
+          <div class="qr-left-pane">
+            <!-- QR Canvas Container -->
+            <div class="p-2.5 rounded-xl flex flex-col items-center justify-center mx-auto" style="background:#ffffff; width:180px; height:180px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+              <div id="adminFacultyQrCodeContainer" class="flex items-center justify-center w-full h-full"></div>
+            </div>
+
+            <!-- 30-Minute Session Duration Loading Phase Bar (Green) -->
+            <div class="p-2.5 rounded-xl border text-left w-full" style="background:var(--raised); border-color:var(--border);">
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <span class="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full inline-block" style="background:var(--present);"></span>
+                  30-Min Duration
+                </span>
+                <span id="facultyQrSessionRemaining" class="font-mono font-bold tabular-nums text-xs" style="color:var(--present);">30:00</span>
+              </div>
+              <!-- Green Loading / Progress Bar -->
+              <div class="w-full h-2 rounded-full overflow-hidden" style="background:rgba(16, 185, 129, 0.18);">
+                <div id="facultyQrSessionProgressBar" class="h-full rounded-full transition-all duration-500" style="background:var(--present); width:100%;"></div>
+              </div>
+              <div class="flex items-center justify-between text-[10px] mt-1 text-[var(--text-3)] font-mono">
+                <span>Started</span>
+                <span id="facultyQrSessionPct">100% remaining</span>
+              </div>
+            </div>
+
+            <!-- Rotation Countdown & Token Display -->
+            <div class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg w-full" style="background:var(--raised); height:28px; box-sizing:border-box;">
+              <span class="font-medium" style="color:var(--text-2);">Auto-Rotates In:</span>
+              <span id="facultyQrRotationCountdown" class="font-mono font-bold text-amber-500 tabular-nums">30s</span>
+            </div>
+
+            <div class="text-[10.5px] font-mono text-center truncate w-full" style="color:var(--text-3); height:16px; line-height:16px;" id="facultyQrTokenDisplay">
+              Token: --
+            </div>
+          </div>
+
+          <!-- RIGHT SIDE: Live Faculty QR Ingress Feed & Simulated Faculty Scan Test -->
+          <div class="qr-right-pane" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+              <div class="flex items-center justify-between px-0.5" style="height:20px; line-height:20px; margin-bottom:10px;">
+                <span class="text-xs font-semibold text-[var(--text-1)]" id="qrFeedLabel">Live Faculty QR Ingress Feed</span>
+                <span id="modalQrTapCount" class="font-mono text-emerald-500 font-bold tabular-nums text-xs">0 Scanned</span>
+              </div>
+
+              <!-- Scrollable Ingress Feed (calibrated to align simulate button with auto-rotates) -->
+              <div id="modalQrTapFeed" class="space-y-1.5 p-2 rounded-lg border" style="background:var(--surface); border-color:var(--border); height:231px; max-height:231px; overflow-y:auto; box-sizing:border-box;">
+                <div id="modalQrEmptyFeed" class="py-12 text-center text-xs" style="color:var(--text-3);">
+                  Waiting for faculty QR scan on the terminal...
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick QR Demo / Simulate Scan Trigger (Aligned horizontally with Auto-Rotates) -->
+            <button type="button" id="btnSimulateQrScan" class="btn-sim-thin" style="height:28px; min-height:28px; max-height:28px; box-sizing:border-box;">
+              <svg style="width:12px; height:12px; flex-shrink:0; color:#2196f3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <span>Simulate Faculty QR Scan (Test / Demonstration)</span>
+            </button>
+
+            <!-- Spacer matching Token line height to prevent touching the bottom divider -->
+            <div style="height:16px; line-height:16px;" aria-hidden="true"></div>
+          </div>
+
+        </div>
+
+        <!-- Session Controls (Centered Close Button) -->
+        <div class="flex items-center justify-center pt-3 border-t" style="border-color:var(--border); margin-top:14px;">
+          <button type="button" id="btnAdminCloseQrSession" class="btn-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer" style="background:var(--ch-900); color:#fff; padding:7px 26px; border-radius:8px;">
+            Close Session
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Manual Attendance Override Modal -->
+  <div id="teacherOverrideModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-md w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong);">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold">Manual Faculty Override</h3>
+        <button id="closeTeacherOverrideBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="p-3 rounded-lg text-xs" style="background:var(--raised);">
+          <div class="font-semibold text-sm" id="modalTeacherName">Teacher Name</div>
+          <div class="text-[11px] tabular-nums mt-0.5" style="color:var(--text-2);" id="modalTeacherId">Employee ID: 2024-FAC-001</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text-2);">Target Status</label>
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" data-status="present" class="teacher-status-btn py-2 text-xs font-semibold rounded-lg border text-center transition-colors">Present</button>
+            <button type="button" data-status="late" class="teacher-status-btn py-2 text-xs font-semibold rounded-lg border text-center transition-colors">Late</button>
+            <button type="button" data-status="absent" class="teacher-status-btn py-2 text-xs font-semibold rounded-lg border text-center transition-colors">Absent</button>
+            <button type="button" data-status="excused" class="teacher-status-btn py-2 text-xs font-semibold rounded-lg border text-center transition-colors">Excused</button>
+          </div>
+        </div>
+
+        <div>
+          <label for="teacherOverrideReason" class="block text-xs font-semibold mb-1" style="color:var(--text-2);">Reason / Audit Note</label>
+          <textarea id="teacherOverrideReason" rows="2" placeholder="e.g. Card replacement in progress; verified on campus" class="w-full p-2.5 text-xs rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1);"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="cancelTeacherOverrideBtn" class="pillbtn text-xs">Cancel</button>
+          <button type="button" id="saveTeacherOverrideBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-500); color:#fff; padding:7px 16px; border-radius:8px;">
+            Save Override
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Page Controller Script -->
+  <script type="module" src="../assets/js/pages/admin/teacher-attendance.js"></script>
+</body>
+</html>
