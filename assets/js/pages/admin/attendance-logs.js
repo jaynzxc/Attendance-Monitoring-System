@@ -59,22 +59,32 @@ function renderLogs(logs) {
     const personName = `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Unknown';
     const idNumber = person.student_number || person.employee_number || '—';
     const affiliation = isTeacher ? '<span style="color:var(--ch-500); font-weight:700;">Faculty / Teacher</span>' : `<span style="font-weight:600;">${log.section?.name || '—'}</span>`;
-    const deviceName = log.device?.location || log.device?.device_code || 'Gate Terminal';
+    const deviceName = log.device?.location || log.device?.device_code || (log.is_manual ? 'Manual Entry' : 'Gate Terminal');
     const status = (log.status || 'present').toLowerCase();
     const eventType = (log.event_type || 'time_in') === 'time_in' ? 'Time-In' : 'Time-Out';
     const method = (log.scan_method || 'rfid').toUpperCase();
-    const isOffline = log.is_offline_sync;
+
+    const voidBadge = log.is_voided
+      ? `<span class="badge" style="background:rgba(239, 68, 68, 0.15); color:var(--absent); border:1px solid rgba(239, 68, 68, 0.3); font-weight:700;">VOIDED</span>`
+      : `<span class="badge badge-${status}">${status}</span>`;
+
+    const manualBadge = log.is_manual
+      ? `<span class="badge" style="background:rgba(33, 150, 243, 0.15); color:var(--ch-500); border:1px solid rgba(33, 150, 243, 0.3); font-size:10px; font-weight:700;">MANUAL</span>`
+      : '';
 
     return `
-      <tr>
+      <tr style="${log.is_voided ? 'opacity: 0.75; background: rgba(239, 68, 68, 0.03);' : ''}">
         <td style="font-weight:600; color:var(--text-1);">${formatDateTime(log.scanned_at)}</td>
         <td>
-          <div style="font-weight:600; color:var(--text-1);">${personName}</div>
+          <div style="font-weight:600; color:var(--text-1); display:flex; align-items:center; gap:6px;">
+            ${personName}
+            ${manualBadge}
+          </div>
           <div style="font-size:11px; color:var(--text-3); font-family:monospace;">${idNumber} ${isTeacher ? '· Faculty' : ''}</div>
         </td>
         <td>${affiliation}</td>
         <td><span style="font-size:12px; font-weight:500;">${eventType}</span></td>
-        <td><span class="badge badge-${status}">${status}</span></td>
+        <td>${voidBadge}</td>
         <td style="color:var(--text-2); font-size:12px;">${deviceName}</td>
         <td>
           <span style="font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; background:var(--raised); color:var(--text-1); border:1px solid var(--border);">
@@ -82,18 +92,29 @@ function renderLogs(logs) {
           </span>
         </td>
         <td>
-          ${isOffline ? `
-            <span title="Buffered offline on scanner terminal and synced on network reconnect" style="color:var(--late); font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-              Offline Sync
-            </span>
-          ` : `
-            <span style="color:var(--present); font-size:11px; font-weight:600;">Live Feed</span>
-          `}
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--present); font-size:11px; font-weight:600;">Verified</span>
+            ${!log.is_voided ? `
+              <button class="btn-void-row" data-id="${log.id}" data-name="${personName}" title="Void this record for buddy-punching or policy breach" style="background:none; border:none; cursor:pointer; color:var(--text-3); padding:2px 4px; border-radius:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              </button>
+            ` : `
+              <span style="font-size:10px; color:var(--absent); font-weight:600;">Voided</span>
+            `}
+          </div>
         </td>
       </tr>
     `;
   }).join('');
+
+  tbody.querySelectorAll('.btn-void-row').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const logId = btn.getAttribute('data-id');
+      const studentName = btn.getAttribute('data-name');
+      promptVoidRecord(logId, studentName);
+    });
+  });
 }
 
 /**
@@ -154,6 +175,55 @@ function updatePaginationUI() {
 }
 
 /**
+ * Prompts admin to void an attendance record with justification
+ */
+function promptVoidRecord(logId, studentName) {
+  const content = `
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <p style="font-size:13px; color:var(--text-1); line-height:1.5;">
+        Are you sure you want to mark the attendance record for <strong>${studentName}</strong> as <strong>VOID</strong>?
+      </p>
+      <div style="background:rgba(239, 68, 68, 0.08); border-left:3px solid var(--absent); padding:10px 12px; border-radius:4px; font-size:12px; color:var(--absent);">
+        <strong>Warning:</strong> Voiding marks the daily status as Absent, dispatches an automated Parent Alert, and logs a violation to the Prefect disciplinary system.
+      </div>
+      <div>
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Audit Justification</label>
+        <textarea id="voidReasonInput" class="input-field" style="width:100%; height:60px; resize:none;" placeholder="e.g. Buddy-punch tap detected; student was physically absent from class."></textarea>
+      </div>
+    </div>
+  `;
+
+  Modal.open({
+    id: 'voidConfirmModal',
+    title: 'Void Attendance Record',
+    content,
+    actions: [
+      {
+        label: 'Cancel',
+        class: 'btn-secondary',
+        onClick: () => Modal.close('voidConfirmModal')
+      },
+      {
+        label: 'Confirm Void',
+        class: 'btn-primary',
+        onClick: async () => {
+          const reason = document.getElementById('voidReasonInput')?.value.trim() || 'Buddy punch violation';
+          try {
+            await attendanceApi.voidAttendanceRecord(logId, reason);
+            toast.show('Attendance record successfully voided.', 'success');
+            Modal.close('voidConfirmModal');
+            loadLogs();
+          } catch (err) {
+            console.error('[Void Record Error]', err);
+            toast.show('Failed to void record: ' + (err.message || 'Error'), 'error');
+          }
+        }
+      }
+    ]
+  });
+}
+
+/**
  * Exports current attendance logs to CSV
  */
 function exportToCsv() {
@@ -162,18 +232,25 @@ function exportToCsv() {
     return;
   }
 
-  const headers = ['Timestamp', 'Student Number', 'Student Name', 'Section', 'Event', 'Status', 'Terminal', 'Method', 'Offline Sync'];
-  const rows = currentLogs.map(log => [
-    `"${new Date(log.scanned_at).toLocaleString()}"`,
-    `"${log.student?.student_number || ''}"`,
-    `"${log.student?.first_name || ''} ${log.student?.last_name || ''}"`,
-    `"${log.section?.name || ''}"`,
-    `"${log.event_type || 'time_in'}"`,
-    `"${log.status || ''}"`,
-    `"${log.device?.location || log.device?.device_code || ''}"`,
-    `"${log.scan_method || ''}"`,
-    `"${log.is_offline_sync ? 'Yes' : 'No'}"`
-  ]);
+  const headers = ['Timestamp', 'Identity Number', 'Name', 'Affiliation', 'Event', 'Status', 'Terminal', 'Method', 'Manual', 'Voided'];
+  const rows = currentLogs.map(log => {
+    const person = log.student || log.teacher || {};
+    const idNumber = person.student_number || person.employee_number || '';
+    const name = `${person.first_name || ''} ${person.last_name || ''}`.trim();
+    const aff = log.teacher_id ? 'Faculty' : (log.section?.name || '');
+    return [
+      `"${new Date(log.scanned_at).toLocaleString()}"`,
+      `"${idNumber}"`,
+      `"${name}"`,
+      `"${aff}"`,
+      `"${log.event_type || 'time_in'}"`,
+      `"${log.status || ''}"`,
+      `"${log.device?.location || log.device?.device_code || (log.is_manual ? 'Manual' : '')}"`,
+      `"${log.scan_method || ''}"`,
+      `"${log.is_manual ? 'Yes' : 'No'}"`,
+      `"${log.is_voided ? 'Yes' : 'No'}"`
+    ];
+  });
 
   const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const encodedUri = encodeURI(csvContent);
@@ -194,18 +271,15 @@ function openManualOverrideModal() {
   const content = `
     <div style="display:flex; flex-direction:column; gap:14px;">
       <div>
-        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Student Number</label>
-        <input type="text" id="overrideStudentNum" class="input-field" style="width:100%;" placeholder="e.g. 2024-00101">
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Target User Type</label>
+        <select id="overrideUserType" class="select-field" style="width:100%;">
+          <option value="student">Student</option>
+          <option value="teacher">Faculty / Teacher</option>
+        </select>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div>
-          <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Date</label>
-          <input type="date" id="overrideDate" class="input-field" style="width:100%;" value="${new Date().toISOString().split('T')[0]}">
-        </div>
-        <div>
-          <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Time</label>
-          <input type="time" id="overrideTime" class="input-field" style="width:100%;" value="08:00">
-        </div>
+      <div>
+        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);" id="lblIdNumber">Student Number</label>
+        <input type="text" id="overrideIdentifier" class="input-field" style="width:100%;" placeholder="e.g. 2024-IT-00101">
       </div>
       <div>
         <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Target Status</label>
@@ -237,14 +311,13 @@ function openManualOverrideModal() {
         label: 'Submit Override',
         class: 'btn-primary',
         onClick: async () => {
-          const studentNum = document.getElementById('overrideStudentNum')?.value.trim();
-          const date = document.getElementById('overrideDate')?.value;
-          const time = document.getElementById('overrideTime')?.value;
-          const status = document.getElementById('overrideStatus')?.value;
+          const userType = document.getElementById('overrideUserType')?.value || 'student';
+          const identifier = document.getElementById('overrideIdentifier')?.value.trim();
+          const status = document.getElementById('overrideStatus')?.value || 'present';
           const reason = document.getElementById('overrideReason')?.value.trim();
 
-          if (!studentNum || !reason) {
-            toast.show('Please fill in Student Number and Justification.', 'warning');
+          if (!identifier || !reason) {
+            toast.show('Please provide an Identity Number and Justification.', 'warning');
             return;
           }
 
@@ -255,31 +328,27 @@ function openManualOverrideModal() {
           }
 
           try {
-            // Find student id
-            const { data: student, error: stdErr } = await sb
-              .from('users')
-              .select('id, section_id')
-              .eq('student_number', studentNum)
-              .single();
+            let query = sb.from('users').select('id, role, first_name, last_name');
+            if (userType === 'student') {
+              query = query.eq('student_number', identifier);
+            } else {
+              query = query.eq('employee_number', identifier);
+            }
 
-            if (stdErr || !student) {
-              toast.show(`Student number "${studentNum}" not found.`, 'error');
+            const { data: targetUser, error: userErr } = await query.maybeSingle();
+
+            if (userErr || !targetUser) {
+              toast.show(`Account with number "${identifier}" not found.`, 'error');
               return;
             }
 
-            const timestamp = `${date}T${time}:00`;
-
-            const { data, error } = await sb.rpc('fn_manual_attendance_override', {
-              p_student_id: student.id,
-              p_section_id: student.section_id,
-              p_new_status: status,
-              p_timestamp: timestamp,
-              p_reason: reason
+            await attendanceApi.manualAttendanceOverride({
+              user_id: targetUser.id,
+              status,
+              reason
             });
 
-            if (error) throw error;
-
-            toast.show('Manual attendance override applied successfully.', 'success');
+            toast.show(`Attendance override recorded for ${targetUser.first_name} ${targetUser.last_name}.`, 'success');
             Modal.close('manualOverrideModal');
             loadLogs();
           } catch (err) {
@@ -290,6 +359,23 @@ function openManualOverrideModal() {
       }
     ]
   });
+
+  setTimeout(() => {
+    const typeSelect = document.getElementById('overrideUserType');
+    const lbl = document.getElementById('lblIdNumber');
+    const input = document.getElementById('overrideIdentifier');
+    if (typeSelect && lbl && input) {
+      typeSelect.addEventListener('change', () => {
+        if (typeSelect.value === 'teacher') {
+          lbl.textContent = 'Employee Number';
+          input.placeholder = 'e.g. EMP-2020-001';
+        } else {
+          lbl.textContent = 'Student Number';
+          input.placeholder = 'e.g. 2024-IT-00101';
+        }
+      });
+    }
+  }, 50);
 }
 
 /**

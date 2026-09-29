@@ -1,15 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>AMS — Faculty QR Code Attendance</title>
   <meta name="description" content="Scan the session QR code with your camera to record your attendance at Bestlink College of the Philippines.">
-
+  <meta http-equiv="refresh" content="0; url=attendance.html">
   <script>
     (function() {
-      const savedTheme = localStorage.getItem('ams_theme') || 'light';
-      document.documentElement.setAttribute('data-theme', savedTheme);
+      window.location.replace('attendance.html');
     })();
   </script>
 

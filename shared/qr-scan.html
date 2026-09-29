@@ -175,8 +175,17 @@
 
     <!-- Main Workspace -->
     <main class="kiosk-grid">
-      <!-- Left: Camera Viewfinder -->
+      <!-- Left: Camera Viewfinder & Geolocation Status -->
       <section>
+        <!-- GPS Status Pill / Warning -->
+        <div id="gpsStatusContainer" class="p-3 rounded-xl mb-3 flex items-center justify-between text-xs" style="background: var(--surface); border: 1px solid var(--border);">
+          <div class="flex items-center gap-2">
+            <span id="gpsDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <span id="gpsText" class="font-medium" style="color: var(--text-2);">Requesting GPS Geolocation...</span>
+          </div>
+          <span id="gpsBadge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wide" style="background: var(--raised); color: var(--text-2);">50m Geofence</span>
+        </div>
+
         <div class="scanner-box">
           <video id="qrVideo" playsinline autoplay muted></video>
           <canvas id="qrCanvas" style="display: none;"></canvas>
@@ -185,13 +194,32 @@
           </div>
         </div>
 
-        <div style="margin-top: 14px; text-align: center; color: var(--text-2); font-size: 12.5px;">
-          Position your student digital QR code within the viewfinder. Auto-scanning active.
+        <div style="margin-top: 14px; text-align: center; color: var(--text-2); font-size: 12.5px;" id="scannerInstruction">
+          Point camera at the teacher's dynamic screen QR pass. Geofence verification active.
+        </div>
+
+        <!-- GPS Denied Fallback Banner -->
+        <div id="gpsFallbackBanner" class="p-3.5 rounded-xl mt-3 text-xs leading-relaxed hidden" style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid var(--absent); color: var(--text-1);">
+          <strong>GPS Verification Required:</strong> Location access is required to ensure physical presence within 50 meters of the classroom and prevent buddy punching. If GPS is unavailable, <strong>please tap your physical RFID card</strong> on the scanner or ask your teacher for manual roll call.
         </div>
       </section>
 
       <!-- Right: Live Feedback & Scan Stream -->
       <section>
+        <!-- Authenticated Profile Chip -->
+        <div class="card p-3 mb-4 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs" style="background: var(--ch-100); color: var(--ch-900);" id="authInitials">
+              ST
+            </div>
+            <div>
+              <div class="font-semibold" id="authName">Authenticated Student</div>
+              <div class="text-[11px]" style="color: var(--text-3);" id="authDetails">Loading session...</div>
+            </div>
+          </div>
+          <span class="pill pill-present text-[10px] font-bold uppercase" id="authRoleBadge">Student</span>
+        </div>
+
         <!-- Feedback Strobe Banner -->
         <div id="feedbackBanner" class="feedback-banner">
           <div id="feedbackIcon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"></div>
@@ -204,27 +232,14 @@
         <!-- Recent Gate Scans Card -->
         <div class="card" style="padding: 18px 20px;">
           <div class="rowhead">
-            <h3>Recent Scans (Current Session)</h3>
-            <span style="font-size: 11.5px; color: var(--text-3); font-weight: 500;">Hardware Fallback</span>
+            <h3>Recent QR Ingress Records</h3>
+            <span style="font-size: 11.5px; color: var(--text-3); font-weight: 500;">Live Feed</span>
           </div>
-          <div class="sub">Logs processed via camera optical scanner</div>
+          <div class="sub">Classroom QR scans with anti-buddy-punch GPS checks</div>
 
-          <div id="scanLogList">
-            <div class="list-row">
-              <div class="avatar">JD</div>
-              <div class="row-main">
-                <div class="name">Juan Dela Cruz</div>
-                <div class="meta">BSIT 3-1 · QR Ingress · <span class="tabular-nums">07:54 AM</span></div>
-              </div>
-              <span class="pill pill-present">Present</span>
-            </div>
-            <div class="list-row">
-              <div class="avatar">MC</div>
-              <div class="row-main">
-                <div class="name">Maria Clara</div>
-                <div class="meta">BSIT 3-1 · QR Ingress · <span class="tabular-nums">08:12 AM</span></div>
-              </div>
-              <span class="pill pill-late">Late (12m)</span>
+          <div id="scanLogList" class="space-y-2 mt-3">
+            <div class="text-xs text-center py-6" style="color: var(--text-3);" id="emptyLogsMsg">
+              Ready to scan. Point camera at classroom QR pass.
             </div>
           </div>
         </div>
@@ -234,10 +249,51 @@
 
   <script type="module">
     import { initThemeToggle } from '../assets/js/lib/rbac-guard.js';
+    import { getCurrentUser } from '../assets/js/lib/auth.js';
+    import { getSupabase } from '../assets/js/lib/supabaseClient.js';
 
     initThemeToggle();
 
-    // 1. Audio Synthesis Feedback (<300ms latency)
+    let currentUser = null;
+    let userGps = null;
+    let gpsStatus = 'requesting'; // 'active', 'denied'
+    const SUPABASE_URL = 'https://lbgrhbayadehorjixibx.supabase.co';
+
+    // 1. Authenticate user & load identity
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        currentUser = await getCurrentUser() || {
+          id: 'c0000000-0000-0000-0000-000000000001',
+          first_name: 'Juan',
+          last_name: 'Dela Cruz',
+          student_number: '2024-IT-00101',
+          role: 'student'
+        };
+
+        const nameEl = document.getElementById('authName');
+        const detailsEl = document.getElementById('authDetails');
+        const initialsEl = document.getElementById('authInitials');
+        const roleEl = document.getElementById('authRoleBadge');
+
+        if (nameEl) nameEl.textContent = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || 'Student User';
+        if (detailsEl) detailsEl.textContent = currentUser.student_number ? `ID: ${currentUser.student_number}` : 'Faculty Member';
+        if (initialsEl) {
+          const init = `${(currentUser.first_name || 'U')[0]}${(currentUser.last_name || '')[0] || ''}`.toUpperCase();
+          initialsEl.textContent = init;
+        }
+        if (roleEl) roleEl.textContent = (currentUser.role || 'student').toUpperCase();
+      } catch (err) {
+        console.warn('[AMS QR Scan] User profile load error:', err);
+      }
+
+      // Initialize Geolocation Tracking
+      initGeolocation();
+
+      // Initialize Camera
+      initCamera();
+    });
+
+    // 2. Audio Synthesis Feedback (<300ms latency)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(freq, type, duration, count = 1) {
       for (let i = 0; i < count; i++) {
@@ -258,65 +314,62 @@
       }
     }
 
-    // 2. Offline IndexedDB Queue
-    let db;
-    const dbReq = indexedDB.open('ams_offline_scans_db', 1);
-    dbReq.onupgradeneeded = (e) => {
-      db = e.target.result;
-      if (!db.objectStoreNames.contains('scans')) {
-        db.createObjectStore('scans', { keyPath: 'id', autoIncrement: true });
+    // 3. Geolocation Geofence Tracker
+    function initGeolocation() {
+      const gpsDot = document.getElementById('gpsDot');
+      const gpsText = document.getElementById('gpsText');
+      const gpsBadge = document.getElementById('gpsBadge');
+      const gpsFallbackBanner = document.getElementById('gpsFallbackBanner');
+
+      if (!navigator.geolocation) {
+        gpsStatus = 'denied';
+        if (gpsDot) gpsDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+        if (gpsText) gpsText.textContent = 'Geolocation not supported';
+        if (gpsFallbackBanner) gpsFallbackBanner.classList.remove('hidden');
+        return;
       }
-    };
-    dbReq.onsuccess = (e) => {
-      db = e.target.result;
-      updateOfflineCount();
-    };
 
-    function updateOfflineCount() {
-      if (!db) return;
-      const tx = db.transaction('scans', 'readonly');
-      const store = tx.objectStore('scans');
-      const countReq = store.count();
-      countReq.onsuccess = () => {
-        const count = countReq.result;
-        const offlineBar = document.getElementById('offlineBar');
-        const countEl = document.getElementById('offlineCount');
-        if (count > 0 || !navigator.onLine) {
-          offlineBar.style.display = 'block';
-          countEl.textContent = count;
-        } else {
-          offlineBar.style.display = 'none';
-        }
-      };
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          userGps = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: Math.round(pos.coords.accuracy)
+          };
+          gpsStatus = 'active';
+
+          if (gpsDot) gpsDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+          if (gpsText) gpsText.textContent = `GPS Geofence Locked (Acc: ±${userGps.accuracy}m)`;
+          if (gpsBadge) {
+            gpsBadge.style.background = 'var(--present-soft)';
+            gpsBadge.style.color = 'var(--present)';
+            gpsBadge.textContent = 'Proximity Ready';
+          }
+          if (gpsFallbackBanner) gpsFallbackBanner.classList.add('hidden');
+        },
+        (err) => {
+          console.warn('[AMS QR Scan] Geolocation error:', err);
+          gpsStatus = 'denied';
+          if (gpsDot) gpsDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+          if (gpsText) gpsText.textContent = 'GPS Location Permission Denied';
+          if (gpsBadge) {
+            gpsBadge.style.background = 'var(--absent-soft)';
+            gpsBadge.style.color = 'var(--absent)';
+            gpsBadge.textContent = 'GPS Blocked';
+          }
+          if (gpsFallbackBanner) gpsFallbackBanner.classList.remove('hidden');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
     }
 
-    window.addEventListener('online', () => {
-      updateOfflineCount();
-      flushOfflineQueue();
-    });
-    window.addEventListener('offline', () => updateOfflineCount());
-
-    function flushOfflineQueue() {
-      if (!db || !navigator.onLine) return;
-      const tx = db.transaction('scans', 'readwrite');
-      const store = tx.objectStore('scans');
-      const getAllReq = store.getAll();
-      getAllReq.onsuccess = () => {
-        const scans = getAllReq.result;
-        if (scans.length > 0) {
-          console.log(`[AMS Ingress] Flushing ${scans.length} buffered scans.`);
-          store.clear();
-          updateOfflineCount();
-        }
-      };
-    }
-
-    // 3. Camera Setup & jsQR Continuous Loop
+    // 4. Camera Setup & jsQR Continuous Loop
     const video = document.getElementById('qrVideo');
     const canvas = document.getElementById('qrCanvas');
     const ctx = canvas.getContext('2d');
     let lastScanTime = 0;
-    const SCAN_THROTTLE_MS = 3000; // Prevent instant duplicate camera reads
+    const SCAN_THROTTLE_MS = 3000;
+    let isProcessingScan = false;
 
     async function initCamera() {
       try {
@@ -329,13 +382,12 @@
         requestAnimationFrame(tick);
       } catch (err) {
         console.warn('[AMS QR Scan] Camera access denied or not available:', err);
-        // Simulation helper for testing environments without webcam
         simulateScanner();
       }
     }
 
     function tick() {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      if (video.readyState === video.HAVE_ENOUGH_DATA && !isProcessingScan) {
         canvas.height = video.videoHeight;
         canvas.width = video.videoWidth;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -348,53 +400,112 @@
           const now = Date.now();
           if (now - lastScanTime > SCAN_THROTTLE_MS) {
             lastScanTime = now;
-            handleScannedCode(code.data);
+            handleScannedCode(code.data.trim());
           }
         }
       }
       requestAnimationFrame(tick);
     }
 
-    // 4. Ingress Processing & Optical/Audio Feedback
+    // 5. Ingress Processing against Supabase Edge Function
     const feedbackBanner = document.getElementById('feedbackBanner');
     const feedbackTitle = document.getElementById('feedbackTitle');
     const feedbackDesc = document.getElementById('feedbackDesc');
     const scanLogList = document.getElementById('scanLogList');
 
-    function handleScannedCode(codeValue) {
-      // Mock student resolution for test QR tokens
-      const isKnown = codeValue.includes('delacruz') || codeValue.includes('clara') || codeValue.startsWith('bcp_');
-      
-      if (!isKnown) {
-        // Red Error Feedback: Unregistered
-        showFeedback('error', 'Unregistered Credential', 'QR code is not associated with an active student or teacher.');
+    async function handleScannedCode(codeValue) {
+      if (isProcessingScan) return;
+      isProcessingScan = true;
+
+      // Extract clean token
+      let sessionToken = codeValue;
+      try {
+        if (codeValue.startsWith('{') && codeValue.endsWith('}')) {
+          const parsed = JSON.parse(codeValue);
+          sessionToken = parsed.session_token || codeValue;
+        }
+      } catch(e) {}
+
+      // Check GPS Requirement
+      if (!userGps) {
+        showFeedback('error', 'GPS Location Required', 'Please enable device location to verify you are within 50m of the classroom.');
         playBeep(240, 'sawtooth', 0.4);
+        isProcessingScan = false;
         return;
       }
 
-      // Check anti-passback cooldown (simulated 5-min threshold)
-      const cachedLastTap = sessionStorage.getItem(`last_tap_${codeValue}`);
-      const now = Date.now();
-      if (cachedLastTap && (now - parseInt(cachedLastTap)) < 30000) { // 30s for fast dev demo
-        showFeedback('cooldown', 'Cooldown Active (429)', 'Card was already tapped within 5 minutes (anti-passback).');
-        playBeep(480, 'triangle', 0.15, 2);
-        return;
-      }
+      showFeedback('cooldown', 'Verifying Attendance...', 'Checking classroom proximity & subject enrollment...');
 
-      sessionStorage.setItem(`last_tap_${codeValue}`, now.toString());
+      try {
+        const sb = getSupabase();
+        let authHeader = '';
+        if (sb && sb.auth) {
+          const { data: sessionData } = await sb.auth.getSession();
+          if (sessionData && sessionData.session) {
+            authHeader = `Bearer ${sessionData.session.access_token}`;
+          }
+        }
 
-      // Determine on-time vs late
-      const currentHour = new Date().getHours();
-      const isLate = currentHour >= 8; // Past 8:00 AM is late
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/scan-ingest`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authHeader ? { 'Authorization': authHeader } : {})
+          },
+          body: JSON.stringify({
+            session_token: sessionToken,
+            scan_method: 'qr',
+            student_lat: userGps.latitude,
+            student_lng: userGps.longitude
+          })
+        });
 
-      if (isLate) {
-        showFeedback('late', 'Late Arrival Recorded', 'Tardy status logged. Parent notification queued.');
-        playBeep(620, 'sine', 0.18, 2);
-        prependScanLog('Andres Bonifacio', 'BSIT 3-2', 'late');
-      } else {
-        showFeedback('present', 'Verified: On Time', 'Attendance recorded successfully. Have a great class!');
-        playBeep(880, 'sine', 0.2, 1);
-        prependScanLog('Juan Dela Cruz', 'BSIT 3-1', 'present');
+        const result = await res.json().catch(() => ({}));
+
+        if (res.ok && result.success) {
+          const status = result.status || 'present';
+          const name = result.student_name || `${currentUser?.first_name || ''} ${currentUser?.last_name || ''}`.trim() || 'Student';
+          const section = result.section_name || 'Class Session';
+
+          if (status === 'present') {
+            showFeedback('present', 'Verified: Present (On-Time)', `Attendance confirmed for ${section}. Have a great class!`);
+            playBeep(880, 'sine', 0.2, 1);
+          } else {
+            showFeedback('late', 'Late Arrival Recorded', `Checked in after cutoff window. Marked Late.`);
+            playBeep(620, 'sine', 0.18, 2);
+          }
+
+          prependScanLog(name, section, status);
+        } else {
+          // Failure handling
+          const errCode = result.code || result.error;
+          const errMsg = result.message || 'Scan validation failed.';
+
+          if (res.status === 403 && (errCode === 'geolocation_mismatch' || errMsg.includes('50 meters') || errMsg.includes('outside the geofence'))) {
+            showFeedback('error', 'Geofence Mismatch (403)', 'You are outside the 50-meter classroom radius. Anti-buddy-punch enforced.');
+            playBeep(240, 'sawtooth', 0.4);
+          } else if (res.status === 403 && errCode === 'unenrolled_tap') {
+            showFeedback('error', 'Not Enrolled (403)', 'You are not enrolled in this section. Please report to the registrar.');
+            playBeep(220, 'sawtooth', 0.5);
+          } else if (res.status === 401 && errCode === 'invalid_qr_token') {
+            showFeedback('error', 'QR Token Expired (401)', 'This QR pass has rotated. Please scan the newly displayed QR code.');
+            playBeep(320, 'triangle', 0.2, 2);
+          } else if (res.status === 429) {
+            showFeedback('cooldown', 'Cooldown Active (429)', 'You have already tapped in within the last 5 minutes.');
+            playBeep(480, 'triangle', 0.15, 2);
+          } else {
+            showFeedback('error', 'Ingress Rejected', errMsg);
+            playBeep(240, 'sawtooth', 0.3);
+          }
+        }
+      } catch (networkErr) {
+        console.error('[AMS QR Scan] Ingress submission error:', networkErr);
+        showFeedback('error', 'Connection Error', 'Could not reach attendance server. Please try again.');
+        playBeep(240, 'sawtooth', 0.3);
+      } finally {
+        setTimeout(() => {
+          isProcessingScan = false;
+        }, 1500);
       }
     }
 
@@ -405,23 +516,28 @@
       feedbackBanner.style.display = 'flex';
 
       setTimeout(() => {
-        feedbackBanner.style.display = 'none';
-      }, 4000);
+        if (!isProcessingScan) {
+          feedbackBanner.style.display = 'none';
+        }
+      }, 5000);
     }
 
     function prependScanLog(name, section, status) {
+      const emptyMsg = document.getElementById('emptyLogsMsg');
+      if (emptyMsg) emptyMsg.style.display = 'none';
+
       const row = document.createElement('div');
       row.className = 'list-row';
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const initials = name.split(' ').map(n => n[0]).join('');
-      
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2);
+
       row.innerHTML = `
         <div class="avatar">${initials}</div>
         <div class="row-main">
           <div class="name">${name}</div>
-          <div class="meta">${section} · QR Ingress · <span class="tabular-nums">${timeStr}</span></div>
+          <div class="meta">${section} · Classroom QR · <span class="tabular-nums">${timeStr}</span></div>
         </div>
-        <span class="pill pill-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+        <span class="pill pill-${status}">${status.toUpperCase()}</span>
       `;
       scanLogList.prepend(row);
     }
@@ -429,19 +545,31 @@
     // Simulation trigger for browser environments without active camera
     function simulateScanner() {
       const container = document.querySelector('.scanner-box');
-      const testBtn = document.createElement('button');
-      testBtn.className = 'pillbtn';
-      testBtn.style.position = 'absolute';
-      testBtn.style.zIndex = '10';
-      testBtn.style.background = 'var(--surface)';
-      testBtn.textContent = 'Simulate QR Tap';
-      testBtn.addEventListener('click', () => {
-        handleScannedCode('bcp_qr_sec_tok_delacruz_01');
-      });
-      container.appendChild(testBtn);
-    }
+      const simBox = document.createElement('div');
+      simBox.className = 'flex flex-col items-center gap-2 p-3 rounded-lg z-10';
+      simBox.style.position = 'absolute';
+      simBox.style.background = 'rgba(5, 11, 20, 0.85)';
+      simBox.style.border = '1px solid var(--border)';
 
-    initCamera();
+      const label = document.createElement('span');
+      label.className = 'text-[11px] font-semibold text-gray-300';
+      label.textContent = 'Camera Unavailable - Simulation Mode';
+
+      const testBtn = document.createElement('button');
+      testBtn.className = 'pillbtn text-xs';
+      testBtn.style.background = 'var(--surface)';
+      testBtn.textContent = 'Simulate QR Token Scan';
+      testBtn.addEventListener('click', () => {
+        const token = prompt('Enter QR session token to simulate (or press OK for sample):', '00000000-0000-0000-0000-000000000000');
+        if (token) {
+          handleScannedCode(token.trim());
+        }
+      });
+
+      simBox.appendChild(label);
+      simBox.appendChild(testBtn);
+      container.appendChild(simBox);
+    }
   </script>
 </body>
 </html>

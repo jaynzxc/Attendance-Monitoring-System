@@ -115,8 +115,9 @@
   </div>
 
   <script type="module">
-    import { logout, getRoleDashboardPath } from '../assets/js/lib/auth.js';
+    import { getRoleDashboardPath } from '../assets/js/lib/auth.js';
     import { initThemeToggle } from '../assets/js/lib/rbac-guard.js';
+    import { openSignOutModal } from '../assets/js/components/signOutModal.js';
 
     initThemeToggle();
 
@@ -127,7 +128,7 @@
     }
 
     document.getElementById('logoutBtn')?.addEventListener('click', () => {
-      logout();
+      openSignOutModal();
     });
   </script>
 </body>

@@ -24,32 +24,27 @@
   <!-- Chart.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- QRCode Generator CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
   <style>
-    /* Dashboard donut chart container */
-    .donut-wrap {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      padding-top: 10px;
-    }
-    .donut-wrap canvas { flex: 0 0 140px; width: 140px !important; height: 140px !important; }
-    .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-    .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .legend-label { flex: 1; color: var(--text-2); }
-    .legend-val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-1); }
+    /* Admin dashboard layout tweaks */
+    .tabular-nums { font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
   <div class="layout">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar" aria-label="Main Navigation">
+            <aside class="sidebar" aria-label="Main Navigation">
       <div class="brand">
         <div class="mark">A</div>
         <span>AMS Admin</span>
         <span class="sub-tag">SMS 1</span>
       </div>
-      
+
       <div class="navgroup">Main</div>
       <nav class="nav">
         <a class="active" href="dashboard.html">
@@ -59,6 +54,10 @@
         <a href="attendance-logs.html">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           Attendance Logs
+        </a>
+        <a href="teacher-attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Teacher Attendance
         </a>
         <a href="attendance-calendar.html">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -93,7 +92,7 @@
           Awards
         </a>
       </nav>
-      
+
       <div class="navgroup">System</div>
       <nav class="nav">
         <a href="reports.html">
@@ -104,12 +103,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
           Settings
         </a>
-        <a href="../shared/rfid-simulator.html" target="_blank" style="color:var(--accent);">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
-          Hardware Simulator
-        </a>
       </nav>
-      
+
       <div class="sidebar-foot">
         SMS 1 · Bestlink College<br>
         Attendance Monitoring System
@@ -152,10 +147,43 @@
             <h1>Overview</h1>
             <p id="pageheadDate">Wednesday, September 25 · Bestlink College of the Philippines</p>
           </div>
-          <button class="pillbtn">
-            Last 30 days
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
+          
+        </div>
+
+        <!-- Active Attendance Session Monitor Card -->
+        <div id="activeSessionCard" class="card" style="display:none; margin-bottom:20px; border-left:4px solid var(--ch-500); background:linear-gradient(to right, rgba(33, 150, 243, 0.05), transparent);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:10px; background:var(--ch-100); color:var(--ch-900); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="live-dot" style="width:8px; height:8px; border-radius:50%; background:var(--present); display:inline-block; box-shadow:0 0 8px var(--present);"></span>
+                  <h4 style="margin:0; font-size:15px; font-weight:700;" id="activeSessionTitle">Active Attendance Session</h4>
+                  <span id="activeSessionMethodBadge" class="badge" style="background:var(--ch-100); color:var(--ch-900); font-size:11px; font-weight:700;">RFID GATE</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-2); margin-top:3px;" id="activeSessionDetails">
+                  Section: BSIT 3-1 · Terminal: GATE-01-ESP32
+                </div>
+              </div>
+            </div>
+
+            <!-- Countdown Timer & Stats -->
+            <div style="display:flex; align-items:center; gap:20px;">
+              <div style="text-align:right;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-3); font-weight:600;">Time Remaining</div>
+                <div id="activeSessionCountdown" class="tabular-nums" style="font-size:18px; font-weight:700; color:var(--text-1);">--:--</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-3); font-weight:600;">Arrivals</div>
+                <div id="activeSessionArrivalsCount" class="tabular-nums" style="font-size:18px; font-weight:700; color:var(--ch-500);">0</div>
+              </div>
+              <button id="btnCloseActiveSession" class="btn-secondary" style="color:var(--absent); border-color:rgba(239, 68, 68, 0.3); font-size:12px; padding:6px 12px;">
+                Close Session Early
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- KPI Summary Cards -->
@@ -185,57 +213,154 @@
           </div>
         </div>
 
-        <!-- Upper Grid: Trend Line & Today's Breakdown -->
+        <!-- Upper Grid: 5-Week Trend Line & Today's Attendance Radial Breakdown -->
         <div class="grid2">
-          <div class="card">
-            <h3>5-Week Attendance Trend</h3>
-            <div class="sub">Weekly institution-wide rate vs 92% goal</div>
-            <canvas id="trendChart" height="96"></canvas>
+          <!-- Card 1: 5-Week Attendance Trend Analytics Chart -->
+          <div class="card" style="display:flex; flex-direction:column;">
+            <div class="rowhead">
+              <div>
+                <h3 style="margin:0 0 2px;">5-Week Attendance Trend</h3>
+                <div class="sub" style="margin:0;">Weekly institution-wide rate vs. 92% goal</div>
+              </div>
+              <a href="analytics.html" class="viewall">Detailed Analytics →</a>
+            </div>
+
+            <div style="position:relative; height:185px; margin-top:14px;">
+              <canvas id="trendChart"></canvas>
+            </div>
+
+            <div style="font-size:11.5px; color:var(--text-3); margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+              <span>Institutional Goal: <strong>92%</strong></span>
+              <span>Current Week Average: <strong id="trendCurrentAvg" class="tabular-nums" style="color:var(--present);">94.1%</strong></span>
+            </div>
           </div>
 
-          <div class="card">
-            <h3>Today's Breakdown</h3>
-            <div class="sub">Total enrolled: 1,107 students</div>
-            
-            <div class="distrow">
-              <span class="dot2" style="background:var(--present);"></span>
-              <span class="lbl">Present</span>
-              <div class="bar"><span style="width:94%;background:var(--present);"></span></div>
-              <span class="val">1,042</span>
-            </div>
-            <div class="distrow">
-              <span class="dot2" style="background:var(--late);"></span>
-              <span class="lbl">Tardy</span>
-              <div class="bar"><span style="width:3.3%;background:var(--late);"></span></div>
-              <span class="val">37</span>
-            </div>
-            <div class="distrow">
-              <span class="dot2" style="background:var(--absent);"></span>
-              <span class="lbl">Absent</span>
-              <div class="bar"><span style="width:2.5%;background:var(--absent);"></span></div>
-              <span class="val">28</span>
-            </div>
-            <div class="distrow">
-              <span class="dot2" style="background:var(--excused);"></span>
-              <span class="lbl">Excused</span>
-              <div class="bar"><span style="width:1.5%;background:var(--excused);"></span></div>
-              <span class="val">16</span>
+          <!-- Card 2: Today's Status Breakdown (Radial Donut Matching Institutional Reference) -->
+          <div class="card" style="display:flex; flex-direction:column;">
+            <div class="rowhead">
+              <div>
+                <h3 style="margin:0 0 2px;">Today's Attendance Breakdown</h3>
+                <div class="sub" style="margin:0;">Total enrolled: <span id="adminTotalEnrolled" class="tabular-nums">1,107</span> students</div>
+              </div>
+              <a href="attendance-logs.html" class="viewall">View logs →</a>
             </div>
 
-            <div class="totalbox">
-              <span class="t-lbl">Total Logged Today</span>
-              <span class="t-val">1,123</span>
+            <!-- Horizontal Container: Donut on Left, Legend Table on Right -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:20px; margin:auto 0; padding:12px 4px;">
+              <!-- Donut Canvas Container -->
+              <div style="position:relative; width:145px; height:145px; flex-shrink:0;">
+                <canvas id="statusDonutChart" width="145" height="145"></canvas>
+              </div>
+
+              <!-- Vertical Legend Table matching institutional reference -->
+              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#10B981; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Present</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-present">1,042</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#F59E0B; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Late / Tardy</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-late">37</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#EF4444; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Absent</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-absent">28</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#3B82F6; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Excused</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-excused">16</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom summary note -->
+            <div style="font-size:11.5px; color:var(--text-3); margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+              <span>Total Logged Today: <strong id="adminTotalLogged" class="tabular-nums">1,123</strong></span>
+              <span>Rate: <strong id="adminAttendanceRatePct" class="tabular-nums" style="color:var(--present);">94.1%</strong></span>
             </div>
           </div>
         </div>
 
-        <!-- Lower Grid: Section Watchlist & Today's Status Donut Chart -->
+        <!-- Lower Grid: Live Ingress Stream & Section Watchlist -->
         <div class="grid2b">
-          <!-- Section Watchlist (replaces former Live Scan Stream) -->
+          <!-- Left: Live Ingress Stream -->
+          <div class="card">
+            <div class="rowhead">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <h3 style="margin:0;">Live Scan Stream</h3>
+                <span class="live-badge">
+                  <span class="live-dot"></span>
+                  Active Scanner Feed
+                </span>
+              </div>
+              <a href="attendance-logs.html" class="viewall">View all logs →</a>
+            </div>
+            <div class="sub" style="margin-top:4px;">Latest taps from ESP32 Gate & Fallback QR terminals</div>
+
+            <div id="liveScanList" aria-live="polite">
+              <div class="list-row">
+                <div class="avatar">EB</div>
+                <div class="row-main">
+                  <div class="name">Ethan Bautista · Student</div>
+                  <div class="meta">07:58:14 AM · Main Gate Turnstile A (RFID)</div>
+                </div>
+                <span class="pill pill-present">Present</span>
+              </div>
+              <div class="list-row">
+                <div class="avatar">MS</div>
+                <div class="row-main">
+                  <div class="name">Maria Santos · Student</div>
+                  <div class="meta">07:57:42 AM · East Wing Turnstile B (RFID)</div>
+                </div>
+                <span class="pill pill-present">Present</span>
+              </div>
+              <div class="list-row">
+                <div class="avatar">KD</div>
+                <div class="row-main">
+                  <div class="name">Kevin De Vera · Student</div>
+                  <div class="meta">08:04:19 AM · Room 302 Kiosk (QR)</div>
+                </div>
+                <span class="pill pill-late">Late</span>
+              </div>
+              <div class="list-row">
+                <div class="avatar">AL</div>
+                <div class="row-main">
+                  <div class="name">Angela Lim · Student</div>
+                  <div class="meta">07:55:01 AM · Main Gate Turnstile A (RFID)</div>
+                </div>
+                <span class="pill pill-present">Present</span>
+              </div>
+              <div class="list-row">
+                <div class="avatar">JR</div>
+                <div class="row-main">
+                  <div class="name">Prof. John Reyes · Faculty</div>
+                  <div class="meta">07:54:33 AM · North Gate Turnstile C (RFID)</div>
+                </div>
+                <span class="pill pill-present">Present</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Section Watchlist -->
           <div class="card">
             <div class="rowhead">
               <h3 style="margin:0;">Section Watchlist</h3>
-              <a href="sections.html" class="viewall">Manage &rarr;</a>
+              <a href="sections.html" class="viewall">Manage →</a>
             </div>
             <div class="sub" style="margin-top:4px;">Sections requiring attendance intervention this week</div>
 
@@ -282,45 +407,13 @@
               </div>
             </div>
           </div>
-
-          <!-- Today's Attendance Status Donut Chart (replaces former Section Watchlist) -->
-          <div class="card">
-            <div class="rowhead">
-              <h3 style="margin:0;">Today's Status Breakdown</h3>
-              <a href="attendance-logs.html" class="viewall">View logs &rarr;</a>
-            </div>
-            <div class="sub" style="margin-top:4px;">Proportional attendance distribution across all enrolled students</div>
-
-            <div class="donut-wrap">
-              <canvas id="statusDonutChart"></canvas>
-              <div class="donut-legend">
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--present);"></span>
-                  <span class="legend-label">Present</span>
-                  <span class="legend-val" id="donut-present">0</span>
-                </div>
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--late);"></span>
-                  <span class="legend-label">Late / Tardy</span>
-                  <span class="legend-val" id="donut-late">0</span>
-                </div>
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--absent);"></span>
-                  <span class="legend-label">Absent</span>
-                  <span class="legend-val" id="donut-absent">0</span>
-                </div>
-                <div class="legend-row">
-                  <span class="legend-dot" style="background:var(--excused);"></span>
-                  <span class="legend-label">Excused</span>
-                  <span class="legend-val" id="donut-excused">0</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </div>
   </div>
+
+  <!-- QRCode Generator Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <!-- Page Controller Module -->
   <script type="module" src="../assets/js/pages/admin/dashboard.js"></script>

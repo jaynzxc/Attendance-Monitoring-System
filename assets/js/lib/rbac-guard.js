@@ -4,6 +4,9 @@
 
 import { getSupabase } from './supabaseClient.js';
 import { getCurrentUser, logout } from './auth.js';
+import { openSignOutModal } from '../components/signOutModal.js';
+
+export { openSignOutModal };
 
 /**
  * Enforces role restriction for portal views
@@ -92,16 +95,20 @@ export function initLayoutBindings(user) {
     avatarEl.textContent = initials;
   }
 
-  // Bind logout click on profile card or logout button
-  const profileBtn = document.querySelector('.appbar .profile');
-  if (profileBtn) {
-    profileBtn.setAttribute('title', 'Click to Sign Out');
-    profileBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to sign out?')) {
-        logout();
-      }
-    });
-  }
+  // Bind logout modal form on profile card and any sign out triggers
+  const signoutTriggers = document.querySelectorAll(
+    '.appbar .profile, [data-action="signout"], [data-action="logout"], .logout-btn, #logoutBtn, #btnSignOut'
+  );
+  signoutTriggers.forEach((trigger) => {
+    trigger.setAttribute('title', 'Click to Sign Out');
+    trigger.onclick = (e) => {
+      e.preventDefault();
+      openSignOutModal(user);
+    };
+  });
+
+  // Attach global shortcut for easy invocation
+  window.openSignOutModal = (customUser) => openSignOutModal(customUser || user);
 
   // Initialize theme toggle
   initThemeToggle();

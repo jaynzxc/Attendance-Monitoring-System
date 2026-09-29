@@ -20,16 +20,17 @@ export const usersApi = {
         .select(`
           id,
           student_number,
+          employee_number,
           first_name,
           last_name,
           email,
           role,
           status,
-          section_id,
           created_at,
-          sections:section_id ( id, name, program_code, year_level ),
-          rfid_credentials ( id, card_uid, is_active ),
-          parent_contacts ( id, contact_name, relationship, phone_number )
+          rfid_cards ( id, card_uid, is_active ),
+          parent_contacts ( id, full_name, relationship, mobile_number ),
+          student_sections ( sections ( id, name, grade_level ) ),
+          teacher_sections ( sections ( id, name ), subject )
         `, { count: 'exact' });
 
       if (role) {
@@ -38,11 +39,8 @@ export const usersApi = {
       if (status) {
         query = query.eq('status', status);
       }
-      if (sectionId) {
-        query = query.eq('section_id', sectionId);
-      }
       if (search) {
-        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,student_number.ilike.%${search}%,email.ilike.%${search}%`);
+        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,student_number.ilike.%${search}%,employee_number.ilike.%${search}%,email.ilike.%${search}%`);
       }
 
       query = query
@@ -71,10 +69,11 @@ export const usersApi = {
         .from('users')
         .select(`
           *,
-          sections:section_id (*),
-          rfid_credentials (*),
-          qr_tokens (*),
-          parent_contacts (*)
+          rfid_cards (*),
+          qr_codes (*),
+          parent_contacts (*),
+          student_sections ( sections (*) ),
+          teacher_sections ( sections (*), subject )
         `)
         .eq('id', id)
         .single();
@@ -139,13 +138,13 @@ export const usersApi = {
 
     // Deactivate previous cards
     await sb
-      .from('rfid_credentials')
+      .from('rfid_cards')
       .update({ is_active: false })
       .eq('user_id', userId);
 
     // Insert new card
     const { data, error } = await sb
-      .from('rfid_credentials')
+      .from('rfid_cards')
       .insert([{
         user_id: userId,
         card_uid: cardUid.toUpperCase().trim(),
@@ -167,20 +166,18 @@ export const usersApi = {
 
     // Deactivate older tokens
     await sb
-      .from('qr_tokens')
-      .update({ is_revoked: true })
+      .from('qr_codes')
+      .update({ is_active: false })
       .eq('user_id', userId);
 
     const token = 'QR-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
-    const expiresAt = new Date(Date.now() + 30 * 86400000).toISOString();
 
     const { data, error } = await sb
-      .from('qr_tokens')
+      .from('qr_codes')
       .insert([{
         user_id: userId,
-        token_hash: token,
-        expires_at: expiresAt,
-        is_revoked: false
+        code_value: token,
+        is_active: true
       }])
       .select()
       .single();

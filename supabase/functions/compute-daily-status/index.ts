@@ -74,12 +74,13 @@ serve(async (req: Request) => {
       throw new Error(`Failed to query active users: ${usersErr?.message}`);
     }
 
-    // 3. Fetch Today's Attendance Logs
+    // 3. Fetch Today's Attendance Logs (excluding voided records)
     const { data: dayLogs } = await supabase
       .from("attendance_logs")
-      .select("student_id, teacher_id, status, event_type, scanned_at")
+      .select("student_id, teacher_id, status, event_type, scanned_at, is_voided")
       .gte("scanned_at", `${targetDate}T00:00:00`)
-      .lte("scanned_at", `${targetDate}T23:59:59`);
+      .lte("scanned_at", `${targetDate}T23:59:59`)
+      .or("is_voided.is.null,is_voided.eq.false");
 
     const logMap = new Map<string, { status: string; event_type: string }>();
     (dayLogs || []).forEach((l) => {

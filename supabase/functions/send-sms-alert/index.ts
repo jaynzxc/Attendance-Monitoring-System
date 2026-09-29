@@ -76,7 +76,13 @@ serve(async (req: Request) => {
     let messageText = "";
 
     // Check system_settings for custom template
-    const templateKey = alert_type === "absent" ? "sms_template_absent" : "sms_template_tardy";
+    let templateKey = "sms_template_tardy";
+    if (alert_type === "absent") {
+      templateKey = "sms_template_absent";
+    } else if (alert_type === "buddy_punch_void") {
+      templateKey = "sms_template_buddy_punch";
+    }
+
     const { data: templateRow } = await supabase
       .from("system_settings")
       .select("setting_value")
@@ -91,6 +97,8 @@ serve(async (req: Request) => {
     } else {
       if (alert_type === "absent") {
         messageText = `BCP AMS Notice: Your child ${studentName} was marked ABSENT on ${eventDate}. Please submit an official excuse slip upon return. Bestlink College`;
+      } else if (alert_type === "buddy_punch_void") {
+        messageText = `BCP AMS Security Notice: Attendance for ${studentName} on ${eventDate} was VOIDED due to buddy punching. Please report to the Prefect Office. Bestlink College`;
       } else {
         messageText = `BCP AMS Alert: Your child ${studentName} arrived LATE at campus on ${eventDate} at ${eventTime}. Bestlink College of the Philippines`;
       }
@@ -133,18 +141,43 @@ serve(async (req: Request) => {
       gatewayResponse = { mode: "simulated_development", timestamp: new Date().toISOString() };
     }
 
-    // 4. Log to alerts_log Audit Trail
+    // 4. Outbound Prefect Webhook Dispatch on Disciplinary / Void Events
+    const prefectWebhookUrl = Deno.env.get("PREFECT_WEBHOOK_URL") || "";
+    let prefectWebhookStatus = "skipped";
+
+    if (alert_type === "buddy_punch_void" && prefectWebhookUrl) {
+      try {
+        const pRes = await fetch(prefectWebhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: "buddy_punch_violation",
+            student_id,
+            student_name: studentName,
+            section_id: details.section_id,
+            section_name: details.section_name,
+            session_date: eventDate,
+            voided_by: details.voided_by,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+        prefectWebhookStatus = pRes.ok ? "delivered" : "failed";
+      } catch (pErr) {
+        console.warn("[AMS SMS] Prefect webhook dispatch failed:", pErr);
+        prefectWebhookStatus = "error";
+      }
+    }
+
+    // 5. Log to alerts_log Audit Trail
     const { data: alertLog, error: logErr } = await supabase
       .from("alerts_log")
       .insert([
         {
           student_id,
           parent_contact_id: parent.id,
-          alert_type,
-          recipient_number: parent.mobile_number,
-          message_body: messageText,
-          status: gatewayStatus,
-          gateway_response: gatewayResponse,
+          channel: "sms",
+          message: messageText,
+          status: gatewayStatus === "delivered" ? "sent" : "failed",
           sent_at: new Date().toISOString(),
         },
       ])
@@ -162,6 +195,7 @@ serve(async (req: Request) => {
         recipient: parent.mobile_number,
         alert_type,
         status: gatewayStatus,
+        prefect_webhook: prefectWebhookStatus,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

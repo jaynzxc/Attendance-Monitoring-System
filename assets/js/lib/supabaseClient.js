@@ -2,6 +2,8 @@
 // Supabase Client Singleton Helper
 // Authoritative Reference: docs/UI-UX_BackendSpec.md, docs/Security.md
 
+import { createClient as esmCreateClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
 // Default configuration with browser runtime support and fallback storage
 const DEFAULT_SUPABASE_URL = 'https://lbgrhbayadehorjixibx.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_iKVipoPe2iik-q_jyP8eYA_Ow0izfzs';
@@ -30,19 +32,24 @@ export function getSupabase() {
     return null;
   }
 
-  if (typeof window !== 'undefined' && typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
-    clientInstance = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    });
-    return clientInstance;
+  const factory = (typeof window !== 'undefined' && window.supabase?.createClient) || esmCreateClient;
+
+  if (typeof factory === 'function') {
+    try {
+      clientInstance = factory(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true
+        }
+      });
+      return clientInstance;
+    } catch (err) {
+      console.warn('[AMS SupabaseClient] Failed to initialize client instance:', err);
+    }
   }
 
-  // Defensive fallback stub if Supabase CDN script hasn't loaded yet
-  console.warn('[AMS SupabaseClient] @supabase/supabase-js CDN not yet detected on window.');
+  console.warn('[AMS SupabaseClient] @supabase/supabase-js not detected.');
   return null;
 }
 

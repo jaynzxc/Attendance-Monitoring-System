@@ -241,6 +241,8 @@ export const sectionsApi = {
           status,
           scan_method,
           event_type,
+          is_manual,
+          is_voided,
           device:scan_devices!device_id ( device_code, location )
         `)
         .in('student_id', studentIds)
@@ -274,22 +276,31 @@ export const sectionsApi = {
         let scannedAt = null;
         let scanMethod = null;
         let deviceLocation = null;
+        let isManual = false;
+        let isVoided = false;
+        let logId = null;
 
         if (log) {
-          status = log.status;
+          logId = log.id;
+          status = log.is_voided ? 'absent' : log.status;
           scannedAt = log.scanned_at;
           scanMethod = log.scan_method;
           deviceLocation = log.device ? `${log.device.device_code} (${log.device.location})` : 'Main Campus Gate';
+          isManual = !!log.is_manual;
+          isVoided = !!log.is_voided;
         } else if (sum) {
           status = sum.status;
         }
 
         return {
           ...st,
+          log_id: logId,
           status,
           scanned_at: scannedAt,
           scan_method: scanMethod,
-          device_location: deviceLocation
+          device_location: deviceLocation,
+          is_manual: isManual,
+          is_voided: isVoided
         };
       }).sort((a, b) => (a.last_name || '').localeCompare(b.last_name || ''));
 
