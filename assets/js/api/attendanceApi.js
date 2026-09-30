@@ -954,6 +954,13 @@ export const attendanceApi = {
   },
 
   /**
+   * Alias for manualAttendanceOverride
+   */
+  async manualOverride(params) {
+    return this.manualAttendanceOverride(params);
+  },
+
+  /**
    * Voids an attendance record due to buddy punching or policy violation
    * @param {string} logId
    * @param {string} reason

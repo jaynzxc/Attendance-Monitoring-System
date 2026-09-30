@@ -124,8 +124,42 @@ export const sectionsApi = {
    */
   async getSectionsByTeacher(teacherId) {
     const defaultFallback = [
-      { id: '11111111-1111-1111-1111-111111111111', name: 'BSIT 3-1', grade_level: '3rd Year', school_year: '2026-2027', subject: 'Systems Architecture', active_student_count: 35 },
-      { id: '22222222-2222-2222-2222-222222222222', name: 'BSIT 3-2', grade_level: '3rd Year', school_year: '2026-2027', subject: 'Database Systems', active_student_count: 32 }
+      {
+        id: '11111111-1111-1111-1111-111111111111',
+        name: 'BSIT 3-1',
+        grade_level: '3rd Year',
+        school_year: '2026-2027',
+        subject: 'Systems Architecture',
+        subject_code: 'IT 301',
+        subject_name: 'Systems Architecture & Integration',
+        schedule: '08:00 AM – 10:00 AM',
+        room: 'Computer Lab 4',
+        active_student_count: 35
+      },
+      {
+        id: '22222222-2222-2222-2222-222222222222',
+        name: 'BSIT 3-2',
+        grade_level: '3rd Year',
+        school_year: '2026-2027',
+        subject: 'Database Systems',
+        subject_code: 'IT 302',
+        subject_name: 'Database Systems Administration',
+        schedule: '01:00 PM – 03:00 PM',
+        room: 'Lecture Hall 302',
+        active_student_count: 32
+      },
+      {
+        id: '33333333-3333-3333-3333-333333333333',
+        name: 'BSIS 2-1',
+        grade_level: '2nd Year',
+        school_year: '2026-2027',
+        subject: 'Object-Oriented Programming',
+        subject_code: 'IT 204',
+        subject_name: 'Object-Oriented Programming',
+        schedule: '10:30 AM – 12:30 PM',
+        room: 'Computer Lab 2',
+        active_student_count: 28
+      }
     ];
 
     const sb = getSupabase();
@@ -170,16 +204,25 @@ export const sectionsApi = {
       const list = [];
       const seenIds = new Set();
 
-      teacherSections.forEach(item => {
+      teacherSections.forEach((item, idx) => {
         if (item.section && !seenIds.has(item.section.id)) {
           seenIds.add(item.section.id);
           const studentCount = countMap.get(item.section.id) || (item.section.id === '11111111-1111-1111-1111-111111111111' ? 35 : 32);
+          const subjName = item.subject || (idx === 0 ? 'Systems Architecture & Integration' : 'Database Systems Administration');
+          const subjCode = idx === 0 ? 'IT 301' : (idx === 1 ? 'IT 302' : 'IT 204');
+          const sched = idx === 0 ? '08:00 AM – 10:00 AM' : (idx === 1 ? '01:00 PM – 03:00 PM' : '10:30 AM – 12:30 PM');
+          const rm = idx === 0 ? 'Computer Lab 4' : (idx === 1 ? 'Lecture Hall 302' : 'Computer Lab 2');
+
           list.push({
             id: item.section.id,
             name: item.section.name,
             grade_level: item.section.grade_level,
             school_year: item.section.school_year,
-            subject: item.subject,
+            subject: subjName,
+            subject_code: subjCode,
+            subject_name: subjName,
+            schedule: sched,
+            room: rm,
             active_student_count: studentCount
           });
         }
@@ -317,8 +360,8 @@ export const sectionsApi = {
    * @param {string} date
    */
   _getMockSectionRoster(sectionId, date) {
+    // 1. BSIT 3-2: 32 Enrolled (27 Present, 3 Late, 2 Absent)
     if (sectionId === '22222222-2222-2222-2222-222222222222') {
-      // BSIT 3-2: 32 Enrolled (29 Present, 2 Late, 1 Absent/Excused) -> 96.9% attendance rate
       const roster = [
         {
           id: 'c0000000-0000-0000-0000-000000000004',
@@ -327,7 +370,7 @@ export const sectionsApi = {
           student_number: '2024-IT-00201',
           email: 'andres.bonifacio@student.bestlink.edu.ph',
           status: 'present',
-          scanned_at: `${date}T07:48:22.000Z`,
+          scanned_at: `${date}T12:48:22.000Z`,
           scan_method: 'qr',
           device_location: 'GATE-02-ESP32 (East Annex Gate Turnstile B)'
         },
@@ -337,27 +380,31 @@ export const sectionsApi = {
           last_name: 'Silang',
           student_number: '2024-IT-00202',
           email: 'gabriela.silang@student.bestlink.edu.ph',
-          status: 'excused',
-          scanned_at: null,
-          scan_method: 'manual',
-          device_location: 'Registrar Approval'
+          status: 'present',
+          scanned_at: `${date}T12:52:14.000Z`,
+          scan_method: 'rfid',
+          device_location: 'GATE-01-ESP32 (Main Gate Turnstile A)'
         }
       ];
 
-      // Additional students to reach 32 enrolled
       const surnames = ['Aquino', 'Balagtas', 'Dagohoy', 'Jacinto', 'Lapu-Lapu', 'Luna', 'Mabini', 'Ponce', 'Quezon', 'Ricarte', 'Tecson', 'Valenzuela', 'Burgos', 'Gomez', 'Zamora', 'Del Pilar', 'Lopez Jaena', 'Paterno', 'Malvar', 'Agoncillo', 'Tandang Sora', 'Escoda', 'Santos', 'Reyes', 'Cruz', 'Bautista', 'Ocampo', 'Garcia', 'Mendoza', 'Torres'];
-      const firstNames = ['Manuel', 'Francisco', 'Francisco', 'Emilio', 'Calixto', 'Antonio', 'Apolinario', 'Mariano', 'Manuel', 'Artemio', 'Trinidad', 'Pio', 'Jose', 'Mariano', 'Jacinto', 'Marcelo', 'Graciano', 'Pedro', 'Miguel', 'Felipe', 'Melchora', 'Josefa', 'Danilo', 'Corazon', 'Eduardo', 'Grace', 'Ramon', 'Liza', 'Ferdinand', 'Sara'];
+      const firstNames = ['Manuel', 'Francisco', 'Emilio', 'Calixto', 'Antonio', 'Apolinario', 'Mariano', 'Manuel', 'Artemio', 'Trinidad', 'Pio', 'Jose', 'Mariano', 'Jacinto', 'Marcelo', 'Graciano', 'Pedro', 'Miguel', 'Felipe', 'Melchora', 'Josefa', 'Danilo', 'Corazon', 'Eduardo', 'Grace', 'Ramon', 'Liza', 'Ferdinand', 'Sara', 'Luz'];
 
       for (let i = 0; i < 30; i++) {
         const num = String(i + 203).padStart(5, '0');
         let status = 'present';
-        let scannedAt = `${date}T07:${String(30 + (i % 28)).padStart(2, '0')}:15.000Z`;
+        let scannedAt = `${date}T12:${String(35 + (i % 22)).padStart(2, '0')}:15.000Z`;
         let method = i % 4 === 0 ? 'qr' : 'rfid';
         let location = i % 2 === 0 ? 'GATE-01-ESP32 (Main Gate Turnstile A)' : 'GATE-02-ESP32 (East Annex Gate Turnstile B)';
 
-        if (i === 12 || i === 22) {
+        if (i === 10 || i === 18 || i === 25) {
           status = 'late';
-          scannedAt = `${date}T08:14:30.000Z`;
+          scannedAt = `${date}T13:18:30.000Z`;
+        } else if (i === 14 || i === 29) {
+          status = 'absent';
+          scannedAt = null;
+          method = null;
+          location = null;
         }
 
         roster.push({
@@ -376,7 +423,59 @@ export const sectionsApi = {
       return roster.sort((a, b) => a.last_name.localeCompare(b.last_name));
     }
 
-    // Default / BSIT 3-1: 35 Enrolled (31 Present, 2 Late, 2 Absent) -> 94.3% attendance rate
+    // 2. BSIS 2-1: 28 Enrolled (24 Present, 2 Late, 2 Absent)
+    if (sectionId === '33333333-3333-3333-3333-333333333333') {
+      const roster = [
+        {
+          id: 'c0000000-0000-0000-0000-000000000006',
+          first_name: 'Emilio',
+          last_name: 'Aguinaldo',
+          student_number: '2025-IS-00012',
+          email: 'emilio.aguinaldo@student.bestlink.edu.ph',
+          status: 'present',
+          scanned_at: `${date}T10:18:40.000Z`,
+          scan_method: 'rfid',
+          device_location: 'GATE-01-ESP32 (Main Gate Turnstile A)'
+        }
+      ];
+
+      const surnames = ['Alonso', 'Beltran', 'Cordero', 'Dela Torre', 'Esteban', 'Fajardo', 'Gallardo', 'Hidalgo', 'Ilagan', 'Javier', 'Lacson', 'Manalo', 'Natividad', 'Ortega', 'Padilla', 'Quirante', 'Roxas', 'Soriano', 'Tolentino', 'Urbano', 'Vargas', 'Ylagan', 'Zuniga', 'Apostol', 'Bañaga', 'Cuenca', 'De Leon'];
+      const firstNames = ['Arthur', 'Bernadette', 'Conrado', 'Domenic', 'Evelyn', 'Federico', 'Gemma', 'Hector', 'Irene', 'Joel', 'Kristine', 'Lorenzo', 'Miriam', 'Nestor', 'Olivia', 'Paul', 'Queenie', 'Reynaldo', 'Sheryl', 'Tristan', 'Ursula', 'Vicente', 'Wendy', 'Xavier', 'Yvette', 'Zaldy', 'Amelia'];
+
+      for (let i = 0; i < 27; i++) {
+        const num = String(i + 13).padStart(5, '0');
+        let status = 'present';
+        let scannedAt = `${date}T10:${String(12 + (i % 16)).padStart(2, '0')}:20.000Z`;
+        let method = i % 3 === 0 ? 'qr' : 'rfid';
+        let location = i % 2 === 0 ? 'GATE-01-ESP32 (Main Gate Turnstile A)' : 'GATE-02-ESP32 (East Annex Gate Turnstile B)';
+
+        if (i === 8 || i === 20) {
+          status = 'late';
+          scannedAt = `${date}T10:48:15.000Z`;
+        } else if (i === 15 || i === 26) {
+          status = 'absent';
+          scannedAt = null;
+          method = null;
+          location = null;
+        }
+
+        roster.push({
+          id: `c0000000-0000-0000-0000-0000000003${String(i + 10).padStart(2, '0')}`,
+          first_name: firstNames[i],
+          last_name: surnames[i],
+          student_number: `2025-IS-${num}`,
+          email: `${firstNames[i].toLowerCase()}.${surnames[i].toLowerCase()}@student.bestlink.edu.ph`,
+          status,
+          scanned_at: scannedAt,
+          scan_method: method,
+          device_location: location
+        });
+      }
+
+      return roster.sort((a, b) => a.last_name.localeCompare(b.last_name));
+    }
+
+    // 3. Default / BSIT 3-1: 35 Enrolled (31 Present, 2 Late, 2 Absent) -> 94.3% attendance rate
     const roster = [
       {
         id: 'c0000000-0000-0000-0000-000000000001',
@@ -447,5 +546,63 @@ export const sectionsApi = {
     }
 
     return roster.sort((a, b) => a.last_name.localeCompare(b.last_name));
+  },
+
+  /**
+   * Enrolls a student into a section
+   * @param {string} sectionId
+   * @param {string} studentId
+   */
+  async enrollStudent(sectionId, studentId) {
+    const sb = getSupabase();
+    if (!sb) {
+      return { success: true, message: 'Enrolled in demo mode' };
+    }
+
+    try {
+      const { data, error } = await sb
+        .from('student_sections')
+        .insert([{ section_id: sectionId, student_id: studentId }])
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Student is already enrolled in this section.');
+        }
+        throw error;
+      }
+      return data;
+    } catch (err) {
+      console.error('[AMS API] enrollStudent error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Unenrolls / removes a student from a section
+   * @param {string} sectionId
+   * @param {string} studentId
+   */
+  async unenrollStudent(sectionId, studentId) {
+    const sb = getSupabase();
+    if (!sb) {
+      return { success: true, message: 'Unenrolled in demo mode' };
+    }
+
+    try {
+      const { error } = await sb
+        .from('student_sections')
+        .delete()
+        .eq('section_id', sectionId)
+        .eq('student_id', studentId);
+
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('[AMS API] unenrollStudent error:', err);
+      throw err;
+    }
   }
 };
+
