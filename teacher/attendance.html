@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>AMS — Student Attendance & Section Roll Call</title>
   
-  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <!-- Anti-FOUC: Immediate theme restoration before first paint & seamless redirect -->
   <script>
     (function() {
       const savedTheme = localStorage.getItem('ams_theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
+      window.location.replace('my-classes.html');
     })();
   </script>
   
@@ -24,6 +25,72 @@
 
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- QRCode Generator CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .stream-feed {
+      max-height: 480px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    /* Student QR Modal Split Layout (mirrored from Admin) */
+    .qr-modal-container {
+      width: 100%;
+      max-width: 440px;
+      transition: max-width 0.2s ease;
+    }
+    .qr-modal-container.is-active-session {
+      max-width: 720px;
+    }
+    .qr-columns-split {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      align-items: stretch;
+    }
+    .qr-left-pane {
+      width: 250px;
+      min-width: 250px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .qr-right-pane {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-sim-thin {
+      height: 28px !important;
+      min-height: 28px !important;
+      max-height: 28px !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
+      line-height: 26px !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      background: var(--raised) !important;
+      color: var(--text-2) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      width: 100% !important;
+      cursor: pointer !important;
+      box-sizing: border-box !important;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+    }
+    .btn-sim-thin:hover {
+      background: var(--surface-hover) !important;
+      border-color: var(--border-strong) !important;
+      color: var(--text-1) !important;
+    }
+  </style>
 </head>
 <body>
   <div class="layout">
@@ -41,9 +108,17 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
           Dashboard
         </a>
-        <a class="active" href="attendance.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-          Student Attendance
+        <a class="active" href="my-classes.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+          My Classes
+        </a>
+        <a href="live-session.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Live Session
+        </a>
+        <a href="attendance-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Attendance Logs
         </a>
         <a href="qr-attendance.html">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
@@ -104,23 +179,18 @@
         <div class="pagehead">
           <div>
             <h1>Student Attendance</h1>
-            <p>Live section roll call, RFID & QR session controls, and instant buddy-punch voiding</p>
+            <p>Live subject roll call, RFID & QR session controls, and subject-enrolled ingress validation</p>
           </div>
           <div class="flex items-center gap-3">
-            <button id="btnTeacherStartRfid" class="btn-primary text-xs inline-flex items-center gap-2" style="padding: 7px 12px; background:var(--ch-900); color:#fff; border-radius:8px; font-weight:600;">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-              Start Attendance (RFID)
-            </button>
-            <button id="btnTeacherStartQr" class="btn-secondary text-xs inline-flex items-center gap-2" style="padding: 7px 12px; border:1px solid var(--border); border-radius:8px; font-weight:600;">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              Start QR Session
-            </button>
             <button id="markUnmarkedAbsentBtn" class="pillbtn text-xs inline-flex items-center gap-2">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
               Mark Remaining as Absent
             </button>
           </div>
         </div>
+
+        <!-- Hidden select to keep backward compatibility with any direct references -->
+        <select id="sectionSelect" class="hidden"></select>
 
         <!-- Teacher Active Attendance Session Banner -->
         <div id="teacherSessionCard" class="card p-4 mb-6" style="display:none; border-left:4px solid var(--ch-500); background:linear-gradient(to right, rgba(33, 150, 243, 0.05), transparent);">
@@ -134,6 +204,7 @@
                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <h4 class="font-bold text-sm" id="teacherSessionTitle">Active Attendance Session</h4>
                   <span id="teacherSessionMethodBadge" class="badge" style="background:var(--ch-100); color:var(--ch-900); font-size:10px; font-weight:700;">RFID</span>
+                  <span id="teacherSessionTypeBadge" class="badge" style="background:var(--ch-100); color:var(--ch-900); font-size:10px; font-weight:700;">TIME-IN</span>
                 </div>
                 <div class="text-xs" style="color:var(--text-2); margin-top:2px;" id="teacherSessionDetails">
                   Session window is live. Students may tap their RFID cards or scan screen QR.
@@ -141,148 +212,68 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-4 self-end sm:self-center">
+            <div class="flex items-center gap-3 self-end sm:self-center">
               <div class="text-right">
-                <div class="text-[10px] uppercase font-bold tracking-wider" style="color:var(--text-3);">Time Remaining</div>
-                <div id="teacherSessionCountdown" class="text-base font-bold tabular-nums" style="color:var(--text-1);">--:--</div>
+                <div class="text-[10px] uppercase font-bold tracking-wider" style="color:var(--text-3);">Session Time Remaining</div>
+                <div id="teacherSessionCountdown" class="text-base font-bold font-mono text-amber-500 tabular-nums">--:--</div>
               </div>
+              <button id="btnReopenSessionModal" type="button" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); padding:6px 14px; border-radius:6px;">
+                View Live Tapping
+              </button>
               <button id="btnTeacherCloseSession" class="btn-secondary text-xs" style="color:var(--absent); border-color:rgba(239, 68, 68, 0.3); padding:6px 12px; border-radius:6px;">
-                Close Session Early
+                Close Session
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Section Selector & Controls Filter Bar -->
+        <!-- Class Schedule Filters Bar (Search Bar, Section Filter, Subject Filter) -->
         <div class="card p-4 mb-6">
-          <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <!-- Search Bar (Compact Width) -->
+            <div class="relative w-64 sm:w-72">
+              <input type="text" id="classSearchInput" placeholder="Search subject, section, room..." class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+              <svg class="w-4 h-4 absolute left-3 top-2.5" style="color: var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+
             <div class="flex flex-wrap items-center gap-3">
-              <!-- Section Select -->
-              <div class="flex flex-col gap-1">
-                <label for="sectionSelect" class="text-xs font-semibold" style="color: var(--text-2);">Select Section</label>
-                <select id="sectionSelect" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1); min-width: 200px;">
-                  <option value="">Loading assigned sections...</option>
+              <!-- Section Filter -->
+              <div class="flex items-center gap-2">
+                <label for="classSectionFilter" class="text-xs font-semibold" style="color: var(--text-2);">Section:</label>
+                <select id="classSectionFilter" class="px-3 py-2 text-xs rounded-lg border focus:outline-none cursor-pointer" style="background: var(--surface); border-color: var(--border); color: var(--text-1); min-width: 140px;">
+                  <option value="">All Sections</option>
                 </select>
               </div>
 
-              <!-- Date Picker -->
-              <div class="flex flex-col gap-1">
-                <label for="attendanceDate" class="text-xs font-semibold" style="color: var(--text-2);">Attendance Date</label>
-                <input type="date" id="attendanceDate" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+              <!-- Subject Filter -->
+              <div class="flex items-center gap-2">
+                <label for="classSubjectFilter" class="text-xs font-semibold" style="color: var(--text-2);">Subject:</label>
+                <select id="classSubjectFilter" class="px-3 py-2 text-xs rounded-lg border focus:outline-none cursor-pointer" style="background: var(--surface); border-color: var(--border); color: var(--text-1); min-width: 150px;">
+                  <option value="">All Subjects</option>
+                </select>
               </div>
 
-              <!-- Live Indicator Pill -->
-              <div class="flex items-center gap-2 mt-4 md:mt-5 px-3 py-1.5 rounded-full text-xs font-semibold" style="background: var(--present-soft); color: var(--present);">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Gate Ingress Active</span>
-              </div>
-            </div>
-
-            <!-- Student Search -->
-            <div class="flex flex-col gap-1 w-full md:w-64">
-              <label for="studentSearchInput" class="text-xs font-semibold" style="color: var(--text-2);">Search Student</label>
-              <div class="relative">
-                <input type="text" id="studentSearchInput" placeholder="Name or Student ID..." class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
-                <svg class="w-4 h-4 absolute left-3 top-2.5" style="color: var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              </div>
+              <!-- Reset Filters Button -->
+              <button id="btnResetClassFilters" type="button" class="btn-secondary text-xs px-3 py-2 rounded-lg border hover:bg-[var(--surface-hover)] cursor-pointer" style="border-color: var(--border); color: var(--text-2);" title="Reset filters">
+                Reset
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- Section Roll Call KPIs -->
-        <div class="kpis" style="margin-bottom: 20px;">
-          <div class="card kpi">
-            <div class="label">Present</div>
-            <div class="num tabular-nums" style="color:var(--present);" id="secPresentCount">0</div>
-            <span class="chip chip-good" id="secPresentPct">0% of section</span>
-          </div>
-
-          <div class="card kpi">
-            <div class="label">Late / Tardy</div>
-            <div class="num tabular-nums" style="color:var(--late);" id="secLateCount">0</div>
-            <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
-          </div>
-
-          <div class="card kpi">
-            <div class="label">Absent</div>
-            <div class="num tabular-nums" style="color:var(--absent);" id="secAbsentCount">0</div>
-            <span class="chip chip-bad">Unmarked</span>
-          </div>
-
-          <div class="card kpi">
-            <div class="label">Excused</div>
-            <div class="num tabular-nums" style="color:var(--excused);" id="secExcusedCount">0</div>
-            <span class="chip" style="background:var(--excused-soft); color:var(--excused);">Approved Slip</span>
-          </div>
-        </div>
-
-        <!-- Two-Column Grid: Section Roster Table (Left 2 Col) + Live Card Taps & Scans Feed (Right 1 Col) -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Section Roster Table -->
-          <div class="lg:col-span-2">
-            <div class="card overflow-hidden">
-              <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
-                <div>
-                  <h2 class="text-base font-semibold" id="sectionRosterTitle">Section Roster</h2>
-                  <p class="text-xs" style="color: var(--text-2);" id="sectionRosterSubtitle">Showing enrolled students</p>
-                </div>
-                <div class="text-xs font-mono" style="color: var(--text-3);" id="rosterCountBadge">
-                  0 Students
-                </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
-                      <th class="py-3 px-4">Student</th>
-                      <th class="py-3 px-4">Student ID</th>
-                      <th class="py-3 px-4">Status</th>
-                      <th class="py-3 px-4">Time In</th>
-                      <th class="py-3 px-4">Method & Device</th>
-                      <th class="py-3 px-4 text-center">Manual Fallback Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rosterTableBody" class="divide-y" style="border-color: var(--border);">
-                    <tr>
-                      <td colspan="6" class="py-12 text-center text-sm" style="color: var(--text-3);">
-                        Select an assigned section to load students...
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+        <!-- Today's Class Schedule & Subjects Cards Deck (Primary Class Selector) -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-xs uppercase font-bold tracking-wider" style="color:var(--text-3);">Today's Class Schedule & Subjects</h3>
+              <p class="text-xs" style="color:var(--text-2);">Click a subject class to view roster and start attendance. Only enrolled students will be authorized.</p>
             </div>
+            <span class="text-xs font-mono font-medium px-2 py-0.5 rounded" style="background:var(--raised); color:var(--text-2);" id="activeScheduleCountBadge">3 Classes Today</span>
           </div>
 
-          <!-- Right: Live Scans & Card Taps Feed with Immediate Void Action -->
-          <div class="lg:col-span-1">
-            <div class="card overflow-hidden">
-              <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <h3 class="text-sm font-semibold">Live Scans & Card Taps</h3>
-                </div>
-                <span class="badge" style="background: var(--present-soft); color: var(--present); font-size: 10px; font-weight: 700;">STREAM</span>
-              </div>
-
-              <div id="teacherLiveTapStream" class="p-3 space-y-3" style="max-height: 480px; overflow-y: auto;">
-                <div class="text-center py-12 text-xs" style="color: var(--text-3);">
-                  Select a section and start an RFID/QR session to view incoming card taps.
-                </div>
-              </div>
-            </div>
-
-            <!-- Instant Disciplinary Notice -->
-            <div class="card p-4 mt-6" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.04), transparent); border-color: rgba(239, 68, 68, 0.2);">
-              <div class="flex items-center gap-2 mb-2 font-semibold text-xs" style="color: var(--absent);">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                Buddy-Punch Disciplinary Policy
-              </div>
-              <p class="text-xs leading-relaxed" style="color: var(--text-2);">
-                If you detect a student tapping another student's RFID card or sharing a QR pass, click <strong>Void</strong> on their live tap. The record will be revoked to <strong>ABSENT</strong>, a parent alert will be triggered, and an incident report will be transmitted to the Prefect of Discipline.
-              </p>
-            </div>
+          <div id="subjectScheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated subject class cards -->
+            <div class="p-6 text-center text-xs text-[var(--text-3)] col-span-3 card">Loading assigned subject classes...</div>
           </div>
         </div>
       </main>
@@ -366,38 +357,346 @@
     </div>
   </div>
 
-  <!-- Teacher Dynamic Rotating QR Code Modal -->
+  <!-- Subject Attendance Method Selection Modal -->
+  <div id="subjectAttendanceMethodModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-lg w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong);">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-[var(--text-1)]" id="methodModalSubjectTitle">Start Subject Attendance</h3>
+            <p class="text-[11px] text-[var(--text-2)]" id="methodModalSubjectMeta">Select ingress method for this specific class</p>
+          </div>
+        </div>
+        <button id="closeSubjectMethodModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" aria-label="Close Modal">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Selected Subject Overview Card -->
+      <div class="p-3.5 rounded-xl border mb-4" style="background:var(--raised); border-color:var(--border);">
+        <div class="flex items-center justify-between">
+          <span class="badge font-mono text-xs font-bold px-2.5 py-0.5 rounded" style="background:var(--ch-100); color:var(--ch-900);" id="methodModalCodeBadge">IT 301</span>
+          <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400" id="methodModalHeadcount">35 Enrolled Students</span>
+        </div>
+        <div class="font-bold text-sm text-[var(--text-1)] mt-2" id="methodModalName">Systems Architecture & Integration</div>
+        <div class="text-xs text-[var(--text-2)] mt-1 flex flex-wrap items-center gap-2">
+          <span id="methodModalSection" class="font-semibold">BSIT 3-1</span>
+          <span>·</span>
+          <span id="methodModalSchedule">08:00 AM – 10:00 AM</span>
+          <span>·</span>
+          <span id="methodModalRoom">Computer Lab 4</span>
+        </div>
+      </div>
+
+      <!-- Method Selection Options (RFID vs QR) -->
+      <div class="space-y-3 mb-4">
+        <label class="block text-xs font-semibold text-[var(--text-2)]">Select Attendance Ingress Method</label>
+        
+        <div class="grid grid-cols-2 gap-3" id="methodPickerCards" role="radiogroup" aria-label="Ingress Method">
+          <!-- RFID Option Card -->
+          <button type="button" data-method="rfid" class="method-card-btn active" role="radio" aria-checked="true">
+            <div class="flex items-center justify-between">
+              <div class="type-icon-box">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              </div>
+              <span class="method-check-badge shrink-0">
+                <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div>
+              <div class="method-title">RFID Terminal</div>
+              <div class="method-desc mt-0.5">ESP32 physical card reader tap</div>
+            </div>
+          </button>
+
+          <!-- QR Option Card -->
+          <button type="button" data-method="qr" class="method-card-btn" role="radio" aria-checked="false">
+            <div class="flex items-center justify-between">
+              <div class="type-icon-box">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <span class="method-check-badge shrink-0">
+                <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div>
+              <div class="method-title">Dynamic QR Pass</div>
+              <div class="method-desc mt-0.5">30s rotating classroom screen pass</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Security Notice -->
+      <div class="p-3 rounded-xl border flex items-center gap-2.5 text-xs mb-4" style="background:rgba(239, 68, 68, 0.06); border-color:rgba(239, 68, 68, 0.25); color:var(--text-1);">
+        <svg class="w-4 h-4 shrink-0 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div>
+          <span class="font-bold text-rose-600 dark:text-rose-400">Enrollment Security Enforced:</span>
+          Only students enrolled in this specific subject roster are permitted to log ingress. Unenrolled taps will register as invalid.
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2 border-t" style="border-color:var(--border);">
+        <button type="button" id="cancelSubjectMethodModalBtn" class="pillbtn text-xs">Cancel</button>
+        <button type="button" id="btnConfirmLaunchSubjectSession" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 20px; border-radius:8px;">
+          Launch 30-Min Session
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher Student RFID Session Modal -->
+  <div id="teacherRfidSessionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-lg w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong);">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <h3 class="text-base font-semibold" id="rfidModalTitle">Student RFID Attendance Session</h3>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span id="rfidReadyLabel" class="badge hidden" style="background:rgba(16, 185, 129, 0.15); color:var(--present); border:1px solid rgba(16, 185, 129, 0.35); font-size:11px; font-weight:700; padding:2px 10px; border-radius:12px;">Active</span>
+          <button id="closeRfidModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" aria-label="Close Modal">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- State 1: Session Confirmation Modal Form (Time-In Ingress Only) -->
+      <div id="rfidConfigSection" class="space-y-4">
+        <!-- Session Overview Card -->
+        <div class="p-3.5 rounded-xl border text-left flex items-start gap-3" style="background:var(--accent-soft); border-color:var(--border-strong); color:var(--text-1);">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background:var(--accent); color:#fff;">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm">Classroom Time-In Attendance</span>
+              <span class="badge font-bold text-[10px] px-2 py-0.5 rounded-full" style="background:var(--ch-500); color:#fff;">Single Ingress</span>
+            </div>
+            <div class="text-xs opacity-85 mt-1 leading-relaxed">
+              One-tap Time-In attendance for all enrolled students. Specifically accommodates regular, irregular, and Octoberian students without requiring a time-out scan.
+            </div>
+          </div>
+        </div>
+
+        <!-- 30-Minute Automatic Window Callout -->
+        <div class="p-3 rounded-xl border flex items-center gap-3" style="background:var(--raised); border-color:var(--border);">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="text-xs">
+            <div class="font-semibold text-[var(--text-1)]">30 Minutes Automatic Ingress Window</div>
+            <div style="color:var(--text-2);" class="text-[11px] mt-0.5">Session window opens for 30 minutes. Student RFID card taps on the classroom ESP32 reader are captured live.</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="cancelRfidModalBtn" class="pillbtn text-xs">Cancel</button>
+          <button type="button" id="confirmStartRfidBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 18px; border-radius:8px;">
+            Start 30-Min RFID Session
+          </button>
+        </div>
+      </div>
+
+      <!-- State 2: Active RFID Session Live Tap View (Ready for Card Tapping) -->
+      <div id="rfidActiveSection" class="space-y-4 hidden">
+        <!-- Telemetry Cards -->
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="py-3.5 px-3 rounded-xl border flex flex-col justify-center" style="background:var(--raised); border-color:var(--border); min-height:68px;">
+            <div class="text-[10px] uppercase font-bold tracking-wider mb-1" style="color:var(--text-3);">Session Remaining</div>
+            <div id="modalRfidCountdown" class="text-lg font-bold font-mono text-amber-500 tabular-nums">--:--</div>
+            <div class="w-full h-1.5 rounded-full overflow-hidden mt-1.5" style="background:rgba(16, 185, 129, 0.18);">
+              <div id="modalRfidProgressBar" class="h-full rounded-full transition-all duration-500" style="background:var(--present); width:100%;"></div>
+            </div>
+          </div>
+          <div class="py-3.5 px-3 rounded-xl border flex flex-col justify-center" style="background:var(--raised); border-color:var(--border); min-height:68px;">
+            <div class="text-[10px] uppercase font-bold tracking-wider mb-1" style="color:var(--text-3);">Students Checked In</div>
+            <div id="modalRfidTapCount" class="text-lg font-bold font-mono tabular-nums" style="color:var(--present);">0 Tapped</div>
+          </div>
+        </div>
+
+        <!-- Live Student Ingress List -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5 px-0.5">
+            <span class="text-xs font-semibold text-[var(--text-1)]" id="rfidFeedLabel">Live Student Ingress Feed</span>
+            <span class="text-[10px] text-[var(--text-3)] font-mono">ESP32 Hardware Stream</span>
+          </div>
+
+          <div id="modalRfidTapFeed" class="space-y-2 p-2.5 rounded-lg border" style="background:var(--surface); border-color:var(--border); max-height:240px; overflow-y:auto; min-height:160px;">
+            <div id="modalRfidEmptyFeed" class="py-10 text-center text-xs" style="color:var(--text-3);">
+              Waiting for student RFID card tap on the ESP32 reader...
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick ESP32 Demo / Simulate Tap Triggers -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button type="button" id="btnSimulateStudentEsp32Tap" class="py-2 px-3 text-xs rounded-lg border flex items-center justify-center gap-1.5 hover:bg-[var(--surface-hover)] transition-colors cursor-pointer" style="border-color:var(--border); color:var(--text-2);">
+            <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span>Simulate Enrolled Card Tap</span>
+          </button>
+          <button type="button" id="btnSimulateInvalidStudentTap" class="py-2 px-3 text-xs rounded-lg border flex items-center justify-center gap-1.5 hover:bg-[var(--surface-hover)] transition-colors cursor-pointer" style="border-color:rgba(239, 68, 68, 0.3); background:rgba(239, 68, 68, 0.05); color:var(--absent);">
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Simulate Un-Enrolled Tap (Reject)</span>
+          </button>
+        </div>
+
+        <!-- Session Controls (Centered Close Button) -->
+        <div class="flex items-center justify-center pt-2 border-t" style="border-color:var(--border);">
+          <button type="button" id="btnCloseAndRecordRfidBtn" class="btn-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer" style="background:var(--ch-900); color:#fff; padding:8px 24px; border-radius:8px;">
+            Close Session
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher Dynamic Rotating QR Code Modal (Split Layout Mirrored from Admin) -->
   <div id="teacherQrModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
-    <div class="card max-w-sm w-full p-6 text-center shadow-2xl relative animate-fade-in" style="background: var(--surface); border: 1px solid var(--border);">
-      <button id="closeTeacherQrModalBtn" class="absolute top-4 right-4 text-xs p-1.5 rounded-lg border hover:bg-[var(--surface-hover)] transition-colors" style="border-color: var(--border);" aria-label="Close Modal">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
+    <div id="qrModalCard" class="card qr-modal-container p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border:1px solid var(--border);">
 
-      <div class="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3" style="background: var(--ch-100); color: var(--ch-900);">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <h3 class="text-base font-semibold" id="qrModalTitle">Student QR Attendance Session</h3>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span id="qrReadyLabel" class="badge hidden" style="background:rgba(16, 185, 129, 0.15); color:var(--present); border:1px solid rgba(16, 185, 129, 0.35); font-size:11px; font-weight:700; padding:2px 10px; border-radius:12px;">Active</span>
+          <button id="closeTeacherQrModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer" aria-label="Close Modal">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
       </div>
 
-      <h3 class="text-base font-bold" style="color: var(--text-1);">Classroom QR Attendance</h3>
-      <p class="text-xs mt-1" style="color: var(--text-2);">Have students scan this dynamic QR pass from their portal. Geofence radius: 50m.</p>
+      <!-- State 1: Session Confirmation Modal Form (QR Time-In Only) -->
+      <div id="qrConfigSection" class="space-y-4">
+        <!-- Session Overview Card -->
+        <div class="p-3.5 rounded-xl border text-left flex items-start gap-3" style="background:var(--accent-soft); border-color:var(--border-strong); color:var(--text-1);">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background:var(--accent); color:#fff;">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm">Dynamic Classroom QR Pass</span>
+              <span class="badge font-bold text-[10px] px-2 py-0.5 rounded-full" style="background:var(--ch-500); color:#fff;">Time-In Only</span>
+            </div>
+            <div class="text-xs opacity-85 mt-1 leading-relaxed">
+              Generates a dynamic rotating QR pass for student classroom Time-In. Regular, irregular, and Octoberian students scan with camera to record attendance.
+            </div>
+          </div>
+        </div>
 
-      <!-- QR Canvas Container -->
-      <div class="my-5 p-4 rounded-xl flex flex-col items-center justify-center mx-auto" style="background: #ffffff; width: 220px; height: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-        <div id="teacherQrCodeContainer" class="flex items-center justify-center w-full h-full"></div>
+        <!-- 30-Minute Automatic Window Callout -->
+        <div class="p-3 rounded-xl border flex items-center gap-3" style="background:var(--raised); border-color:var(--border);">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:var(--ch-100); color:var(--ch-900);">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="text-xs">
+            <div class="font-semibold text-[var(--text-1)]">30 Minutes Automatic Window & Anti-Buddy Geofence</div>
+            <div style="color:var(--text-2);" class="text-[11px] mt-0.5">Dynamic QR token rotates every 30 seconds for 30 minutes. Anti-buddy-punch geofence active.</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="cancelQrModalBtn" class="pillbtn text-xs">Cancel</button>
+          <button type="button" id="confirmStartQrBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 18px; border-radius:8px;">
+            Start 30-Min QR Pass
+          </button>
+        </div>
       </div>
 
-      <!-- Rotation Progress & Token Info -->
-      <div class="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg mb-3" style="background: var(--raised);">
-        <span class="font-medium" style="color: var(--text-2);">Auto-Rotates In:</span>
-        <span id="qrRotationCountdown" class="font-mono font-bold text-amber-500 tabular-nums">30s</span>
+      <!-- State 2: Active QR Display (Split 2-Column View) -->
+      <div id="qrActiveSection" class="hidden space-y-2.5">
+        <div class="qr-columns-split">
+          
+          <!-- LEFT SIDE: QR Code Canvas, 30-Min Duration Loading Phase, Auto-Rotate & Token -->
+          <div class="qr-left-pane">
+            <!-- QR Canvas Container -->
+            <div class="p-2.5 rounded-xl flex flex-col items-center justify-center mx-auto" style="background:#ffffff; width:180px; height:180px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+              <div id="teacherQrCodeContainer" class="flex items-center justify-center w-full h-full"></div>
+            </div>
+
+            <!-- 30-Minute Session Duration Loading Phase Bar (Green) -->
+            <div class="p-2.5 rounded-xl border text-left w-full" style="background:var(--raised); border-color:var(--border);">
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <span class="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full inline-block" style="background:var(--present);"></span>
+                  30-Min Duration
+                </span>
+                <span id="studentQrSessionRemaining" class="font-mono font-bold tabular-nums text-xs" style="color:var(--present);">30:00</span>
+              </div>
+              <!-- Green Loading / Progress Bar -->
+              <div class="w-full h-2 rounded-full overflow-hidden" style="background:rgba(16, 185, 129, 0.18);">
+                <div id="studentQrSessionProgressBar" class="h-full rounded-full transition-all duration-500" style="background:var(--present); width:100%;"></div>
+              </div>
+              <div class="flex items-center justify-between text-[10px] mt-1 text-[var(--text-3)] font-mono">
+                <span>Started</span>
+                <span id="studentQrSessionPct">100% remaining</span>
+              </div>
+            </div>
+
+            <!-- Rotation Countdown & Token Display -->
+            <div class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg w-full" style="background:var(--raised); height:28px; box-sizing:border-box;">
+              <span class="font-medium" style="color:var(--text-2);">Auto-Rotates In:</span>
+              <span id="qrRotationCountdown" class="font-mono font-bold text-amber-500 tabular-nums">30s</span>
+            </div>
+
+            <div class="text-[10.5px] font-mono text-center truncate w-full" style="color:var(--text-3); height:16px; line-height:16px;" id="qrTokenDisplay">
+              Token: --
+            </div>
+          </div>
+
+          <!-- RIGHT SIDE: Live Student QR Ingress Feed & Simulated Student Scan Test -->
+          <div class="qr-right-pane" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+              <div class="flex items-center justify-between px-0.5" style="height:20px; line-height:20px; margin-bottom:10px;">
+                <span class="text-xs font-semibold text-[var(--text-1)]" id="qrFeedLabel">Live Student QR Ingress Feed</span>
+                <span id="modalQrTapCount" class="font-mono text-emerald-500 font-bold tabular-nums text-xs">0 Scanned</span>
+              </div>
+
+              <!-- Scrollable Ingress Feed -->
+              <div id="modalQrTapFeed" class="space-y-1.5 p-2 rounded-lg border" style="background:var(--surface); border-color:var(--border); height:231px; max-height:231px; overflow-y:auto; box-sizing:border-box;">
+                <div id="modalQrEmptyFeed" class="py-12 text-center text-xs" style="color:var(--text-3);">
+                  Waiting for student QR scan on the terminal...
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Student QR Demo / Simulate Scan Triggers -->
+            <div class="grid grid-cols-2 gap-1.5" style="box-sizing:border-box;">
+              <button type="button" id="btnSimulateStudentQrScan" class="btn-sim-thin" style="height:28px; min-height:28px; max-height:28px; box-sizing:border-box; font-size:10px !important; padding:0 4px !important;">
+                <svg style="width:11px; height:11px; flex-shrink:0; color:#2196f3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span class="truncate">Enrolled Scan</span>
+              </button>
+              <button type="button" id="btnSimulateInvalidStudentQr" class="btn-sim-thin" style="height:28px; min-height:28px; max-height:28px; box-sizing:border-box; font-size:10px !important; padding:0 4px !important; border-color:rgba(239, 68, 68, 0.3) !important; color:var(--absent) !important; background:rgba(239, 68, 68, 0.05) !important;">
+                <svg style="width:11px; height:11px; flex-shrink:0; color:#ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <span class="truncate">Un-Enrolled (Reject)</span>
+              </button>
+            </div>
+
+            <!-- Spacer matching Token line height -->
+            <div style="height:16px; line-height:16px;" aria-hidden="true"></div>
+          </div>
+
+        </div>
+
+        <!-- Session Controls (Centered Close Button) -->
+        <div class="flex items-center justify-center pt-3 border-t" style="border-color:var(--border); margin-top:14px;">
+          <button type="button" id="btnTeacherCloseQrSession" class="btn-primary text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer" style="background:var(--ch-900); color:#fff; padding:7px 26px; border-radius:8px;">
+            Close Session
+          </button>
+        </div>
       </div>
 
-      <div class="text-[11px] font-mono text-center truncate mb-4" style="color: var(--text-3);" id="qrTokenDisplay">
-        Token: --
-      </div>
-
-      <button type="button" id="btnDoneTeacherQr" class="w-full py-2 text-xs font-semibold rounded-lg btn-secondary">
-        Keep Session Running & Minimize
-      </button>
     </div>
   </div>
 
