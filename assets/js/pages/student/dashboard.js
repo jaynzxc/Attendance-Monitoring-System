@@ -228,6 +228,15 @@ function initRealtimeFeed() {
         message: `Your campus attendance check-in was registered as ${newLog.status.toUpperCase()}.`,
         type: newLog.status === 'present' ? 'success' : 'warning'
       });
+
+      if (window.addAMSNotification) {
+        window.addAMSNotification({
+          title: newLog.event_type === 'time_out' ? 'Campus Time-Out Recorded' : 'Campus Ingress Registered',
+          message: `Attendance tap registered as ${newLog.status ? newLog.status.toUpperCase() : 'PRESENT'} via ${(newLog.scan_method || 'rfid').toUpperCase()}.`,
+          type: newLog.status === 'late' ? 'late' : 'present',
+          link: 'attendance-history.html'
+        });
+      }
     }
   });
 }
