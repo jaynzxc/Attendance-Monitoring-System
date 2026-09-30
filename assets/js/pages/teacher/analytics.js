@@ -146,6 +146,10 @@ function renderComparisonChart(stats) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       scales: {
         y: {
           min: 0,
@@ -164,8 +168,15 @@ function renderComparisonChart(stats) {
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: isDark ? '#0C1D38' : '#0D47A1',
+          titleColor: '#FFFFFF',
+          bodyColor: '#E3F2FD',
+          borderColor: '#2196F3',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
           callbacks: {
-            label: (ctx) => ` Attendance: ${ctx.parsed.y}%`
+            label: (ctx) => ` Attendance Rate: ${ctx.parsed.y}%`
           }
         }
       }
@@ -245,13 +256,22 @@ function renderWeekdayTrendChart() {
         backgroundColor: 'rgba(33, 150, 243, 0.1)',
         tension: 0.35,
         fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointHitRadius: 20,
         pointBackgroundColor: '#0D47A1',
-        pointRadius: 4
+        pointHoverBackgroundColor: '#2196F3',
+        pointHoverBorderColor: '#FFFFFF',
+        pointHoverBorderWidth: 2
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       scales: {
         y: {
           min: 70,
@@ -268,7 +288,19 @@ function renderWeekdayTrendChart() {
         }
       },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#0C1D38' : '#0D47A1',
+          titleColor: '#FFFFFF',
+          bodyColor: '#E3F2FD',
+          borderColor: '#2196F3',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: (c) => ` Avg Attendance: ${c.parsed.y}%`
+          }
+        }
       }
     }
   });

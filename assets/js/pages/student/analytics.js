@@ -132,6 +132,10 @@ async function renderArrivalChart(studentId) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       scales: {
         y: {
           beginAtZero: true,
@@ -152,6 +156,13 @@ async function renderArrivalChart(studentId) {
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: isDark ? '#0C1D38' : '#0D47A1',
+          titleColor: '#FFFFFF',
+          bodyColor: '#E3F2FD',
+          borderColor: '#2196F3',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
           callbacks: {
             label: (ctx) => ` Gate Scans: ${ctx.parsed.y} days`
           }

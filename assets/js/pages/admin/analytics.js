@@ -43,8 +43,26 @@ function renderProgramChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#0C1D38' : '#0D47A1',
+          titleColor: '#FFFFFF',
+          bodyColor: '#E3F2FD',
+          borderColor: '#2196F3',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: (items) => `Department: ${items[0].label}`,
+            label: (c) => ` Attendance Rate: ${c.parsed.y}%`
+          }
+        }
       },
       scales: {
         x: {
@@ -87,15 +105,38 @@ function renderArrivalCurve() {
         fill: true,
         tension: 0.35,
         pointRadius: 4,
+        pointHoverRadius: 7,
+        pointHitRadius: 20,
         pointBackgroundColor: '#0D47A1',
+        pointHoverBackgroundColor: '#2196F3',
+        pointHoverBorderColor: '#FFFFFF',
+        pointHoverBorderWidth: 2,
         borderWidth: 2.5
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#0C1D38' : '#0D47A1',
+          titleColor: '#FFFFFF',
+          bodyColor: '#E3F2FD',
+          borderColor: '#2196F3',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: (items) => `Time Slot: ${items[0].label}`,
+            label: (c) => ` Arrival Volume: ${c.parsed.y} students`
+          }
+        }
       },
       scales: {
         x: {

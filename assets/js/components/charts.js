@@ -54,7 +54,10 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
           fill: true,
           tension: 0.38,
           pointRadius: 3.5,
-          pointHoverRadius: 6,
+          pointHoverRadius: 7,
+          pointHitRadius: 20,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor: '#FFFFFF',
           pointBackgroundColor: '#2196F3',
           borderWidth: 2.5
         },
@@ -64,6 +67,8 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
           borderColor: targetColor,
           borderDash: [5, 4],
           pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHitRadius: 0,
           borderWidth: 1.5,
           tension: 0
         }
@@ -72,6 +77,10 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: {
           display: true,
@@ -247,6 +256,10 @@ export function renderSectionComparisonChart(canvasId = 'sectionComparisonChart'
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
