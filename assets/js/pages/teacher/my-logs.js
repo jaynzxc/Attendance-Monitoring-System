@@ -39,9 +39,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 5. Load Personal Daily Paired Attendance Records
   await loadPersonalLogs();
 
-  // 6. Setup Event Listeners & QR Pass Modal
+  // 6. Setup Event Listeners
   initListeners();
-  initQrPassModal(currentTeacher);
 
   // 7. Subscribe to Real-Time Gate Ingress
   initRealtimeFeed();
@@ -150,7 +149,6 @@ function initListeners() {
 
 async function loadPersonalLogs() {
   const tbody = document.getElementById('personalLogsTableBody');
-  const badge = document.getElementById('totalLogsBadge');
   const dateFrom = document.getElementById('filterDateFrom')?.value;
   const dateTo = document.getElementById('filterDateTo')?.value;
   const status = document.getElementById('filterStatus')?.value;
@@ -176,10 +174,6 @@ async function loadPersonalLogs() {
     const { data: records, count } = await attendanceApi.getTeacherDailyAttendance(currentTeacher.id, filters, currentPage, pageSize);
     totalCount = count || 0;
 
-    if (badge) {
-      badge.textContent = `${totalCount} ${totalCount === 1 ? 'Attendance Record' : 'Attendance Records'}`;
-    }
-
     renderLogsTable(records);
     updatePaginationControls();
     updateMonthlyKpiStats(records);
@@ -204,8 +198,8 @@ function renderLogsTable(records) {
   if (!records || records.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="py-12 text-center text-sm" style="color: var(--text-3);">
-          No gate attendance records found for this period.
+        <td colspan="6" class="py-12 text-center text-sm" style="color: var(--text-3);">
+          No attendance records found for this period.
         </td>
       </tr>
     `;
@@ -247,25 +241,40 @@ function renderLogsTable(records) {
     }
 
     // 5. Status Pill
-    const status = record.status || 'present';
-    const statusPillClass = status === 'present' ? 'pill-present' : 'pill-late';
-    const statusLabel = status === 'present' ? 'Present (On-Time)' : `Late (+${record.minutes_late || 0}m)`;
+    const rawStatus = (record.status || 'present').toLowerCase();
+    let statusPillClass = 'pill-present';
+    let statusLabel = 'Present';
+
+    if (rawStatus === 'late') {
+      statusPillClass = 'pill-late';
+      statusLabel = 'Late';
+    } else if (rawStatus === 'absent') {
+      statusPillClass = 'pill-absent';
+      statusLabel = 'Absent';
+    } else if (rawStatus === 'excused') {
+      statusPillClass = 'pill-excused';
+      statusLabel = 'Excused';
+    } else {
+      statusPillClass = 'pill-present';
+      statusLabel = 'Present';
+    }
 
     // 6. Ingress Method
-    const method = (record.scan_method || 'rfid').toUpperCase();
-    const methodBadge = method === 'QR' 
-      ? `<span class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">DYNAMIC QR</span>`
-      : `<span class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">RFID GATE</span>`;
+    const rawMethod = (record.scan_method || record.method || '').toUpperCase();
+    let methodBadge = `<span class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">RFID</span>`;
+    if (record.is_manual || rawMethod.includes('MANUAL') || rawMethod.includes('OVERRIDE')) {
+      methodBadge = `<span class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">MANUAL</span>`;
+    } else if (rawMethod.includes('QR')) {
+      methodBadge = `<span class="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">QR</span>`;
+    }
 
-    // 7. Gate Location
-    const deviceLocation = record.device_location ? `${record.device_code || 'GATE-01'} (${record.device_location})` : 'Main Campus Turnstile';
+    // 7. Drop device location — single ESP32, column removed
 
     return `
       <tr class="hover:bg-[var(--surface-hover)] transition-colors">
         <td class="py-3 px-4 font-medium text-xs tabular-nums">${dateFormatted}</td>
         <td class="py-3 px-4 font-mono text-xs tabular-nums font-semibold" style="color: var(--text-1);">${timeInFormatted}</td>
         <td class="py-3 px-4">${timeOutHtml}</td>
-        <td class="py-3 px-4">${durationHtml}</td>
         <td class="py-3 px-4">
           <span class="pill ${statusPillClass} text-[11px] uppercase font-bold tracking-wider">
             ${statusLabel}
@@ -274,9 +283,7 @@ function renderLogsTable(records) {
         <td class="py-3 px-4">
           ${methodBadge}
         </td>
-        <td class="py-3 px-4 text-xs tabular-nums" style="color: var(--text-2);">
-          ${deviceLocation}
-        </td>
+        <td class="py-3 px-4">${durationHtml}</td>
       </tr>
     `;
   }).join('');
@@ -287,7 +294,6 @@ function updateMonthlyKpiStats(records) {
   const punctualityEl = document.getElementById('myPunctualityRate');
   const daysLateEl = document.getElementById('myDaysLate');
   const latestTapEl = document.getElementById('myLatestTap');
-  const latestLocEl = document.getElementById('myLatestLocation');
 
   if (!records || records.length === 0) {
     if (daysPresentEl) daysPresentEl.textContent = '0';
@@ -323,9 +329,6 @@ function updateMonthlyKpiStats(records) {
       const action = latest.time_out ? 'Time-Out' : 'Time-In';
       latestTapEl.textContent = `${dateStr} · ${timeStr} (${action})`;
     }
-    if (latestLocEl) {
-      latestLocEl.textContent = latest.device_location ? `${latest.device_code} (${latest.device_location})` : 'Main Campus Turnstile';
-    }
   }
 }
 
@@ -345,54 +348,6 @@ function updatePaginationControls() {
   if (nextBtn) nextBtn.disabled = (currentPage + 1) * pageSize >= totalCount;
 }
 
-/**
- * Dynamic QR Pass Modal Logic
- */
-function initQrPassModal(teacher) {
-  const btnOpen = document.getElementById('btnViewQrPass');
-  const btnClose = document.getElementById('btnCloseQrPass');
-  const btnDone = document.getElementById('btnDoneQrPass');
-  const modal = document.getElementById('qrPassModal');
-  const nameEl = document.getElementById('modalFacultyName');
-  const empEl = document.getElementById('modalFacultyEmp');
-  const codeEl = document.getElementById('qrPassCodeDisplay');
-
-  if (nameEl) nameEl.textContent = `Prof. ${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || 'Prof. Faculty';
-  if (empEl) empEl.textContent = teacher.employee_number || 'EMP-2018-042';
-
-  const openModal = async () => {
-    if (modal) modal.classList.remove('hidden');
-    // Fetch or fallback active QR code value
-    const sb = getSupabase();
-    if (sb) {
-      try {
-        const { data } = await sb
-          .from('qr_codes')
-          .select('code_value')
-          .eq('user_id', teacher.id)
-          .eq('is_active', true)
-          .limit(1)
-          .maybeSingle();
-
-        if (data && codeEl) {
-          codeEl.textContent = data.code_value;
-        } else if (codeEl) {
-          codeEl.textContent = `bcp_qr_fac_${teacher.employee_number || 'santos'}`;
-        }
-      } catch {
-        if (codeEl) codeEl.textContent = `bcp_qr_fac_${teacher.employee_number || 'santos'}`;
-      }
-    }
-  };
-
-  const closeModal = () => {
-    if (modal) modal.classList.add('hidden');
-  };
-
-  if (btnOpen) btnOpen.addEventListener('click', openModal);
-  if (btnClose) btnClose.addEventListener('click', closeModal);
-  if (btnDone) btnDone.addEventListener('click', closeModal);
-}
 
 /**
  * Real-time subscription to catch instant gate taps made by this teacher

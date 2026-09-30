@@ -661,6 +661,11 @@ body {
   color: var(--absent);
 }
 
+.pill-excused {
+  background: var(--excused-soft);
+  color: var(--excused);
+}
+
 .rank {
   width: 22px;
   color: var(--accent);

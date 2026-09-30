@@ -97,13 +97,9 @@
         <div class="pagehead">
           <div>
             <h1>My Attendance Log</h1>
-            <p id="myLogsSubtitle">Prof. Ricardo Santos · Employee ID: <strong id="facultyEmpNum">EMP-2018-042</strong> · RFID UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="facultyRfidUid">99887766</strong> · Cutoff: 08:00 AM</p>
+            <p id="myLogsSubtitle"><span id="facultyNameDisplay">Prof. Ricardo Santos</span> · Employee ID: <strong id="facultyEmpNum">EMP-2018-042</strong> · RFID UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="facultyRfidUid">99887766</strong></p>
           </div>
           <div class="flex items-center gap-3">
-            <button id="btnViewQrPass" class="pillbtn text-xs inline-flex items-center gap-2" style="background: var(--surface-hover); border-color: var(--border);">
-              <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              My Dynamic QR Pass
-            </button>
             <button id="refreshLogsBtn" class="pillbtn text-xs inline-flex items-center gap-2">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
               Refresh Logs
@@ -114,39 +110,26 @@
         <!-- Personal Monthly Statistics -->
         <div class="kpis" style="margin-bottom: 20px;">
           <div class="card kpi">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-            </div>
             <div class="label">Days Present (This Month)</div>
             <div class="num tabular-nums" style="color:var(--present);" id="myDaysPresent">--</div>
             <span class="chip chip-good">Verified Ingress</span>
           </div>
 
           <div class="card kpi">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
             <div class="label">On-Time Punctuality Rate</div>
             <div class="num tabular-nums" style="color:var(--accent);" id="myPunctualityRate">--%</div>
             <span class="chip chip-good">Before 08:00 AM</span>
           </div>
 
           <div class="card kpi">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
-            </div>
             <div class="label">Tardy / Late Check-ins</div>
             <div class="num tabular-nums" style="color:var(--late);" id="myDaysLate">--</div>
             <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
           </div>
 
           <div class="card kpi">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
             <div class="label">Latest Check-in Recorded</div>
             <div class="num tabular-nums text-lg" style="color:var(--text-1);" id="myLatestTap">--</div>
-            <span class="chip" style="background:var(--raised); color:var(--text-2);" id="myLatestLocation">Gate Ingress</span>
           </div>
         </div>
 
@@ -167,15 +150,13 @@
               <!-- Status Filter -->
               <select id="filterStatus" class="px-2.5 py-1.5 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
                 <option value="">All Statuses</option>
-                <option value="present">Present (On-Time)</option>
-                <option value="late">Late (Tardy)</option>
+                <option value="present">Present</option>
+                <option value="late">Late</option>
+                <option value="absent">Absent</option>
+                <option value="excused">Excused</option>
               </select>
 
               <button id="applyFilterBtn" class="pillbtn text-xs">Apply Filter</button>
-            </div>
-
-            <div class="text-xs font-mono" style="color: var(--text-3);" id="totalLogsBadge">
-              0 Attendance Records
             </div>
           </div>
 
@@ -184,18 +165,17 @@
               <thead>
                 <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
                   <th class="py-3 px-4">Date</th>
-                  <th class="py-3 px-4">Time In</th>
-                  <th class="py-3 px-4">Time Out</th>
-                  <th class="py-3 px-4">Total Duration</th>
+                  <th class="py-3 px-4">Time-In</th>
+                  <th class="py-3 px-4">Time-Out</th>
                   <th class="py-3 px-4">Status</th>
                   <th class="py-3 px-4">Method</th>
-                  <th class="py-3 px-4">Scanner Gate Location</th>
+                  <th class="py-3 px-4">Total Duration</th>
                 </tr>
               </thead>
               <tbody id="personalLogsTableBody" class="divide-y" style="border-color: var(--border);">
                 <tr>
-                  <td colspan="7" class="py-12 text-center text-sm" style="color: var(--text-3);">
-                    Loading your personal gate attendance records...
+                  <td colspan="6" class="py-12 text-center text-sm" style="color: var(--text-3);">
+                    Loading your personal attendance records...
                   </td>
                 </tr>
               </tbody>
@@ -215,43 +195,6 @@
     </div>
   </div>
 
-  <!-- Dynamic QR Pass Modal -->
-  <div id="qrPassModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-labelledby="qrPassTitle">
-    <div class="card max-w-sm w-full p-6 text-center shadow-2xl relative animate-in fade-in zoom-in-95 duration-200" style="background: var(--surface); border: 1px solid var(--border);">
-      <button id="btnCloseQrPass" class="absolute top-4 right-4 text-xs p-1.5 rounded-lg border hover:bg-[var(--surface-hover)] transition-colors" style="border-color: var(--border);" aria-label="Close Modal">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-
-      <div class="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3" style="background: var(--accent-soft); color: var(--accent);">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      </div>
-
-      <h3 id="qrPassTitle" class="text-base font-bold" style="color: var(--text-1);">Digital Ingress QR Pass</h3>
-      <p class="text-xs mt-1" style="color: var(--text-2);">Present this dynamic credential to the campus camera terminal for Time-In or Time-Out.</p>
-
-      <!-- QR Display Canvas Container -->
-      <div class="my-4 p-4 rounded-xl border flex flex-col items-center justify-center bg-white shadow-inner" style="border-color: var(--border);">
-        <div id="qrCodeContainer" class="w-44 h-44 flex items-center justify-center">
-          <svg class="w-36 h-36 text-slate-800" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14-2h4v2h-4v-2zm-4 0h2v4h-2v-4zm2 4h2v4h-2v-4zm2 2h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 4h2v2h-2v-2z"/>
-          </svg>
-        </div>
-        <div class="mt-2 text-[11px] font-mono font-bold tracking-wider text-slate-600" id="qrPassCodeDisplay">
-          BCP-QR-FACULTY
-        </div>
-      </div>
-
-      <div class="text-left text-xs p-3 rounded-lg border tabular-nums mb-4" style="background: var(--surface-hover); border-color: var(--border);">
-        <div class="flex justify-between py-0.5"><span style="color: var(--text-2);">Faculty Member:</span><strong id="modalFacultyName" style="color: var(--text-1);">Prof. Ricardo Santos</strong></div>
-        <div class="flex justify-between py-0.5"><span style="color: var(--text-2);">Employee ID:</span><span class="font-mono" id="modalFacultyEmp">EMP-2018-042</span></div>
-        <div class="flex justify-between py-0.5"><span style="color: var(--text-2);">Attendance Shift:</span><span>08:00 AM Cutoff</span></div>
-      </div>
-
-      <button id="btnDoneQrPass" class="pillbtn w-full text-xs py-2">
-        Done
-      </button>
-    </div>
-  </div>
 
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
