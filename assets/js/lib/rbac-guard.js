@@ -5,8 +5,9 @@
 import { getSupabase } from './supabaseClient.js';
 import { getCurrentUser, logout } from './auth.js';
 import { openSignOutModal } from '../components/signOutModal.js';
+import { initNotifications, addNotification } from '../components/notifications.js';
 
-export { openSignOutModal };
+export { openSignOutModal, initNotifications, addNotification };
 
 /**
  * Enforces role restriction for portal views
@@ -112,6 +113,9 @@ export function initLayoutBindings(user) {
 
   // Initialize theme toggle
   initThemeToggle();
+
+  // Initialize interactive in-app notification center on appbar bell
+  initNotifications(user);
 }
 
 /**

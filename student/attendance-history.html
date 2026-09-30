@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Student Attendance History</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Modern Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Student Navigation">
+      <div class="brand">
+        <div class="mark">S</div>
+        <span>AMS Student</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="scan-qr.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Scan QR Code
+        </a>
+        <a href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a class="active" href="attendance-history.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+          Attendance History
+        </a>
+        <a href="excuse-slip-submit.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
+          Submit Excuse Slip
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/><circle cx="18" cy="6" r="3"/></svg>
+          My Analytics & Honors
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Student Attendance Portal
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light / Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">JD</div>
+          <div class="pf-info">
+            <div class="pf-name" id="appbarStudentName">Juan Dela Cruz</div>
+            <div class="pf-role" id="appbarStudentRole">Student · BSIT 3-1</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main History Content -->
+      <main class="main">
+        <div class="pagehead">
+          <div>
+            <h1>Attendance History</h1>
+            <p id="historySubtitle">
+              <span id="historyStudentName">Juan Dela Cruz</span> · 
+              <span id="historySectionName">BSIT 3-1</span> · 
+              Student ID: <strong id="historyStudentNumber">2024-IT-00101</strong> · 
+              RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="historyRfidDisplay">E2806894</strong>
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="refreshLogsBtn" class="pillbtn text-xs inline-flex items-center gap-2">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              Refresh
+            </button>
+            <button id="exportCsvBtn" class="pillbtn text-xs inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Attendance KPIs (Institutional Standard: 4 Cards) -->
+        <div class="kpis" style="margin-bottom: 20px;">
+          <div class="card kpi">
+            <div class="label">Attendance Rate</div>
+            <div class="num tabular-nums" style="color:var(--accent);" id="kpiAttendanceRate">--%</div>
+            <span class="chip chip-good">Semester Target &ge; 85%</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Days Present</div>
+            <div class="num tabular-nums" style="color:var(--present);" id="kpiPresentDays">--</div>
+            <span class="chip chip-good">Verified Ingress</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Tardy / Late Check-ins</div>
+            <div class="num tabular-nums" style="color:var(--late);" id="kpiLateDays">--</div>
+            <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
+          </div>
+
+          <div class="card kpi">
+            <div class="label">Unexcused Absences</div>
+            <div class="num tabular-nums" style="color:var(--absent);" id="kpiAbsentDays">--</div>
+            <span class="chip chip-bad">Max Allowed: 3</span>
+          </div>
+        </div>
+
+        <!-- Filters & History Table Card -->
+        <div class="card overflow-hidden">
+          <!-- Filter Controls Toolbar -->
+          <div class="p-4 border-b flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4" style="border-color: var(--border);">
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Quick Search Input -->
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="filterSearch" class="input-field" placeholder="Search records...">
+              </div>
+
+              <!-- Date Range Filter -->
+              <div class="flex items-center gap-2">
+                <label for="filterDateFrom" class="text-xs font-semibold" style="color: var(--text-2);">From</label>
+                <input type="date" id="filterDateFrom" class="input-field text-xs" style="padding: 7px 10px;">
+              </div>
+              <div class="flex items-center gap-2">
+                <label for="filterDateTo" class="text-xs font-semibold" style="color: var(--text-2);">To</label>
+                <input type="date" id="filterDateTo" class="input-field text-xs" style="padding: 7px 10px;">
+              </div>
+
+              <!-- Status Filter -->
+              <select id="filterStatus" class="select-field text-xs" style="padding: 7px 10px;">
+                <option value="">All Statuses</option>
+                <option value="present">Present (On-Time)</option>
+                <option value="late">Late (Tardy)</option>
+                <option value="absent">Absent</option>
+                <option value="excused">Excused Slip</option>
+              </select>
+
+              <!-- Ingress Method Filter -->
+              <select id="filterMethod" class="select-field text-xs" style="padding: 7px 10px;">
+                <option value="">All Ingress Methods</option>
+                <option value="rfid">RFID Card Tap</option>
+                <option value="qr">Camera QR Scan</option>
+                <option value="manual">Manual Override</option>
+              </select>
+            </div>
+
+            <!-- Reset Filter Button -->
+            <div class="flex items-center gap-2">
+              <button id="resetFilterBtn" class="pillbtn text-xs inline-flex items-center gap-1.5" style="color: var(--text-2);">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Detailed Records Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
+                  <th class="py-3 px-4">Date</th>
+                  <th class="py-3 px-4">Check-In</th>
+                  <th class="py-3 px-4">Time-Out</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Method</th>
+                  <th class="py-3 px-4">Duration</th>
+                  <th class="py-3 px-4">Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceHistoryTableBody" class="divide-y" style="border-color: var(--border);">
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-sm" style="color: var(--text-3);">
+                    Loading attendance history records...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Footer -->
+          <div class="p-4 border-t flex items-center justify-between text-xs" style="border-color: var(--border); color: var(--text-2);">
+            <span id="pageInfoText">Showing 1 to 10 of 10 records</span>
+            <div class="flex items-center gap-2">
+              <button id="prevPageBtn" class="pillbtn text-xs px-2.5 py-1" disabled>Previous</button>
+              <button id="nextPageBtn" class="pillbtn text-xs px-2.5 py-1" disabled>Next</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Page Controller Script -->
+  <script type="module" src="../assets/js/pages/student/attendance-history.js"></script>
+</body>
+</html>

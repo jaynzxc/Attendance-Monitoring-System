@@ -24,6 +24,9 @@
 
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="layout">
@@ -48,6 +51,10 @@
         <a href="attendance-calendar.html">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Attendance Calendar
+        </a>
+        <a href="attendance-history.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+          Attendance History
         </a>
         <a href="excuse-slip-submit.html">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
@@ -98,42 +105,6 @@
             <h1 id="greetingHeading">Welcome back, Student</h1>
             <p id="currentDateSubtitle">BSIT 3-1 · Student ID: <strong id="studentIdDisplay">2024-IT-00101</strong> · RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="studentRfidDisplay">E2806894</strong></p>
           </div>
-          <div class="flex items-center gap-3">
-            <a href="attendance-calendar.html" class="pillbtn text-xs inline-flex items-center gap-2">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              View Full Calendar
-            </a>
-            <a href="excuse-slip-submit.html" class="pillbtn text-xs inline-flex items-center gap-2">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Submit Excuse Slip
-            </a>
-          </div>
-        </div>
-
-        <!-- Today's Attendance Status Banner -->
-        <div class="card p-5 mb-6" style="border-left: 4px solid var(--ch-500); background: linear-gradient(to right, rgba(33, 150, 243, 0.05), transparent);">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex items-center gap-3.5">
-              <div id="studentStatusIconBg" class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background: var(--raised);">
-                <svg id="studentStatusIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h3 class="text-base font-bold" id="todayStatusTitle">Today's Attendance Status</h3>
-                  <span id="todayStatusPill" class="pill pill-absent text-[10px] font-bold uppercase tracking-wider">Loading...</span>
-                </div>
-                <p class="text-xs mt-1" style="color: var(--text-2);" id="todayStatusDetail">
-                  Checking today's gate check-in and classroom attendance logs...
-                </p>
-              </div>
-            </div>
-            <a href="scan-qr.html" class="btn-primary text-xs inline-flex items-center gap-2" style="padding: 8px 16px; background: var(--ch-900); color: #fff; border-radius: 8px; font-weight: 600; text-decoration: none;">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              Scan Class QR Pass
-            </a>
-          </div>
         </div>
 
         <!-- Personal Attendance KPIs (Executive Standard) -->
@@ -169,37 +140,50 @@
           </div>
         </div>
 
-        <!-- Two Columns: Recent Ingress Taps & Attendance Quick Notice -->
+        <!-- Two Columns: Recent Ingress Records Chart & Attendance Quick Notice -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Recent Gate Ingress Taps (2 cols) -->
-          <div class="card lg:col-span-2 overflow-hidden">
+          <!-- Left: Recent Campus Check-In & Time-Out Line Chart (2 cols) -->
+          <div class="card lg:col-span-2 overflow-hidden flex flex-col justify-between" style="min-height: 360px;">
             <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
-              <div>
-                <h2 class="text-base font-semibold">My Gate Tap Timeline</h2>
-                <p class="text-xs" style="color: var(--text-2);">Recent campus check-in & time-out timestamps</p>
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: var(--raised); color: var(--accent);">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-base font-semibold" id="recentAttendanceTitle">Recent Campus Attendance</h2>
+                  <p class="text-xs" style="color: var(--text-2);">Verified daily check-in & check-out timestamps from attendance analytics</p>
+                </div>
               </div>
-              <span class="text-xs font-mono" style="color: var(--text-3);" id="recentTapsBadge">Recent Records</span>
+              <div class="flex items-center gap-3">
+                <a href="analytics.html" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
+                  Detailed Analytics
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+              </div>
             </div>
 
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
-                    <th class="py-3 px-4">Date</th>
-                    <th class="py-3 px-4">Time</th>
-                    <th class="py-3 px-4">Event</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4">Method & Gate</th>
-                  </tr>
-                </thead>
-                <tbody id="studentTapsTableBody" class="divide-y" style="border-color: var(--border);">
-                  <tr>
-                    <td colspan="5" class="py-10 text-center text-sm" style="color: var(--text-3);">
-                      Loading your scan timeline...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <!-- Line Chart Canvas Container -->
+            <div class="p-4 flex-1">
+              <div class="relative w-full" style="height: 230px;">
+                <canvas id="studentAttendanceTrendChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Card Footer: Analytics Summary Averages -->
+            <div class="px-5 py-3 border-t text-xs flex flex-wrap items-center justify-between gap-3" style="border-color: var(--border); background: var(--surface-hover);">
+              <div class="flex items-center gap-4 text-xs font-medium" style="color: var(--text-2);">
+                <span>Avg Check-In: <strong id="chartAvgIn" class="font-mono tabular-nums text-emerald-600 dark:text-emerald-400">07:44 AM</strong></span>
+                <span>Avg Check-Out: <strong id="chartAvgOut" class="font-mono tabular-nums text-blue-600 dark:text-blue-400">05:01 PM</strong></span>
+                <span>Avg Daily Stay: <strong id="chartAvgDuration" class="font-mono tabular-nums" style="color: var(--text-1);">9h 17m</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Cutoff: 08:00 AM
+                </span>
+              </div>
             </div>
           </div>
 
