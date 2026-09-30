@@ -265,7 +265,7 @@ function renderClassCards(sections) {
             <div style="font-size: 12.5px; font-weight: 700; color: var(--present);">${rate}</div>
             <div style="font-size: 11px; color: var(--text-3);">${headcount} Students</div>
           </div>
-          <a href="attendance.html?section=${sec.id}" class="pillbtn" style="
+          <a href="live-session.html?section=${sec.id}" class="pillbtn" style="
             background: var(--accent);
             border-color: var(--accent);
             color: #ffffff;
