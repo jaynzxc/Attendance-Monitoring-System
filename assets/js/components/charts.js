@@ -296,3 +296,217 @@ export function renderSectionComparisonChart(canvasId = 'sectionComparisonChart'
 
   return comparisonChartInstance;
 }
+
+const dailyTimestampsChartInstances = {};
+
+/**
+ * Renders or updates the daily check-in and check-out timestamps line chart.
+ * Bases styling on admin/teacher trend line charts with theme awareness.
+ * Plots Morning Check-In, Afternoon Dismissal (Time-Out), and 08:00 AM Gate Cutoff Benchmark.
+ * @param {string} canvasId - Canvas element ID (e.g. 'studentAttendanceTrendChart')
+ * @param {Array} records - Array of daily attendance objects with summary_date, time_in, time_out, status
+ * @returns {Chart|null}
+ */
+export function renderDailyTimestampsLineChart(canvasId = 'studentAttendanceTrendChart', records = []) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return null;
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  if (dailyTimestampsChartInstances[canvasId]) {
+    dailyTimestampsChartInstances[canvasId].destroy();
+  }
+
+  // Theme-aware tokens matching Color Hunt system
+  const textColor = isDark ? '#90CAF9' : '#4A657E';
+  const gridColor = isDark ? '#1A3866' : '#E2ECF7';
+  const cutoffColor = isDark ? '#F59E0B' : '#D97706';
+  const checkInColor = '#2196F3';
+  const checkOutColor = isDark ? '#818CF8' : '#4F46E5';
+
+  const gradIn = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
+  if (isDark) {
+    gradIn.addColorStop(0, 'rgba(33, 150, 243, 0.35)');
+    gradIn.addColorStop(1, 'rgba(33, 150, 243, 0.02)');
+  } else {
+    gradIn.addColorStop(0, 'rgba(33, 150, 243, 0.22)');
+    gradIn.addColorStop(1, 'rgba(227, 242, 253, 0.04)');
+  }
+
+  // Ensure chronological order (oldest to newest)
+  const sorted = [...records].sort((a, b) => a.summary_date.localeCompare(b.summary_date));
+  const todayIso = new Date().toISOString().split('T')[0];
+
+  const labels = sorted.map(r => {
+    const d = new Date(r.summary_date + 'T00:00:00');
+    const day = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const md = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+    return r.summary_date === todayIso ? `Today (${day})` : `${day} ${md}`;
+  });
+
+  const checkInData = sorted.map(r => {
+    if (!r.time_in) return null;
+    const d = new Date(r.time_in);
+    return +(d.getHours() + d.getMinutes() / 60).toFixed(2);
+  });
+
+  const checkOutData = sorted.map(r => {
+    if (!r.time_out) return null;
+    const d = new Date(r.time_out);
+    return +(d.getHours() + d.getMinutes() / 60).toFixed(2);
+  });
+
+  const cutoffData = sorted.map(() => 8.0); // 08:00 AM
+
+  const pointBgIn = sorted.map(r => r.status === 'late' ? '#F59E0B' : '#2196F3');
+
+  dailyTimestampsChartInstances[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Check-In (Arrival)',
+          data: checkInData,
+          borderColor: checkInColor,
+          backgroundColor: gradIn,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 4.5,
+          pointHoverRadius: 7.5,
+          pointHitRadius: 20,
+          pointBackgroundColor: pointBgIn,
+          pointBorderColor: '#FFFFFF',
+          pointBorderWidth: 2,
+          borderWidth: 2.5
+        },
+        {
+          label: 'Check-Out (Dismissal)',
+          data: checkOutData,
+          borderColor: checkOutColor,
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.35,
+          pointRadius: 4.5,
+          pointHoverRadius: 7.5,
+          pointHitRadius: 20,
+          pointBackgroundColor: checkOutColor,
+          pointBorderColor: '#FFFFFF',
+          pointBorderWidth: 2,
+          borderWidth: 2.5
+        },
+        {
+          label: 'Gate Cutoff (08:00 AM)',
+          data: cutoffData,
+          borderColor: cutoffColor,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHitRadius: 0,
+          borderWidth: 1.5,
+          tension: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            color: textColor,
+            font: { size: 11, family: "'Inter', sans-serif", weight: '500' },
+            boxWidth: 10,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
+        tooltip: {
+          backgroundColor: isDark ? '#0C1D38' : '#0D47A1',
+          titleColor: '#FFFFFF',
+          bodyColor: '#E3F2FD',
+          borderColor: '#2196F3',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            title: (items) => {
+              if (!items || items.length === 0) return '';
+              const r = sorted[items[0].dataIndex];
+              if (!r) return items[0].label;
+              const d = new Date(r.summary_date + 'T00:00:00');
+              return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+            },
+            label: (c) => {
+              if (c.dataset.label.includes('Cutoff')) {
+                return ' Official Cutoff: 08:00 AM (Post-08:00 is marked Late)';
+              }
+              if (c.parsed.y == null) {
+                return ` ${c.dataset.label}: None recorded / In Session`;
+              }
+              const h = Math.floor(c.parsed.y);
+              const m = Math.round((c.parsed.y - h) * 60);
+              const h12 = h % 12 || 12;
+              const ampm = h >= 12 ? 'PM' : 'AM';
+              const mStr = m < 10 ? '0' + m : m;
+              return ` ${c.dataset.label}: ${h12}:${mStr} ${ampm}`;
+            },
+            afterBody: (items) => {
+              if (!items || items.length === 0) return [];
+              const r = sorted[items[0].dataIndex];
+              if (!r) return [];
+              const lines = [];
+              const statusText = r.status === 'late' ? 'Tardy / Late' : (r.status || 'present').toUpperCase();
+              lines.push(`Attendance Status: ${statusText}`);
+              if (r.duration_minutes != null) {
+                const hrs = Math.floor(r.duration_minutes / 60);
+                const mins = r.duration_minutes % 60;
+                lines.push(`Campus Duration: ${hrs}h ${mins}m`);
+              } else if (r.time_in && !r.time_out) {
+                lines.push(`Campus Status: Currently In Session`);
+              }
+              if (r.device_location) {
+                lines.push(`Ingress Point: ${r.device_location} (${(r.scan_method || 'rfid').toUpperCase()})`);
+              }
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: textColor,
+            font: { size: 11, family: "'Inter', sans-serif" }
+          },
+          grid: { display: false }
+        },
+        y: {
+          min: 6,
+          max: 19,
+          ticks: {
+            color: textColor,
+            font: { size: 11, family: "'Inter', sans-serif" },
+            stepSize: 2,
+            callback: (val) => {
+              const h = Math.floor(val);
+              const h12 = h % 12 || 12;
+              const ampm = h >= 12 ? 'PM' : 'AM';
+              return `${h12}:00 ${ampm}`;
+            }
+          },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+
+  return dailyTimestampsChartInstances[canvasId];
+}
