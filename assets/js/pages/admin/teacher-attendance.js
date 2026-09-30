@@ -4,7 +4,7 @@
  * Subsystem of SMS 1
  */
 
-import { requireRole } from '../../lib/rbac-guard.js';
+import { requireRole, initThemeToggle } from '../../lib/rbac-guard.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
 import { usersApi } from '../../api/usersApi.js';
 import { devicesApi } from '../../api/devicesApi.js';
@@ -61,19 +61,6 @@ window.addEventListener('beforeunload', () => {
   if (qrCountdownInterval) clearInterval(qrCountdownInterval);
 });
 
-/**
- * Initializes Theme Toggle Button
- */
-function initThemeToggle() {
-  const btn = document.getElementById('themeToggle');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('ams_theme', next);
-  });
-}
 
 /**
  * Initializes Date Filter with Today's Date
