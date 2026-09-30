@@ -2,21 +2,44 @@
  * toast.js - Institutional Toast Notification System
  * Bestlink College of the Philippines - Attendance Monitoring System (AMS)
  * Strictly zero emojis - SVG icons styled via Color Hunt tokens
+ * Limited to a maximum of 3 active toasts; older toasts smoothly fade out when exceeded.
  */
 
 class ToastManager {
   constructor() {
     this.container = null;
+    this.maxToasts = 3;
     if (typeof document !== 'undefined') {
-      this.init();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => this.init());
+      } else {
+        this.init();
+      }
     }
   }
 
   init() {
-    if (document.getElementById('ams-toast-container')) {
-      this.container = document.getElementById('ams-toast-container');
+    if (typeof document === 'undefined') return;
+
+    // Check if the page already has a toast container
+    const existing = document.getElementById('ams-toast-container') || document.getElementById('toastContainer');
+    if (existing) {
+      this.container = existing;
+      if (!this.container.id) this.container.id = 'ams-toast-container';
+      this.container.setAttribute('aria-live', 'polite');
+      this.container.style.position = 'fixed';
+      this.container.style.bottom = '24px';
+      this.container.style.right = '24px';
+      this.container.style.pointerEvents = 'none';
+      this.container.style.zIndex = '9999';
+      this.container.style.maxWidth = '380px';
+      this.container.style.display = 'flex';
+      this.container.style.flexDirection = 'column';
+      this.container.style.gap = '10px';
       return;
     }
+
+    if (!document.body) return;
 
     this.container = document.createElement('div');
     this.container.id = 'ams-toast-container';
@@ -36,13 +59,27 @@ class ToastManager {
   }
 
   /**
-   * Shows a toast notification
+   * Shows a toast notification. Enforces a maximum of 3 visible toasts.
+   * If exceeded, the oldest active toast smoothly fades out and dismisses.
    * @param {string} message - Notification text
    * @param {'success'|'error'|'warning'|'info'} [type='info'] - Severity level
    * @param {number} [duration=4000] - Duration in ms before auto-dismiss
    */
   show(message, type = 'info', duration = 4000) {
-    if (!this.container) this.init();
+    if (!this.container || !document.body || !document.body.contains(this.container)) {
+      this.init();
+    }
+    if (!this.container) return;
+
+    // Limit active visible toasts to maxToasts (3)
+    const activeToasts = Array.from(this.container.children).filter(
+      el => !el.dataset || el.dataset.dismissing !== 'true'
+    );
+
+    while (activeToasts.length >= this.maxToasts) {
+      const oldestToast = activeToasts.shift();
+      this.dismiss(oldestToast);
+    }
 
     const toast = document.createElement('div');
     toast.className = `ams-toast ams-toast-${type}`;
@@ -60,8 +97,10 @@ class ToastManager {
       background: var(--surface);
       color: var(--text-1);
       opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transform: translateY(12px);
+      transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease, padding 0.28s ease;
+      overflow: hidden;
+      max-height: 120px;
     `;
 
     // SVG icon mapping (strictly no emojis)
@@ -71,7 +110,7 @@ class ToastManager {
     if (type === 'success') {
       accentColor = 'var(--present)';
       iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
-    } else if (type === 'error') {
+    } else if (type === 'error' || type === 'danger') {
       accentColor = 'var(--absent)';
       iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${accentColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>`;
     } else if (type === 'warning') {
@@ -95,7 +134,7 @@ class ToastManager {
 
     this.container.appendChild(toast);
 
-    // Trigger animation
+    // Trigger entrance animation
     requestAnimationFrame(() => {
       toast.style.opacity = '1';
       toast.style.transform = 'translateY(0)';
@@ -106,15 +145,21 @@ class ToastManager {
     }
   }
 
+  /**
+   * Smoothly fades out and removes a toast notification
+   * @param {HTMLElement} toast - The toast element to dismiss
+   */
   dismiss(toast) {
-    if (!toast || !toast.parentNode) return;
+    if (!toast || !toast.parentNode || toast.dataset.dismissing === 'true') return;
+    toast.dataset.dismissing = 'true';
+    toast.style.transition = 'opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease, padding 0.28s ease';
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-8px)';
+    toast.style.transform = 'translateY(-10px) scale(0.95)';
     setTimeout(() => {
       if (toast.parentNode) {
         toast.parentNode.removeChild(toast);
       }
-    }, 250);
+    }, 280);
   }
 }
 
@@ -135,4 +180,10 @@ export function showToast(optionsOrMessage, type = 'info', duration = 4000) {
   } else {
     toast.show(String(optionsOrMessage), type, duration);
   }
+}
+
+// Global window registration for cross-portal scripts & non-module compatibility
+if (typeof window !== 'undefined') {
+  window.toast = toast;
+  window.showToast = showToast;
 }

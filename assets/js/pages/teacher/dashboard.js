@@ -16,6 +16,7 @@ import { getCurrentUser } from '../../lib/auth.js';
 import { sectionsApi } from '../../api/sectionsApi.js';
 import { excuseSlipsApi } from '../../api/excuseSlipsApi.js';
 import { renderRadialAttendanceChart, renderTrendChart } from '../../components/charts.js';
+import { showToast } from '../../components/toast.js';
 
 let currentTeacher = null;
 let assignedSections = [];

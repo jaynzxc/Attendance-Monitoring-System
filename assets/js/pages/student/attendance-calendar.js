@@ -8,6 +8,7 @@ import { requireRole } from '../../lib/rbac-guard.js';
 import { getCurrentUser } from '../../lib/auth.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
+import { showToast } from '../../components/toast.js';
 
 let currentStudent = null;
 let currentYear = new Date().getFullYear();

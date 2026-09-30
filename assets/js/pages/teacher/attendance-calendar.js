@@ -5,6 +5,7 @@
 
 import { requireRole } from '../../lib/rbac-guard.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
+import { showToast } from '../../components/toast.js';
 
 let currentDate = new Date(2026, 8, 28); // September 28, 2026 default
 let academicSchedules = [];
