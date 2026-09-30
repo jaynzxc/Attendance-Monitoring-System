@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — My Classes | Bestlink College</title>
+  <meta name="description" content="Manage and view assigned subject classes, student rosters, and schedules at Bestlink College of the Philippines.">
+
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+
+  <!-- Modern Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    /* Roster Modal Container: spacious 880px desktop width with generous breathing room */
+    .roster-modal-container {
+      width: 100% !important;
+      max-width: 880px !important;
+      background: var(--surface) !important;
+      border: 1px solid var(--border-strong) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5) !important;
+      max-height: 90vh !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      padding: 28px 32px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Faculty Navigation">
+      <div class="brand">
+        <div class="mark">T</div>
+        <span>AMS Faculty</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="active" href="my-classes.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+          My Classes
+        </a>
+        <a href="live-session.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Live Session
+        </a>
+        <a href="attendance-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Attendance Logs
+        </a>
+        <a href="qr-attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          QR Attendance
+        </a>
+        <a href="my-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+          My Attendance Log
+        </a>
+        <a href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Section Analytics
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Faculty Attendance Hub
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle Light / Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar" id="headerTeacherAvatar">TC</div>
+          <div class="pf-info">
+            <div class="pf-name" id="headerTeacherName">Faculty Member</div>
+            <div class="pf-role">Instructor / Adviser</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Page Content -->
+      <main class="main">
+        <!-- Page Header -->
+        <div class="pagehead">
+          <div>
+            <h1>My Classes</h1>
+            <p>Assigned subjects, class schedules, and enrolled student rosters</p>
+          </div>
+        </div>
+
+        <!-- Filter Bar (Search Bar, Section Filter, Subject Filter, Reset) -->
+        <div class="card p-4 mb-6">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <!-- Search Bar (Compact Width) -->
+            <div class="relative w-64 sm:w-72">
+              <input type="text" id="classSearchInput" placeholder="Search subject, section, room..." class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+              <svg class="w-4 h-4 absolute left-3 top-2.5" style="color: var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Section Filter -->
+              <div class="flex items-center gap-2">
+                <label for="classSectionFilter" class="text-xs font-semibold" style="color: var(--text-2);">Section:</label>
+                <select id="classSectionFilter" class="px-3 py-2 text-xs rounded-lg border focus:outline-none cursor-pointer" style="background: var(--surface); border-color: var(--border); color: var(--text-1); min-width: 140px;">
+                  <option value="">All Sections</option>
+                </select>
+              </div>
+
+              <!-- Subject Filter -->
+              <div class="flex items-center gap-2">
+                <label for="classSubjectFilter" class="text-xs font-semibold" style="color: var(--text-2);">Subject:</label>
+                <select id="classSubjectFilter" class="px-3 py-2 text-xs rounded-lg border focus:outline-none cursor-pointer" style="background: var(--surface); border-color: var(--border); color: var(--text-1); min-width: 150px;">
+                  <option value="">All Subjects</option>
+                </select>
+              </div>
+
+              <!-- Reset Filters Button -->
+              <button id="btnResetClassFilters" type="button" class="btn-secondary text-xs px-3 py-2 rounded-lg border hover:bg-[var(--surface-hover)] cursor-pointer" style="border-color: var(--border); color: var(--text-2);" title="Reset filters">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Cards Grid Section -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-xs uppercase font-bold tracking-wider" style="color:var(--text-3);">Assigned Subjects & Sections</h3>
+              <p class="text-xs" style="color:var(--text-2);">Select a class to review the student roster or start a live attendance session.</p>
+            </div>
+            <span class="text-xs font-mono font-medium px-2 py-0.5 rounded" style="background:var(--raised); color:var(--text-2);" id="activeScheduleCountBadge">0 Classes</span>
+          </div>
+
+          <div id="subjectScheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated subject class cards -->
+            <div class="p-8 text-center text-xs text-[var(--text-3)] col-span-3 card">Loading assigned classes...</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Official Class Attendance Roster Modal -->
+  <div id="rosterModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card roster-modal-container animate-fade-in">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between pb-4 mb-4 border-b" style="border-color:var(--border);">
+        <div class="min-w-0 pr-3">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span id="rosterModalCodeBadge" class="badge font-mono text-xs font-bold px-2.5 py-0.5 rounded" style="background:var(--ch-100); color:var(--ch-900);">IT 301</span>
+            <span id="rosterModalSectionBadge" class="badge text-xs font-semibold px-2.5 py-0.5 rounded" style="background:var(--raised); color:var(--text-1);">BSIT 3-1</span>
+          </div>
+          <h3 class="text-base sm:text-lg font-bold text-[var(--text-1)] leading-snug break-words" id="rosterModalTitle">Class Roster</h3>
+          <p class="text-xs sm:text-sm text-[var(--text-2)] mt-1 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="rosterModalSubtitle">Schedule: 08:00 AM – 10:00 AM · Computer Lab 4</span>
+          </p>
+        </div>
+        <button id="closeRosterModalBtn" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-[var(--surface-hover)] cursor-pointer transition-colors shrink-0" aria-label="Close Modal">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Roster Search Input -->
+      <div class="mb-4">
+        <div class="relative flex items-center" style="position:relative;">
+          <svg class="w-4 h-4 pointer-events-none" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="rosterSearchInput" placeholder="Filter enrolled students by name, ID number..." class="w-full text-xs sm:text-sm rounded-xl border focus:outline-none" style="padding-left:40px; padding-right:16px; padding-top:10px; padding-bottom:10px; background:var(--raised); border-color:var(--border); color:var(--text-1);">
+        </div>
+      </div>
+
+      <!-- Roster Table Scroll Area -->
+      <div class="overflow-y-auto border rounded-xl" style="border-color:var(--border); max-height:350px; margin-bottom:20px;">
+        <table class="w-full text-xs sm:text-sm text-left">
+          <thead style="background:var(--raised); color:var(--text-2); position:sticky; top:0; z-index:10;">
+            <tr>
+              <th class="py-3 px-4 font-semibold text-left">Student Name</th>
+              <th class="py-3 px-4 font-semibold text-left">Student ID</th>
+              <th class="py-3 px-4 font-semibold text-left">Status</th>
+              <th class="py-3 px-4 font-semibold text-left">Method</th>
+            </tr>
+          </thead>
+          <tbody id="rosterModalTableBody" class="divide-y" style="border-color:var(--border);">
+            <tr>
+              <td colspan="4" class="py-8 text-center text-xs" style="color:var(--text-3);">Loading student roster...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between pt-5 border-t" style="border-color:var(--border); margin-top:10px; padding-top:18px;">
+        <span class="text-xs sm:text-sm font-mono font-medium" style="color:var(--text-2);" id="rosterModalCountLabel">0 Students Enrolled</span>
+        <div class="flex items-center gap-3">
+          <button type="button" id="closeRosterModalFooterBtn" class="pillbtn text-xs sm:text-sm px-4 py-2.5 font-semibold rounded-lg cursor-pointer">Close</button>
+          <button type="button" id="rosterModalStartSessionBtn" class="btn-primary text-xs sm:text-sm font-semibold inline-flex items-center gap-2 py-2.5 px-4 rounded-lg cursor-pointer" style="background:var(--ch-900); color:#fff;">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span>Start Attendance</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Page Controller Script -->
+  <script type="module" src="../assets/js/pages/teacher/my-classes.js"></script>
+</body>
+</html>
