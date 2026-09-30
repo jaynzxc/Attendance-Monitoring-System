@@ -679,6 +679,19 @@ function initSessionModals() {
   document.getElementById('btnSimulateQrScan')?.addEventListener('click', () => {
     handleSimulatedQrScan();
   });
+
+  // Listen for live QR scans submitted from teacher portal on other tabs/devices
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'ams_faculty_scan_event' && e.newValue) {
+      try {
+        const scanData = JSON.parse(e.newValue);
+        if (scanData && activeFacultySession && activeFacultySession.status === 'active') {
+          const teacher = scanData.teacher || allFacultyUsers[0];
+          recordTeacherCardTap(teacher, 'QR-' + (scanData.token ? scanData.token.slice(-6).toUpperCase() : 'PASS'));
+        }
+      } catch (err) {}
+    }
+  });
 }
 
 /**
@@ -1222,6 +1235,9 @@ async function handleStartFacultyQrSession() {
     });
 
     activeFacultySession = { ...session, session_type: sessionType, scan_method: 'qr' };
+    try {
+      localStorage.setItem('ams_last_active_session', JSON.stringify(activeFacultySession));
+    } catch(e) {}
     sessionTappedTeachers = [];
 
     // Expand modal to split 2-column view
@@ -1276,10 +1292,19 @@ function generateFacultyQrCode(token) {
   if (tokenDisplay) tokenDisplay.textContent = `Token: ${token}`;
   if (!container) return;
 
+  const sessionType = activeFacultySession?.session_type || 'time_in';
+  const qrPayload = JSON.stringify({
+    ams_auth: 'bcp_ams_admin_station',
+    session_id: activeFacultySession?.id,
+    session_type: sessionType,
+    token: token,
+    created_at: new Date().toISOString()
+  });
+
   container.innerHTML = '';
   if (window.QRCode) {
     new window.QRCode(container, {
-      text: token,
+      text: qrPayload,
       width: 180,
       height: 180,
       colorDark: '#000000',
