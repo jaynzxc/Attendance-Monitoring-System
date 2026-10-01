@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 7. Setup Inline Single-Student Modals (Override & Void)
   initOverrideModal();
   initVoidModal();
+  initBatchAbsentModal();
 
   // 8. Load Assigned Sections
   await loadAssignedSections();
@@ -146,6 +147,12 @@ async function loadAssignedSections() {
       `).join('');
 
       livePicker.addEventListener('change', async (e) => {
+        if (activeSession) {
+          // Revert the picker back to the active section — cannot switch while a session is live
+          e.target.value = activeSession.section_id || selectedSectionId;
+          toast.show('Cannot switch classes while an attendance session is active. Close the current session first.', 'warning');
+          return;
+        }
         await selectSubjectClass(e.target.value);
       });
     }
@@ -400,10 +407,24 @@ function updateKpiCounters() {
 
   if (kpiLateChip) {
     if (currentSec && currentSec.schedule) {
-      const match = currentSec.schedule.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
-      kpiLateChip.textContent = match ? `After ${match[1]}` : 'Grace Period Exceeded';
+      const match = currentSec.schedule.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        let m = parseInt(match[2], 10) + 20;
+        let mer = match[3].toUpperCase();
+        if (m >= 60) {
+          h += Math.floor(m / 60);
+          m = m % 60;
+          if (h >= 12 && mer === 'AM') mer = 'PM';
+          else if (h > 12 && mer === 'PM') h = h % 12;
+        }
+        const timeStr = `${h}:${String(m).padStart(2, '0')} ${mer}`;
+        kpiLateChip.textContent = `After ${timeStr}`;
+      } else {
+        kpiLateChip.textContent = '20m Grace Period Exceeded';
+      }
     } else {
-      kpiLateChip.textContent = 'Grace Period Exceeded';
+      kpiLateChip.textContent = '20m Grace Period Exceeded';
     }
   }
 
@@ -460,15 +481,31 @@ function renderRosterRows(roster) {
       ? new Date(student.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
       : '—';
 
-    let methodLabel = '';
+    let methodLabel = '—';
+    let methodBadgeClass = 'text-xs text-[var(--text-3)] font-mono';
+    let methodStyle = '';
+
     if (student.is_voided) {
       methodLabel = 'VOID';
+      methodBadgeClass = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded tracking-wide';
+      methodStyle = 'background:rgba(239, 68, 68, 0.12); color:var(--absent); border:1px solid rgba(239, 68, 68, 0.3);';
     } else if (student.is_manual) {
       methodLabel = 'MANUAL';
+      methodBadgeClass = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded tracking-wide';
+      methodStyle = 'background:var(--raised); border:1px solid var(--border); color:var(--text-2);';
     } else if (student.scan_method) {
-      methodLabel = student.scan_method.toUpperCase();
+      const m = student.scan_method.toUpperCase();
+      methodLabel = m === 'QR' ? 'QR PASS' : m;
+      methodBadgeClass = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded tracking-wide';
+      if (m === 'QR') {
+        methodStyle = 'background:rgba(33, 150, 243, 0.12); color:var(--ch-500); border:1px solid rgba(33, 150, 243, 0.25);';
+      } else {
+        methodStyle = 'background:var(--ch-100); color:var(--ch-900); border:1px solid rgba(13, 71, 161, 0.2);';
+      }
     } else if (student.scanned_at || status !== 'absent') {
       methodLabel = 'RFID';
+      methodBadgeClass = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded tracking-wide';
+      methodStyle = 'background:var(--ch-100); color:var(--ch-900); border:1px solid rgba(13, 71, 161, 0.2);';
     }
 
     const manualBadge = (student.is_manual && !student.is_voided)
@@ -496,14 +533,6 @@ function renderRosterRows(roster) {
           </div>
         </td>
 
-        <!-- Section & Subject -->
-        <td class="py-3 px-4">
-          <div>
-            <span class="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded" style="background:var(--raised); border:1px solid var(--border); color:var(--ch-900);">${secName}</span>
-            <div class="text-[11px] text-[var(--text-2)] truncate max-w-[140px] mt-0.5" title="${subjectName}">${subjectName}</div>
-          </div>
-        </td>
-
         <!-- Class Schedule -->
         <td class="py-3 px-4">
           <span class="text-xs tabular-nums text-[var(--text-2)] whitespace-nowrap">${scheduleStr}</span>
@@ -511,16 +540,20 @@ function renderRosterRows(roster) {
 
         <!-- Time In -->
         <td class="py-3 px-4">
-          <div class="flex items-center gap-1.5">
-            <span class="font-mono text-xs tabular-nums ${student.scanned_at ? 'font-semibold text-[var(--text-1)]' : 'text-[var(--text-3)]'} time-cell">${timeInDisplay}</span>
-            ${methodLabel ? `<span class="text-[9px] font-bold px-1 rounded method-cell" style="background:var(--raised); color:var(--text-3);">${methodLabel}</span>` : `<span class="text-[9px] font-bold px-1 rounded method-cell hidden" style="background:var(--raised); color:var(--text-3);"></span>`}
-          </div>
+          <span class="font-mono text-xs tabular-nums ${student.scanned_at ? 'font-semibold text-[var(--text-1)]' : 'text-[var(--text-3)]'} time-cell">${timeInDisplay}</span>
         </td>
 
         <!-- Status -->
         <td class="py-3 px-4">
           <span class="badge status-pill text-[11px] font-bold" style="${statusStyle}">
             ${statusLabel}
+          </span>
+        </td>
+
+        <!-- Method -->
+        <td class="py-3 px-4">
+          <span class="method-cell ${methodBadgeClass}" style="${methodStyle}">
+            ${methodLabel}
           </span>
         </td>
 
@@ -631,7 +664,7 @@ async function performQuickOverride(studentId, targetStatus, reason = null) {
 /**
  * Optimistically updates a table row visually
  */
-function updateStudentRowUI(studentId, status, methodText) {
+function updateStudentRowUI(studentId, status, methodText, scannedAt = null) {
   const row = document.getElementById(`row-${studentId}`);
   if (!row) return;
 
@@ -650,14 +683,34 @@ function updateStudentRowUI(studentId, status, methodText) {
   }
 
   if (methodCell) {
-    methodCell.textContent = methodText || 'MANUAL';
+    let raw = (methodText || 'MANUAL').toUpperCase();
+    let clean = 'RFID';
+    let style = 'background:var(--ch-100); color:var(--ch-900); border:1px solid rgba(13, 71, 161, 0.2);';
+
+    if (raw.includes('MANUAL')) {
+      clean = 'MANUAL';
+      style = 'background:var(--raised); border:1px solid var(--border); color:var(--text-2);';
+    } else if (raw.includes('QR')) {
+      clean = 'QR PASS';
+      style = 'background:rgba(33, 150, 243, 0.12); color:var(--ch-500); border:1px solid rgba(33, 150, 243, 0.25);';
+    } else if (raw.includes('VOID')) {
+      clean = 'VOID';
+      style = 'background:rgba(239, 68, 68, 0.12); color:var(--absent); border:1px solid rgba(239, 68, 68, 0.3);';
+    }
+
+    methodCell.textContent = clean;
+    methodCell.className = 'method-cell inline-block text-[10px] font-bold px-2 py-0.5 rounded tracking-wide';
+    methodCell.setAttribute('style', style);
     methodCell.classList.remove('hidden');
   }
 
-  if (timeCell && timeCell.textContent.trim() === '—') {
-    timeCell.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    timeCell.classList.remove('text-[var(--text-3)]');
-    timeCell.classList.add('font-semibold', 'text-[var(--text-1)]');
+  if (timeCell) {
+    if (scannedAt || timeCell.textContent.trim() === '—') {
+      const timeDate = scannedAt ? new Date(scannedAt) : new Date();
+      timeCell.textContent = timeDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      timeCell.classList.remove('text-[var(--text-3)]');
+      timeCell.classList.add('font-semibold', 'text-[var(--text-1)]');
+    }
   }
 
   // Flash highlight animation
@@ -667,10 +720,52 @@ function updateStudentRowUI(studentId, status, methodText) {
   }, 1200);
 }
 
+let pendingBatchUnmarked = [];
+
 /**
- * Handles batch marking remaining unaccounted students as absent
+ * Initializes Batch Absent confirmation modal
  */
-async function handleBatchMarkAbsent() {
+function initBatchAbsentModal() {
+  const modal = document.getElementById('batchAbsentModal');
+  const closeBtn = document.getElementById('closeBatchAbsentModalBtn');
+  const cancelBtn = document.getElementById('cancelBatchAbsentBtn');
+  const confirmBtn = document.getElementById('confirmBatchAbsentBtn');
+
+  if (closeBtn) closeBtn.addEventListener('click', closeBatchAbsentModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeBatchAbsentModal);
+  if (confirmBtn) confirmBtn.addEventListener('click', executeBatchMarkAbsent);
+}
+
+function openBatchAbsentModal(unmarked) {
+  pendingBatchUnmarked = unmarked;
+  const modal = document.getElementById('batchAbsentModal');
+  const countEl = document.getElementById('batchAbsentTargetCount');
+  const secEl = document.getElementById('batchAbsentSectionLabel');
+
+  const currentSec = assignedSections.find(s => s.id === selectedSectionId);
+  const secName = currentSec?.name || 'Section';
+  const subName = currentSec?.subject_name || currentSec?.subject || currentSec?.subject_code || 'Subject';
+
+  if (countEl) {
+    countEl.textContent = `${unmarked.length} Unmarked Student${unmarked.length > 1 ? 's' : ''}`;
+  }
+  if (secEl) {
+    secEl.textContent = `Section: ${secName} · ${subName}`;
+  }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeBatchAbsentModal() {
+  const modal = document.getElementById('batchAbsentModal');
+  if (modal) modal.classList.add('hidden');
+  pendingBatchUnmarked = [];
+}
+
+/**
+ * Handles batch marking remaining unaccounted students as absent (opens confirmation modal)
+ */
+function handleBatchMarkAbsent() {
   const unmarked = currentRoster.filter(s => s.status === 'absent' && !s.scanned_at);
   if (unmarked.length === 0) {
     showToast({
@@ -681,8 +776,29 @@ async function handleBatchMarkAbsent() {
     return;
   }
 
-  const confirmMsg = `Are you sure you want to confirm ABSENT for ${unmarked.length} unmarked student(s)?`;
-  if (!confirm(confirmMsg)) return;
+  openBatchAbsentModal(unmarked);
+}
+
+/**
+ * Executes the confirmed batch absent action
+ */
+async function executeBatchMarkAbsent() {
+  if (!pendingBatchUnmarked || pendingBatchUnmarked.length === 0) {
+    closeBatchAbsentModal();
+    return;
+  }
+
+  const confirmBtn = document.getElementById('confirmBatchAbsentBtn');
+  const origBtnText = confirmBtn ? confirmBtn.innerHTML : '';
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = `
+      <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+      <span>Saving...</span>
+    `;
+  }
+
+  const unmarked = [...pendingBatchUnmarked];
 
   try {
     for (const student of unmarked) {
@@ -697,6 +813,7 @@ async function handleBatchMarkAbsent() {
       student.scan_method = 'manual';
     }
 
+    closeBatchAbsentModal();
     updateKpiCounters();
     renderRosterRows(currentRoster);
 
@@ -712,6 +829,11 @@ async function handleBatchMarkAbsent() {
       message: 'Failed to complete batch update.',
       type: 'error'
     });
+  } finally {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = origBtnText;
+    }
   }
 }
 
@@ -802,7 +924,8 @@ function initRealtimeIngress() {
         updateStudentRowUI(
           student.id,
           newLog.status,
-          `${(newLog.scan_method || 'rfid').toUpperCase()} · Gate Tap (${timeStr})`
+          (newLog.scan_method || 'rfid').toUpperCase(),
+          newLog.scanned_at
         );
         updateKpiCounters();
 
@@ -1701,28 +1824,53 @@ async function startAttendanceForSection(targetSec) {
 }
 
 /**
- * Evaluates tardiness based on the subject's scheduled start time + 15 min grace period.
+ * Evaluates tardiness based on the subject's scheduled start time + 20 min grace period,
+ * or based on when the teacher opened the session (if teacher opened late).
  */
 function evaluateSubjectTardiness(section, scanDate = new Date()) {
+  const scanTimeMs = scanDate.getTime();
+  const graceMs = 20 * 60 * 1000;
+
+  // 1. Calculate scheduled cutoff timestamp for today (+20 mins)
   const schedStr = section?.schedule || '08:00 AM – 10:00 AM';
   const startMatch = schedStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
 
-  if (!startMatch) {
-    return (scanDate.getHours() > 8) || (scanDate.getHours() === 8 && scanDate.getMinutes() > 15);
+  const schedStart = new Date(scanDate);
+  schedStart.setSeconds(0, 0);
+
+  if (startMatch) {
+    let hour = parseInt(startMatch[1], 10);
+    const min = parseInt(startMatch[2], 10);
+    const meridiem = startMatch[3].toUpperCase();
+    if (meridiem === 'PM' && hour < 12) hour += 12;
+    if (meridiem === 'AM' && hour === 12) hour = 0;
+    schedStart.setHours(hour, min, 0, 0);
+  } else {
+    schedStart.setHours(8, 0, 0, 0);
   }
 
-  let schedHour = parseInt(startMatch[1], 10);
-  const schedMin = parseInt(startMatch[2], 10);
-  const meridiem = startMatch[3].toUpperCase();
+  const scheduledCutoffMs = schedStart.getTime() + graceMs;
 
-  if (meridiem === 'PM' && schedHour < 12) schedHour += 12;
-  if (meridiem === 'AM' && schedHour === 12) schedHour = 0;
+  // 2. Calculate teacher session cutoff if session is active
+  // If the teacher was late opening the session, grant 20 minutes from when the teacher opened it
+  let sessionCutoffMs = 0;
+  if (activeSession) {
+    if (activeSession.present_cutoff) {
+      sessionCutoffMs = new Date(activeSession.present_cutoff).getTime();
+    } else if (activeSession.session_start) {
+      sessionCutoffMs = new Date(activeSession.session_start).getTime() + graceMs;
+    } else if (activeSession.session_end) {
+      const sessionStartMs = new Date(activeSession.session_end).getTime() - 30 * 60 * 1000;
+      sessionCutoffMs = sessionStartMs + graceMs;
+    }
+  }
 
-  const graceMinutes = 15;
-  const cutoffTotalMinutes = (schedHour * 60) + schedMin + graceMinutes;
-  const currentTotalMinutes = (scanDate.getHours() * 60) + scanDate.getMinutes();
+  // Effective cutoff is whichever is later:
+  // e.g., if schedule is 8:00 AM -> 8:20 AM
+  // if teacher opened late at 8:15 AM -> 8:35 AM
+  const effectiveCutoffMs = Math.max(scheduledCutoffMs, sessionCutoffMs);
 
-  return currentTotalMinutes > cutoffTotalMinutes;
+  return scanTimeMs > effectiveCutoffMs;
 }
 
 /**
@@ -2081,6 +2229,15 @@ function showSessionBanner(session) {
     }
   }
 
+  // Lock the class picker while a session is live
+  const livePicker = document.getElementById('liveSectionPicker');
+  if (livePicker) {
+    livePicker.disabled = true;
+    livePicker.title = 'Cannot switch classes while an attendance session is active';
+    livePicker.style.opacity = '0.5';
+    livePicker.style.cursor = 'not-allowed';
+  }
+
   updateSessionArrivalsCount();
   updateActiveClassBar();
 }
@@ -2117,6 +2274,15 @@ function hideSessionBanner() {
     clearInterval(qrCountdownInterval);
     qrCountdownInterval = null;
   }
+  // Unlock the class picker when session ends
+  const livePicker = document.getElementById('liveSectionPicker');
+  if (livePicker) {
+    livePicker.disabled = false;
+    livePicker.removeAttribute('title');
+    livePicker.style.opacity = '';
+    livePicker.style.cursor = '';
+  }
+
   updateActiveClassBar();
 }
 

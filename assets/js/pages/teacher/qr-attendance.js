@@ -507,7 +507,6 @@ async function startCamera() {
   const video = document.getElementById('cameraVideo');
   const placeholder = document.getElementById('cameraPlaceholder');
   const overlay = document.getElementById('scanGuideOverlay');
-  const badge = document.getElementById('scannerStatusBadge');
   const btnStart = document.getElementById('btnStartCamera');
   const btnStop = document.getElementById('btnStopCamera');
 
@@ -521,10 +520,6 @@ async function startCamera() {
     if (placeholder) placeholder.style.display = 'none';
     if (video) video.style.display = 'block';
     if (overlay) overlay.style.display = 'flex';
-    if (badge) {
-      badge.style.opacity = '1';
-      badge.innerHTML = '<span class="live-dot"></span> Scanning Active';
-    }
     if (btnStart) btnStart.disabled = true;
     if (btnStop) btnStop.disabled = false;
 
@@ -552,7 +547,6 @@ function stopCamera() {
   const video = document.getElementById('cameraVideo');
   const placeholder = document.getElementById('cameraPlaceholder');
   const overlay = document.getElementById('scanGuideOverlay');
-  const badge = document.getElementById('scannerStatusBadge');
   const btnStart = document.getElementById('btnStartCamera');
   const btnStop = document.getElementById('btnStopCamera');
 
@@ -562,10 +556,6 @@ function stopCamera() {
   }
   if (placeholder) placeholder.style.display = 'flex';
   if (overlay) overlay.style.display = 'none';
-  if (badge) {
-    badge.style.opacity = '0.45';
-    badge.innerHTML = '<span class="live-dot" style="background:var(--text-3);"></span> Camera Idle';
-  }
   if (btnStart) btnStart.disabled = false;
   if (btnStop) btnStop.disabled = true;
 }

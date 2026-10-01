@@ -239,7 +239,8 @@ Every view supports an authoritative **Light Mode** (`data-theme="light"`, defau
 ### 9.5 Hardware & Ingress Protocol
 * ESP32 devices authenticate to `/functions/v1/scan-ingest` using a hashed secret key (`x-device-key`).
 * **Unified Ingress for Teachers & Students:**
-  * When a **teacher** scans in, their attendance status (Present or Late against the teacher shift cutoff) automatically registers in the Admin system in real time. Teachers track their own history in their dedicated **Personal Attendance Log** in `/teacher/`.
+  * When a **teacher** scans in or out (via ESP32 RFID or camera QR), their attendance status (Time-In / Time-Out, Present or Late against the teacher shift cutoff) automatically registers in the Registrar's ledger and directs to their dedicated **My Attendance Log** (`/teacher/my-logs.html`) and the **Admin Teacher Attendance Log** (`/admin/teacher-attendance.html`) in real time.
+  * For enterprise system integration, teacher Time-In and Time-Out timestamps directly feed into the **Academic HR System** (SMS 1 Faculty Time & Attendance module) for teaching load verification, duty tracking, and automated payroll computation.
   * When a **student** scans in, a real-time record is generated (Present or Late against the cutoff e.g. 08:00 AM), updating Admin live streams, Teacher live section roll calls, and the student's personal calendar in `/student/`.
   * Both teachers and students have continuous access to logs in their respective portal panels to keep track of their attendance.
 * Enforce a strict **5-minute anti-passback cooldown window** to prevent duplicate time-in taps for both students and teachers.

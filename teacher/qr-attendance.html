@@ -250,15 +250,9 @@
 
           <!-- Left Pane: Camera Viewfinder & Ingress Controls -->
           <div class="card" style="padding:22px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-              <div>
-                <h3 style="margin:0 0 2px; font-size:15px; font-weight:700;">Camera Ingress Terminal</h3>
-                <div class="sub">Point your camera at the Registrar's attendance screen</div>
-              </div>
-              <span id="scannerStatusBadge" class="live-badge" style="opacity:0.45;">
-                <span class="live-dot" style="background:var(--text-3);"></span>
-                Camera Idle
-              </span>
+            <div style="margin-bottom:16px;">
+              <h3 style="margin:0 0 2px; font-size:15px; font-weight:700;">Camera Ingress Terminal</h3>
+              <div class="sub">Point your camera at the Registrar's attendance screen</div>
             </div>
 
             <!-- Viewfinder Area -->
@@ -299,7 +293,7 @@
                 Start Camera
               </button>
               <button id="btnStopCamera" class="btn-secondary" style="display:flex; align-items:center; gap:6px;" disabled>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 Stop
               </button>
             </div>
@@ -365,27 +359,103 @@
               </div>
             </div>
 
-            <!-- Operating Instructions Card -->
-            <div class="card" style="padding:18px;">
-              <h3 style="margin:0 0 12px; font-size:13px; font-weight:700;">Admin Station QR Workflow</h3>
-              <ol style="padding-left:16px; margin:0; display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--text-2); line-height:1.5;">
-                <li>Click <strong style="color:var(--text-1);">Start Camera</strong> to activate your camera.</li>
-                <li>Point your lens at the rotating QR pass on the Admin attendance monitor.</li>
-                <li>First scan registers your <strong style="color:var(--text-1);">Time-In</strong> (Present).</li>
-                <li>Second scan at the end of class/duty registers your <strong style="color:var(--text-1);">Time-Out</strong>.</li>
-                <li>All timestamps sync instantly with the Registrar's ledger and your <strong style="color:var(--text-1);">My Attendance Log</strong>.</li>
-              </ol>
-            </div>
+            <!-- Faculty Attendance Guide Card -->
+            <div class="card" style="padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:9px;">
+                  <div style="width:32px; height:32px; border-radius:8px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="16" x2="12" y2="12"/>
+                      <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 style="margin:0; font-size:13.5px; font-weight:700; color:var(--text-1);">Faculty Attendance Guide</h3>
+                    <div style="font-size:11px; color:var(--text-3);">Official check-in & check-out procedures</div>
+                  </div>
+                </div>
+              </div>
 
-            <!-- Ingress Scan Log Card -->
-            <div class="card" style="padding:0; overflow:hidden;">
-              <div style="padding:13px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
-                <h3 style="margin:0; font-size:13px; font-weight:700; color:var(--text-1);">Today's Ingress Log</h3>
-                <span id="scanCountBadge" class="badge" style="background:var(--ch-100); color:var(--ch-900); font-size:10.5px; font-weight:700;">0 Scans</span>
+              <!-- Step-by-Step Instructions -->
+              <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+                
+                <!-- Step 1: Time-In -->
+                <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border-radius:10px; background:var(--surface); border:1px solid var(--border);">
+                  <div style="width:24px; height:24px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums;">
+                    1
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-1); margin-bottom:2px;">
+                      Start Camera & Scan Time-In
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-2); line-height:1.45;">
+                      Click <strong style="color:var(--text-1);">Start Camera</strong> and aim your lens at the rotating QR code on the Admin Station display. Your shift start will immediately log as <span style="color:var(--present); font-weight:600;">Present</span> (or <span style="color:var(--late); font-weight:600;">Late</span> if after cutoff).
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 2: Time-Out -->
+                <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border-radius:10px; background:var(--surface); border:1px solid var(--border);">
+                  <div style="width:24px; height:24px; border-radius:50%; background:rgba(33,150,243,0.12); color:var(--ch-500); display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums;">
+                    2
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-1); margin-bottom:2px;">
+                      Scan Again to Record Time-Out
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-2); line-height:1.45;">
+                      After finishing your scheduled classes and campus duty, scan the Admin Station QR code once more. The system automatically registers your departure under <strong style="color:var(--text-1);">Time-Out</strong>.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 3: Direct Routing to Attendance Logs -->
+                <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border-radius:10px; background:var(--surface); border:1px solid var(--border);">
+                  <div style="width:24px; height:24px; border-radius:50%; background:rgba(16,185,129,0.12); color:var(--present); display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums;">
+                    3
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-1); margin-bottom:2px;">
+                      Direct Routing to Attendance Logs
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-2); line-height:1.45;">
+                      Every scan automatically updates the Registrar's ledger and routes directly to your <a href="my-logs.html" style="color:var(--accent); font-weight:600; text-decoration:underline;">My Attendance Log</a> as well as the <strong style="color:var(--text-1);">Admin Teacher Attendance Log</strong> for real-time institutional monitoring.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 4: Academic HR System Integration -->
+                <div style="display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border-radius:10px; background:var(--surface); border:1px solid var(--border);">
+                  <div style="width:24px; height:24px; border-radius:50%; background:rgba(99,102,241,0.12); color:#6366F1; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; flex-shrink:0; font-variant-numeric:tabular-nums;">
+                    4
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-1); margin-bottom:2px;">
+                      Academic HR System Integration
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-2); line-height:1.45;">
+                      Your official <strong style="color:var(--text-1);">Time-In</strong> and <strong style="color:var(--text-1);">Time-Out</strong> stream directly into the <strong style="color:var(--text-1);">Academic HR System</strong> (SMS 1) for verified teaching hours, faculty duty tracking, and automated payroll processing.
+                    </div>
+                  </div>
+                </div>
+
               </div>
-              <div id="scanLog" style="max-height:190px; overflow-y:auto; padding:6px 0;">
-                <div id="emptyLogPrompt" style="padding:16px 18px; text-align:center; color:var(--text-3); font-size:12px;">No QR scans recorded for today yet.</div>
+
+              <!-- Helpful Institutional Tips & Integration Box -->
+              <div style="padding:12px 14px; border-radius:10px; background:var(--surface-hover); border-left:3px solid var(--accent); font-size:11.5px; color:var(--text-2); line-height:1.5;">
+                <div style="font-weight:700; color:var(--text-1); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Faculty Guidelines & HR Integration Notes
+                </div>
+                <ul style="margin:0; padding-left:16px; display:flex; flex-direction:column; gap:4px;">
+                  <li><strong>HR Direct Feed:</strong> Verified Time-In and Time-Out data feed directly into the <strong>Academic HR System</strong> without manual timesheet submission.</li>
+                  <li><strong>Dual Mirroring:</strong> All check-ins and check-outs are visible in your personal <a href="my-logs.html" style="color:var(--accent); font-weight:600;">My Attendance Log</a> and the <strong>Admin Teacher Attendance Log</strong> simultaneously.</li>
+                  <li><strong>Anti-Passback:</strong> A 5-minute cooldown protects against accidental duplicate scans.</li>
+                  <li><strong>Hardware Fallback:</strong> If camera is unavailable, tap your physical <strong>RFID faculty card</strong> on any campus entrance terminal.</li>
+                </ul>
               </div>
+
             </div>
 
           </div>
