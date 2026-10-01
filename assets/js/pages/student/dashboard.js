@@ -308,6 +308,7 @@ async function loadStudentExcuseSlips(studentId) {
     }
 
     if (!slips || slips.length === 0) {
+      container.style.justifyContent = 'center';
       container.innerHTML = `
         <div style="flex:1; min-height:165px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 16px; text-align:center; background:var(--surface-hover); border-radius:12px; border:1px dashed var(--border);">
           <div style="width:38px; height:38px; border-radius:50%; background:var(--present-soft); color:var(--present); display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
@@ -323,6 +324,7 @@ async function loadStudentExcuseSlips(studentId) {
       return;
     }
 
+    container.style.justifyContent = 'flex-start';
     container.innerHTML = slips.slice(0, 3).map(slip => {
       const category = slip.reason_category || 'Excuse Request';
       const reasonText = slip.reason || 'No description provided';

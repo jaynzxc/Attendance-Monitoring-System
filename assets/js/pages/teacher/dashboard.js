@@ -298,6 +298,7 @@ function renderPendingSlips(slips) {
   if (!container) return;
 
   if (!slips || slips.length === 0) {
+    container.style.justifyContent = 'center';
     container.innerHTML = `
       <div style="flex:1; min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 16px; text-align:center; background:var(--surface-hover); border-radius:12px; border:1px dashed var(--border);">
         <div style="width:42px; height:42px; border-radius:50%; background:var(--present-soft); color:var(--present); display:flex; align-items:center; justify-content:center; margin-bottom:10px;">
@@ -313,6 +314,7 @@ function renderPendingSlips(slips) {
     return;
   }
 
+  container.style.justifyContent = 'flex-start';
   container.innerHTML = slips.slice(0, 4).map(slip => {
     const studentName = slip.student
       ? `${slip.student.first_name} ${slip.student.last_name}`
