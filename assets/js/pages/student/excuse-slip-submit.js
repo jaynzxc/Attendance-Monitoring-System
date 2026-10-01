@@ -9,9 +9,13 @@ import { getCurrentUser } from '../../lib/auth.js';
 import { excuseSlipsApi } from '../../api/excuseSlipsApi.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
 import { showToast } from '../../components/toast.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentStudent = null;
 let studentSectionId = '11111111-1111-1111-1111-111111111111'; // Default BSIT 3-1
+let allSlips = [];
+let currentPage = 0;
+const pageSize = 15;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce Student Role Guard
@@ -163,24 +167,58 @@ async function loadSubmittedSlips() {
   if (!tbody) return;
 
   try {
-    const slips = await excuseSlipsApi.getStudentSlips(currentStudent.id);
+    allSlips = await excuseSlipsApi.getStudentSlips(currentStudent.id) || [];
+    currentPage = 0;
 
     if (badge) {
-      badge.textContent = `${slips.length} ${slips.length === 1 ? 'Request' : 'Requests'}`;
+      badge.textContent = `${allSlips.length} ${allSlips.length === 1 ? 'Request' : 'Requests'}`;
     }
 
-    if (!slips || slips.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="py-10 text-center text-xs" style="color: var(--text-3);">
-            You have not submitted any excuse slips yet.
-          </td>
-        </tr>
-      `;
-      return;
-    }
+    renderSlipsHistoryTable();
+  } catch (err) {
+    console.error('[AMS Student Excuse] Error loading slips:', err);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="py-10 text-center text-xs text-red-500">
+          Failed to load submitted excuse slips.
+        </td>
+      </tr>
+    `;
+  }
+}
 
-    tbody.innerHTML = slips.map(slip => {
+function renderSlipsHistoryTable() {
+  const tbody = document.getElementById('studentSlipsHistoryBody');
+  if (!tbody) return;
+
+  renderNumberedPagination({
+    containerId: 'slipsPageNumbersContainer',
+    prevBtnId: 'slipsPrevBtn',
+    nextBtnId: 'slipsNextBtn',
+    infoTextId: 'slipsPageInfoText',
+    totalRecords: allSlips.length,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderSlipsHistoryTable();
+    }
+  });
+
+  if (!allSlips || allSlips.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="py-10 text-center text-xs" style="color: var(--text-3);">
+          You have not submitted any excuse slips yet.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const pagedSlips = allSlips.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  tbody.innerHTML = pagedSlips.map(slip => {
       const filedDate = new Date(slip.submitted_at || Date.now()).toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric'
       });

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AMS — Student QR Attendance Scanner</title>
-  
+  <title>AMS — Student QR Attendance</title>
+
   <!-- Anti-FOUC: Immediate theme restoration before first paint -->
   <script>
     (function() {
@@ -12,37 +12,40 @@
       document.documentElement.setAttribute('data-theme', savedTheme);
     })();
   </script>
-  
+
+  <!-- Modern Typography: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
   <link rel="stylesheet" href="../assets/css/tailwind.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
 
-  <!-- jsQR Decoder CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <!-- jsQR for camera-based QR decoding -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    .scanner-viewport {
+    .qr-viewfinder {
       position: relative;
       width: 100%;
       max-width: 440px;
-      aspect-ratio: 1;
       margin: 0 auto;
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
-      background: #000;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      background: #060d17;
+      aspect-ratio: 1;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.25);
     }
-    #cameraFeed {
+    #cameraVideo {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
-    .viewfinder-reticle {
+    .scan-overlay {
       position: absolute;
       inset: 0;
       display: flex;
@@ -50,46 +53,101 @@
       justify-content: center;
       pointer-events: none;
     }
-    .reticle-frame {
-      width: 220px;
-      height: 220px;
-      border: 2px solid rgba(33, 150, 243, 0.7);
+    .scan-guide {
+      width: 230px;
+      height: 230px;
+      border: 2px dashed rgba(33, 150, 243, 0.7);
       border-radius: 14px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 0 0 9999px rgba(6, 13, 23, 0.6);
       position: relative;
     }
-    .reticle-frame::before,
-    .reticle-frame::after {
+    /* Corner brackets */
+    .scan-guide::before,
+    .scan-guide::after {
       content: '';
       position: absolute;
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-color: #2196F3;
       border-style: solid;
     }
-    .reticle-frame::before {
+    .scan-guide::before {
       top: -2px; left: -2px;
       border-width: 3px 0 0 3px;
       border-radius: 4px 0 0 0;
     }
-    .reticle-frame::after {
+    .scan-guide::after {
       bottom: -2px; right: -2px;
       border-width: 0 3px 3px 0;
       border-radius: 0 0 4px 0;
     }
-    .scan-beam {
+    /* Animated scan beam */
+    .scan-line {
       position: absolute;
       left: 0; right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent, #2196F3, transparent);
-      box-shadow: 0 0 8px #2196F3;
-      animation: scanBeam 2.2s infinite ease-in-out;
+      background: linear-gradient(to right, transparent, #2196F3, transparent);
+      box-shadow: 0 0 10px #2196F3;
+      animation: scanMove 2.2s ease-in-out infinite;
     }
-    @keyframes scanBeam {
-      0% { top: 8%; opacity: 0; }
-      15% { opacity: 1; }
-      85% { opacity: 1; }
-      100% { top: 92%; opacity: 0; }
+    @keyframes scanMove {
+      0%   { top: 10%; opacity: 0.3; }
+      50%  { top: 88%; opacity: 1; }
+      100% { top: 10%; opacity: 0.3; }
+    }
+    /* Scan result overlay */
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border-radius: 14px;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(4px);
+    }
+    .result-overlay.hidden { opacity: 0; pointer-events: none; }
+    .result-overlay.visible { opacity: 1; }
+    .result-icon {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .status-banner {
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .status-banner.present { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.28); }
+    .status-banner.late    { background: rgba(245,158,11,0.08);  border-color: rgba(245,158,11,0.28); }
+    .status-banner.default { background: var(--raised); }
+    .btn-sim-scan {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px dashed var(--border-strong);
+      background: var(--raised);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+    .btn-sim-scan:hover {
+      background: var(--surface-hover);
+      color: var(--ch-500);
+      border-color: var(--ch-500);
     }
     .tabular-nums { font-variant-numeric: tabular-nums; }
   </style>
@@ -99,11 +157,11 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" aria-label="Student Navigation">
       <div class="brand">
-        <div class="mark">S</div>
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Student</span>
         <span class="sub-tag">SMS 1</span>
       </div>
-      
+
       <div class="navgroup">Main</div>
       <nav class="nav">
         <a href="dashboard.html">
@@ -131,14 +189,14 @@
           My Analytics & Honors
         </a>
       </nav>
-      
+
       <div class="sidebar-foot">
         SMS 1 · Bestlink College<br>
-        Student Attendance Portal
+        Student Attendance Hub
       </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Column -->
     <div class="main-col">
       <!-- App Header Bar -->
       <header class="appbar">
@@ -151,9 +209,9 @@
           <span class="dot"></span>
           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </div>
-        
+
         <div class="divider"></div>
-        
+
         <div class="profile" role="button" tabindex="0">
           <div class="pf-avatar">JD</div>
           <div class="pf-info">
@@ -164,137 +222,195 @@
         </div>
       </header>
 
-      <!-- Main Scanner Content -->
+      <!-- Main Ingress Content -->
       <main class="main">
         <div class="pagehead">
           <div>
-            <h1>Scan Classroom QR Code</h1>
-            <p>Point your device camera at the dynamic QR pass displayed on your teacher's screen</p>
+            <h1>Student QR Attendance</h1>
+            <p>Scan the dynamic QR code displayed at the Campus Gate or Classroom Terminal to log your attendance</p>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style="background:var(--present-soft); color:var(--present);">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="geoStatusIndicator">GPS Geofence: Active (50m)</span>
-            </span>
-          </div>
+          <a href="attendance-history.html" class="pillbtn" style="display:inline-flex;align-items:center;gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+            View Attendance History
+          </a>
         </div>
 
-        <!-- Scan Result Banner (Hidden by default, shown upon scan) -->
-        <div id="scanResultBanner" class="card p-4 mb-6 transition-all" style="display:none;">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3.5">
-              <div id="resultIconBox" class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
-                <svg id="resultIcon" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"></svg>
+        <div style="display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(320px, 1fr); gap:20px; align-items:start;">
+
+          <!-- Left Pane: Camera Viewfinder & Ingress Controls -->
+          <div class="card" style="padding:22px;">
+            <div style="margin-bottom:16px;">
+              <h3 style="margin:0 0 2px; font-size:15px; font-weight:700;">Camera Ingress Terminal</h3>
+              <div class="sub">Point your camera at the teacher's classroom QR pass or gate terminal</div>
+            </div>
+
+            <!-- Viewfinder Area -->
+            <div class="qr-viewfinder" id="viewfinderContainer">
+              <!-- Idle placeholder -->
+              <div id="cameraPlaceholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--raised);">
+                <div style="width:56px; height:56px; border-radius:14px; background:rgba(33,150,243,0.1); display:flex; align-items:center; justify-content:center; color:var(--ch-500);">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:13px; font-weight:600; color:var(--text-1);">Camera Standby</div>
+                  <div style="font-size:11.5px; color:var(--text-3); margin-top:2px;">Click Start Camera to begin scanning</div>
+                </div>
               </div>
-              <div>
-                <h3 class="text-sm font-bold" id="resultTitle">Attendance Recorded</h3>
-                <p class="text-xs mt-0.5" style="color:var(--text-2);" id="resultSubtitle">Verified Present at 07:45:12 AM</p>
+
+              <!-- Live Video & Overlay Elements -->
+              <video id="cameraVideo" autoplay playsinline muted style="display:none;"></video>
+              <canvas id="scanCanvas" style="display:none;"></canvas>
+
+              <div class="scan-overlay" id="scanGuideOverlay" style="display:none;">
+                <div class="scan-guide">
+                  <div class="scan-line"></div>
+                </div>
+              </div>
+
+              <!-- Animated Scan Result Overlay -->
+              <div class="result-overlay hidden" id="resultOverlay">
+                <div class="result-icon" id="resultIcon"></div>
+                <div id="resultLabel" style="font-size:17px; font-weight:700; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,0.6);"></div>
+                <div id="resultSub" style="font-size:12.5px; color:rgba(255,255,255,0.9); font-weight:500;"></div>
               </div>
             </div>
-            <button id="btnDismissResult" class="pillbtn text-xs">Dismiss</button>
-          </div>
-        </div>
 
-        <!-- Scanner Two-Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <!-- Left: Camera Box (7 cols) -->
-          <div class="lg:col-span-7">
-            <div class="card p-6 flex flex-col items-center">
-              <div class="scanner-viewport mb-4">
-                <video id="cameraFeed" playsinline autoplay muted></video>
-                <canvas id="qrScanCanvas" class="hidden"></canvas>
-                
-                <div class="viewfinder-reticle">
-                  <div class="reticle-frame">
-                    <div class="scan-beam"></div>
+            <!-- Action Controls -->
+            <div style="display:flex; gap:10px; margin-top:16px;">
+              <button id="btnStartCamera" class="btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7 16 12 23 17V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                Start Camera
+              </button>
+              <button id="btnStopCamera" class="btn-secondary" style="display:flex; align-items:center; gap:6px;" disabled>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+                Stop
+              </button>
+            </div>
+
+            <!-- Quick Demo / Simulation Trigger -->
+            <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
+              <button type="button" id="btnSimulateScan" class="btn-sim-scan" title="Simulate scanning the active classroom QR pass">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span>Simulate Active Classroom QR Pass</span>
+              </button>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                <button type="button" id="btnSimulatePresent" class="btn-secondary" style="font-size:11px; padding:6px 4px; border-radius:6px; font-weight:600; text-align:center; cursor:pointer;" title="Simulate On-Time Present QR pass">
+                  Present Pass
+                </button>
+                <button type="button" id="btnSimulateLate" class="btn-secondary" style="font-size:11px; padding:6px 4px; border-radius:6px; font-weight:600; text-align:center; cursor:pointer;" title="Simulate Tardy / Late QR pass">
+                  Late Pass
+                </button>
+                <button type="button" id="btnSimulateInvalid" class="btn-secondary" style="font-size:11px; padding:6px 4px; border-radius:6px; font-weight:600; color:var(--absent); border-color:rgba(239,68,68,0.3); text-align:center; cursor:pointer;" title="Simulate scanning an invalid/unauthorized QR code">
+                  Invalid QR
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Pane: Status Cards & Instructions -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+
+            <!-- Today's Personal Status Card -->
+            <div class="card" style="padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <h3 style="margin:0; font-size:13.5px; font-weight:700;">My Ingress Today</h3>
+                  <button type="button" id="btnResetDemoAttendance" class="btn-secondary" style="font-size:10.5px; padding:3px 9px; border-radius:6px; color:var(--text-2); display:inline-flex; align-items:center; gap:4px; font-weight:600; cursor:pointer;" title="Reset today's check-in for testing">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Reset (Demo)</span>
+                  </button>
+                </div>
+                <span id="todayDateBadge" class="text-xs font-mono tabular-nums" style="color:var(--text-3);">--</span>
+              </div>
+
+              <!-- Check-In Status Banner (Students only have Check-In, no Time-Out) -->
+              <div class="status-banner default" id="statusBannerCheckIn">
+                <div style="width:36px; height:36px; border-radius:10px; background:var(--raised); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-3);" id="checkInIconBox">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:10.5px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:0.06em;">Campus & Classroom Check-In</div>
+                  <div id="checkInValue" style="font-size:16px; font-weight:700; color:var(--text-1); font-variant-numeric:tabular-nums;">--:-- --</div>
+                  <div id="checkInStatus" style="font-size:11.5px; color:var(--text-2);">Not scanned yet</div>
+                </div>
+              </div>
+
+              <!-- Quick Verification Details -->
+              <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; font-size:11.5px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-3);">Enrolled Section:</span>
+                  <span style="color:var(--text-1); font-weight:600;" id="summarySection">BSIT 3-1</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-3);">Tardy Cutoff:</span>
+                  <span style="color:var(--text-1); font-weight:600;">08:00 AM (Institutional Standard)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-3);">Ingress Terminal:</span>
+                  <span style="color:var(--text-1); font-weight:600;">Classroom QR / Gate 1</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Student Attendance Guide Card -->
+            <div class="card" style="padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:9px;">
+                  <div style="width:32px; height:32px; border-radius:8px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="16" x2="12" y2="12"/>
+                      <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 style="margin:0; font-size:13.5px; font-weight:700; color:var(--text-1);">Student Attendance Guide</h3>
+                    <div style="font-size:11px; color:var(--text-3);">Campus ingress & classroom scan protocol</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Camera Controls -->
-              <div class="flex flex-wrap items-center justify-center gap-3 w-full max-w-sm">
-                <button id="btnStartCamera" class="btn-primary flex-1 justify-center text-xs py-2.5">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  Start Camera
-                </button>
-                <button id="btnSwitchCamera" class="btn-secondary text-xs py-2.5 px-3" title="Switch Camera">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </button>
-                <button id="btnStopCamera" class="btn-secondary text-xs py-2.5 px-3" style="display:none;" title="Stop Camera">
-                  Stop
-                </button>
+              <div style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
+                <div style="display:flex; gap:10px;">
+                  <div style="width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:10px; flex-shrink:0;">1</div>
+                  <div style="color:var(--text-2);">
+                    <strong style="color:var(--text-1);">Classroom QR Pass:</strong> Open your camera and aim it at the dynamic QR pass shown on your instructor's screen or kiosk.
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                  <div style="width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:10px; flex-shrink:0;">2</div>
+                  <div style="color:var(--text-2);">
+                    <strong style="color:var(--text-1);">Cutoff Threshold:</strong> Taps registered on or before 08:00 AM are classified as <span style="color:var(--present); font-weight:600;">Present</span>. Late arrivals after 08:00 AM are logged as <span style="color:var(--late); font-weight:600;">Late</span>.
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                  <div style="width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:10px; flex-shrink:0;">3</div>
+                  <div style="color:var(--text-2);">
+                    <strong style="color:var(--text-1);">Physical RFID Card Tap:</strong> Students with physical student IDs can tap directly on turnstiles without using mobile cameras.
+                  </div>
+                </div>
               </div>
-
-              <p class="text-xs text-center mt-3" style="color:var(--text-3);" id="scannerStatusText">
-                Position your camera so the teacher's QR code fills the square frame.
-              </p>
             </div>
+
+            <!-- Today's Ingress History List Card -->
+            <div class="card" style="padding:0; overflow:hidden;">
+              <div style="padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+                <h3 style="margin:0; font-size:13px; font-weight:700;">Today's Ingress History</h3>
+                <span id="scanCountBadge" class="badge" style="background:var(--raised); color:var(--text-2); font-size:10.5px; font-weight:700;">0 Scans</span>
+              </div>
+              <div id="scanLog" style="max-height:220px; overflow-y:auto;">
+                <div id="emptyLogPrompt" style="padding:28px 18px; text-align:center; color:var(--text-3); font-size:12px;">
+                  No scans registered yet today.
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <!-- Right: Guidance & Attendance Ledger (5 cols) -->
-          <div class="lg:col-span-5 space-y-6">
-            <!-- RFID Card Fast-Path Note -->
-            <div class="card p-5" style="border-left:4px solid var(--present); background:linear-gradient(to right, rgba(16, 185, 129, 0.04), transparent);">
-              <div class="flex items-start gap-3">
-                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background:var(--present-soft); color:var(--present);">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold" style="color:var(--text-1);">Physical RFID Card Tap</h3>
-                  <p class="text-xs mt-1 leading-relaxed" style="color:var(--text-2);">
-                    If you have your physical student ID card, simply tap it on the door scanner or turnstile. You do <strong>not</strong> need to scan with your phone — taps register directly to your attendance calendar.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Anti-Buddy Punch Security Info -->
-            <div class="card p-5" style="background:var(--raised); border-color:var(--border);">
-              <h4 class="text-xs font-bold uppercase tracking-wider mb-2" style="color:var(--text-1);">Scan Verification Rules</h4>
-              <ul class="text-xs space-y-2" style="color:var(--text-2);">
-                <li class="flex items-center gap-2">
-                  <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span><strong>Enrollment Match:</strong> You must be enrolled in the active section.</span>
-                </li>
-                <li class="flex items-center gap-2">
-                  <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span><strong>Geofence Radius:</strong> Within 50 meters of the classroom session.</span>
-                </li>
-                <li class="flex items-center gap-2">
-                  <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span><strong>Anti-Passback:</strong> 5-minute cooldown between duplicate scans.</span>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Today's Recorded Scans Summary -->
-            <div class="card overflow-hidden">
-              <div class="p-3.5 border-b flex items-center justify-between" style="border-color:var(--border);">
-                <h4 class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-1);">Today's Ingress History</h4>
-                <span class="text-[11px] font-mono tabular-nums" style="color:var(--text-3);" id="todayIngressDate">--</span>
-              </div>
-              <div id="todayScansContainer" class="p-3 space-y-2">
-                <div class="text-center py-6 text-xs" style="color:var(--text-3);">
-                  Checking your scans for today...
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </div>
   </div>
-
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
-
-  <!-- Audio Chimes for Scan Feedback -->
-  <audio id="audioSuccess" preload="auto">
-    <source src="https://cdn.freesound.org/previews/320/320655_5260872-lq.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="audioError" preload="auto">
-    <source src="https://cdn.freesound.org/previews/142/142608_24940-lq.mp3" type="audio/mpeg">
-  </audio>
 
   <!-- Page Controller Script -->
   <script type="module" src="../assets/js/pages/student/scan-qr.js"></script>

@@ -253,16 +253,16 @@ function renderWeekdayTrendChart() {
         label: 'Avg Rate',
         data: [92, 95, 91, 94, 88],
         borderColor: '#2196F3',
-        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+        backgroundColor: isDark ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+        cubicInterpolationMode: 'monotone',
         tension: 0.35,
         fill: true,
         pointRadius: 4,
         pointHoverRadius: 7,
         pointHitRadius: 20,
         pointBackgroundColor: '#0D47A1',
-        pointHoverBackgroundColor: '#2196F3',
-        pointHoverBorderColor: '#FFFFFF',
-        pointHoverBorderWidth: 2
+        pointBorderColor: '#FFFFFF',
+        pointBorderWidth: 1.5,
       }]
     },
     options: {

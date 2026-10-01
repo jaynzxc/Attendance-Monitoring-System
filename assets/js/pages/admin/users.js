@@ -8,6 +8,7 @@ import { usersApi } from '../../api/usersApi.js';
 import { sectionsApi } from '../../api/sectionsApi.js';
 import { toast } from '../../components/toast.js';
 import { Modal } from '../../components/modal.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentPage = 0;
 const pageSize = 15;
@@ -152,19 +153,19 @@ function renderUsersTable(users) {
  * Updates pagination bar
  */
 function updatePaginationUI() {
-  const countText = document.getElementById('usersRecordCount');
-  const prevBtn = document.getElementById('usersPrevBtn');
-  const nextBtn = document.getElementById('usersNextBtn');
-  const indicator = document.getElementById('usersPageIndicator');
-
-  const start = totalUsers === 0 ? 0 : currentPage * pageSize + 1;
-  const end = Math.min((currentPage + 1) * pageSize, totalUsers);
-
-  if (countText) countText.textContent = `Showing ${start}–${end} of ${totalUsers} users`;
-  if (indicator) indicator.textContent = `Page ${currentPage + 1} of ${Math.max(1, Math.ceil(totalUsers / pageSize))}`;
-
-  if (prevBtn) prevBtn.disabled = currentPage === 0;
-  if (nextBtn) nextBtn.disabled = (currentPage + 1) * pageSize >= totalUsers;
+  renderNumberedPagination({
+    containerId: 'pageNumbersContainer',
+    prevBtnId: 'usersPrevBtn',
+    nextBtnId: 'usersNextBtn',
+    infoTextId: 'usersRecordCount',
+    totalRecords: totalUsers,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      loadUsers();
+    }
+  });
 }
 
 /**
@@ -373,21 +374,6 @@ async function init() {
       currentPage = 0;
       loadUsers();
     }, 280);
-  });
-
-  // Pagination buttons
-  document.getElementById('usersPrevBtn')?.addEventListener('click', () => {
-    if (currentPage > 0) {
-      currentPage--;
-      loadUsers();
-    }
-  });
-
-  document.getElementById('usersNextBtn')?.addEventListener('click', () => {
-    if ((currentPage + 1) * pageSize < totalUsers) {
-      currentPage++;
-      loadUsers();
-    }
   });
 
   document.getElementById('btnCreateUser')?.addEventListener('click', openCreateUserModal);

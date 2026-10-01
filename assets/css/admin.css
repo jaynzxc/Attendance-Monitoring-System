@@ -417,3 +417,96 @@
     overflow-y: visible;
   }
 }
+
+/* Institutional Brand Logo */
+.brand .brand-logo,
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Trend Chart Relocated Legend */
+.trend-legend-solid {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  background-color: var(--ch-500);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.trend-legend-dashed {
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--ch-900);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .trend-legend-dashed {
+  border-top-color: var(--ch-200);
+}
+
+/* Standardized Interactive Numbered Pagination */
+.page-num-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-variant-numeric: tabular-nums;
+}
+.page-num-btn:hover {
+  background: var(--raised);
+  color: var(--text-1);
+  border-color: var(--border-strong);
+}
+.page-num-btn.active {
+  background: var(--ch-500);
+  border-color: var(--ch-500);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.35);
+}
+.page-arrow-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.page-arrow-btn:hover:not(:disabled) {
+  background: var(--raised);
+  border-color: var(--border-strong);
+  color: var(--ch-500);
+}
+.page-arrow-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--border);
+  color: var(--text-3);
+}
+
+

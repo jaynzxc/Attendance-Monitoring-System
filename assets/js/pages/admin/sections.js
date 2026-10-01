@@ -8,9 +8,12 @@ import { sectionsApi } from '../../api/sectionsApi.js';
 import { usersApi } from '../../api/usersApi.js';
 import { toast } from '../../components/toast.js';
 import { Modal } from '../../components/modal.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let sectionsList = [];
 let teachersList = [];
+let currentPage = 0;
+const pageSize = 15;
 
 /**
  * Loads sections and metrics
@@ -56,8 +59,31 @@ async function loadSections() {
   if (advCount) advCount.textContent = assignedAdvisors;
   if (prgCount) prgCount.textContent = programs.size || 3;
 
+  renderSectionsTable();
+}
+
+function renderSectionsTable() {
+  const tbody = document.getElementById('sectionsTableBody');
+  if (!tbody) return;
+
+  renderNumberedPagination({
+    containerId: 'sectionsPageNumbersContainer',
+    prevBtnId: 'sectionsPrevBtn',
+    nextBtnId: 'sectionsNextBtn',
+    infoTextId: 'sectionsPageInfoText',
+    totalRecords: sectionsList.length,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderSectionsTable();
+    }
+  });
+
+  const pagedSections = sectionsList.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
   // Render rows
-  tbody.innerHTML = sectionsList.map(sec => {
+  tbody.innerHTML = pagedSections.map(sec => {
     const advisorName = sec.advisor ? `${sec.advisor.first_name || ''} ${sec.advisor.last_name || ''}`.trim() : 'Unassigned';
     const advisorEmail = sec.advisor?.email || '';
 
@@ -96,14 +122,14 @@ async function loadSections() {
   }).join('');
 
   // Attach click listeners to row buttons
-  document.querySelectorAll('.btn-roster').forEach(btn => {
+  tbody.querySelectorAll('.btn-roster').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const secId = e.currentTarget.getAttribute('data-id');
       viewSectionRoster(secId);
     });
   });
 
-  document.querySelectorAll('.btn-edit-section').forEach(btn => {
+  tbody.querySelectorAll('.btn-edit-section').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const secId = e.currentTarget.getAttribute('data-id');
       openEditSectionModal(secId);

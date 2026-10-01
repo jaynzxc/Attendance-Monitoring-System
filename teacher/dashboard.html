@@ -30,7 +30,7 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" aria-label="Faculty Navigation">
       <div class="brand">
-        <div class="mark">T</div>
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Faculty</span>
         <span class="sub-tag">SMS 1</span>
       </div>
@@ -169,12 +169,25 @@
               <a href="analytics.html" class="viewall">Detailed Analytics →</a>
             </div>
 
-            <div style="position:relative; height:185px; margin-top:14px;">
+            <div style="position:relative; height:205px; width:100%; margin-top:14px;">
               <canvas id="facultyTrendChart"></canvas>
             </div>
 
-            <div style="font-size:11.5px; color:var(--text-3); margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:11.5px; color:var(--text-3); margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
               <span>Target Benchmark: <strong>90%</strong></span>
+
+              <!-- Relocated Legend in the Middle -->
+              <div id="facultyTrendLegend" style="display:flex; align-items:center; gap:14px; font-size:11px; font-weight:500;">
+                <div id="legendToggleRate" role="button" tabindex="0" title="Toggle Class Attendance" style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; transition:opacity 0.2s;">
+                  <span class="trend-legend-solid"></span>
+                  <span style="color:var(--text-2);">Class Attendance</span>
+                </div>
+                <div id="legendToggleTarget" role="button" tabindex="0" title="Toggle Target Benchmark" style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; transition:opacity 0.2s;">
+                  <span class="trend-legend-dashed"></span>
+                  <span style="color:var(--text-2);">Target (90%)</span>
+                </div>
+              </div>
+
               <span>Current Week Average: <strong id="trendCurrentAvg" class="tabular-nums" style="color:var(--present);">93.5%</strong></span>
             </div>
           </div>

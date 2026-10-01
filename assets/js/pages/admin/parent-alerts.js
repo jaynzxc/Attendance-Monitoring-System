@@ -1,4 +1,4 @@
-﻿/**
+/**
  * parent-alerts.js - Page controller for Parent Alerts & Intervention module
  * Bestlink College of the Philippines - Attendance Monitoring System (AMS)
  */
@@ -6,6 +6,10 @@
 import { requireRole } from '../../lib/rbac-guard.js';
 import { toast } from '../../components/toast.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
+
+let currentPage = 0;
+const pageSize = 15;
 
 // Seed data for at-risk students (replaced by live Supabase query when connected)
 const SEED_RISK = [
@@ -36,12 +40,28 @@ function renderRiskTable(data) {
 
   if (countEl) countEl.textContent = `${data.length} students`;
 
+  renderNumberedPagination({
+    containerId: 'riskPageNumbersContainer',
+    prevBtnId: 'riskPrevBtn',
+    nextBtnId: 'riskNextBtn',
+    infoTextId: 'riskPageInfoText',
+    totalRecords: data.length,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderRiskTable(data);
+    }
+  });
+
   if (data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:36px; color:var(--text-3);">No at-risk students detected. All clear.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = data.map(st => {
+  const paged = data.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  tbody.innerHTML = paged.map(st => {
     const priorityBadge = st.priority === 'High'
       ? 'style="background:rgba(239,68,68,0.12); color:#EF4444;"'
       : 'style="background:rgba(245,158,11,0.12); color:#F59E0B;"';

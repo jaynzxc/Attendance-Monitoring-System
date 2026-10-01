@@ -10,7 +10,7 @@ export const excuseSlipsApi = {
   /**
    * Fetches excuse slips with optional status and section filtering
    */
-  async getExcuseSlips({ status = null, sectionId = null } = {}) {
+  async getExcuseSlips({ status = null, sectionId = null, studentId = null } = {}) {
     const sb = getSupabase();
     if (!sb) return [];
 
@@ -21,18 +21,16 @@ export const excuseSlipsApi = {
           id,
           student_id,
           section_id,
-          reason_category,
+          date_from,
+          date_to,
           reason,
-          start_date,
-          end_date,
           attachment_url,
           status,
-          submitted_at,
-          reviewer_id,
-          reviewer_notes,
+          reviewed_by,
           reviewed_at,
-          student:student_id ( id, first_name, last_name, student_number ),
-          section:section_id ( id, name )
+          created_at,
+          student:users!student_id ( id, first_name, last_name, student_number ),
+          section:sections!section_id ( id, name )
         `);
 
       if (status) {
@@ -45,11 +43,31 @@ export const excuseSlipsApi = {
         query = query.eq('student_id', studentId);
       }
 
-      query = query.order('submitted_at', { ascending: false });
+      query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+
+      // Normalize data for UI backwards-compatibility
+      return (data || []).map(row => {
+        let category = 'Medical / Personal';
+        let detail = row.reason || '';
+        const match = detail.match(/^\[(.*?)\]\s*(.*)$/);
+        if (match) {
+          category = match[1];
+          detail = match[2];
+        }
+
+        return {
+          ...row,
+          start_date: row.date_from,
+          end_date: row.date_to,
+          submitted_at: row.created_at,
+          reason_category: category,
+          reason: detail || row.reason,
+          reviewer_id: row.reviewed_by
+        };
+      });
     } catch (err) {
       console.error('[AMS API] getExcuseSlips error:', err);
       return [];
@@ -170,10 +188,9 @@ export const excuseSlipsApi = {
       .insert([{
         student_id: studentId,
         section_id: sectionId,
-        reason_category: reasonCategory,
-        reason: reason,
-        start_date: dateFrom,
-        end_date: dateTo,
+        date_from: dateFrom,
+        date_to: dateTo,
+        reason: reasonCategory ? `[${reasonCategory}] ${reason}` : reason,
         attachment_url: attachmentPath,
         status: 'pending'
       }])

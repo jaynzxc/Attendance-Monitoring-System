@@ -155,7 +155,8 @@ async function loadTrendChart() {
         presentData,
         targetData,
         presentLabel: 'Present rate',
-        targetLabel: 'Goal (92%)'
+        targetLabel: 'Goal (92%)',
+        hideLegend: true
       };
       renderTrendChart('trendChart', cachedTrendData);
 
@@ -168,13 +169,14 @@ async function loadTrendChart() {
         presentData: [88.5, 90.2, 87.8, 93.1, 94.1],
         targetData: [92, 92, 92, 92, 92],
         presentLabel: 'Present rate',
-        targetLabel: 'Goal (92%)'
+        targetLabel: 'Goal (92%)',
+        hideLegend: true
       };
       renderTrendChart('trendChart', cachedTrendData);
     }
   } catch (err) {
     console.error('[AMS Admin Dashboard] Error loading trend chart:', err);
-    renderTrendChart('trendChart');
+    renderTrendChart('trendChart', { hideLegend: true });
   }
 }
 
@@ -592,6 +594,7 @@ async function init() {
   // 4. Load analytical data & widgets
   loadKpis();
   loadTrendChart();
+  initTrendChartLegendInteractions();
   setupLiveScanStream();
   loadSectionWatchlist();
   checkActiveSession();
@@ -673,4 +676,43 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+/**
+ * Enables interactive dataset toggling for the relocated trend chart legend
+ */
+function initTrendChartLegendInteractions() {
+  const toggleRate = document.getElementById('legendToggleRate');
+  const toggleTarget = document.getElementById('legendToggleTarget');
+
+  const toggleDataset = (datasetIndex, btn) => {
+    const chart = window.Chart?.getChart?.('trendChart');
+    if (!chart) return;
+    const isVisible = chart.isDatasetVisible(datasetIndex);
+    chart.setDatasetVisibility(datasetIndex, !isVisible);
+    chart.update();
+    btn.style.opacity = isVisible ? '0.35' : '1';
+    btn.style.textDecoration = isVisible ? 'line-through' : 'none';
+  };
+
+  if (toggleRate) {
+    toggleRate.addEventListener('click', () => toggleDataset(0, toggleRate));
+    toggleRate.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDataset(0, toggleRate);
+      }
+    });
+  }
+
+  if (toggleTarget) {
+    toggleTarget.addEventListener('click', () => toggleDataset(1, toggleTarget));
+    toggleTarget.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDataset(1, toggleTarget);
+      }
+    });
+  }
+}
+
 

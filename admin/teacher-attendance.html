@@ -94,7 +94,7 @@
     <!-- Sidebar Navigation -->
             <aside class="sidebar" aria-label="Main Navigation">
       <div class="brand">
-        <div class="mark">A</div>
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Admin</span>
         <span class="sub-tag">SMS 1</span>
       </div>
@@ -350,11 +350,12 @@
           </div>
 
           <!-- Pagination -->
-          <div class="p-3 border-t flex items-center justify-between text-xs" style="border-color:var(--border);">
-            <div style="color:var(--text-2);" id="paginationInfo">Page 1 of 1</div>
-            <div class="flex gap-2">
-              <button id="btnPrevPage" class="btn-secondary" style="padding:4px 10px; font-size:11px;" disabled>Previous</button>
-              <button id="btnNextPage" class="btn-secondary" style="padding:4px 10px; font-size:11px;" disabled>Next</button>
+          <div class="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style="border-color:var(--border); color:var(--text-2);">
+            <div id="paginationInfo">Showing 1 to 15 records</div>
+            <div class="flex items-center gap-1.5" id="paginationControls">
+              <button id="btnPrevPage" class="page-arrow-btn" disabled aria-label="Previous Page">&lt;</button>
+              <div id="pageNumbersContainer" class="flex items-center gap-1"></div>
+              <button id="btnNextPage" class="page-arrow-btn" disabled aria-label="Next Page">&gt;</button>
             </div>
           </div>
         </div>

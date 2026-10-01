@@ -8,12 +8,15 @@ import { requireRole } from '../../lib/rbac-guard.js';
 import { getCurrentUser } from '../../lib/auth.js';
 import { sectionsApi } from '../../api/sectionsApi.js';
 import { showToast } from '../../components/toast.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentTeacher = null;
 let assignedSections = [];
 let allAttendanceLogs = [];
 let filteredLogs = [];
 let selectedDate = new Date().toISOString().split('T')[0];
+let currentPage = 0;
+const pageSize = 15;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Role Guard
@@ -221,6 +224,7 @@ function filterAndRenderLogs() {
     return matchesSearch && matchesSection && matchesStatus;
   });
 
+  currentPage = 0;
   updateKpiSummary();
   renderLogsTable();
 }
@@ -257,7 +261,23 @@ function renderLogsTable() {
   const tbody = document.getElementById('logsTableBody');
   if (!tbody) return;
 
-  if (filteredLogs.length === 0) {
+  const totalRecords = filteredLogs.length;
+
+  renderNumberedPagination({
+    containerId: 'pageNumbersContainer',
+    prevBtnId: 'prevPageBtn',
+    nextBtnId: 'nextPageBtn',
+    infoTextId: 'pageInfoText',
+    totalRecords,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderLogsTable();
+    }
+  });
+
+  if (totalRecords === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6">
@@ -272,7 +292,9 @@ function renderLogsTable() {
     return;
   }
 
-  tbody.innerHTML = filteredLogs.map(log => {
+  const pageData = filteredLogs.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  tbody.innerHTML = pageData.map(log => {
     const initials = `${(log.first_name || 'S')[0]}${(log.last_name || '')[0] || ''}`.toUpperCase();
     const studentName = `${log.first_name || ''} ${log.last_name || ''}`.trim() || 'Student';
     const timeFormatted = log.scanned_at

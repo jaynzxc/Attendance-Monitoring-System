@@ -176,6 +176,37 @@ body {
   box-shadow: 0 2px 8px rgba(33, 150, 243, 0.35);
 }
 
+.brand .brand-logo,
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Trend Chart Relocated Legend */
+.trend-legend-solid {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  background-color: var(--ch-500);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.trend-legend-dashed {
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--ch-900);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .trend-legend-dashed {
+  border-top-color: var(--ch-200);
+}
+
 .brand span {
   font-weight: 700;
   font-size: 15px;

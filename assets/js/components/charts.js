@@ -24,15 +24,6 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
     trendChartInstances[canvasId].destroy();
   }
 
-  const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 180);
-  if (isDark) {
-    grad.addColorStop(0, 'rgba(33, 150, 243, 0.45)');
-    grad.addColorStop(1, 'rgba(33, 150, 243, 0.02)');
-  } else {
-    grad.addColorStop(0, 'rgba(33, 150, 243, 0.28)');
-    grad.addColorStop(1, 'rgba(227, 242, 253, 0.05)');
-  }
-
   const textColor = isDark ? '#90CAF9' : '#4A657E';
   const gridColor = isDark ? '#1A3866' : '#E2ECF7';
   const targetColor = isDark ? '#90CAF9' : '#0D47A1';
@@ -41,55 +32,92 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
   const defaultPresentData = [88, 90, 87, 93, 94];
   const defaultTargetData = [92, 92, 92, 92, 92];
 
+  const presentData = (customData?.presentData || defaultPresentData).map(v => Math.min(100, Math.max(0, Number(v) || 0)));
+  const targetData = customData?.targetData || defaultTargetData;
+  const labels = customData?.labels || defaultLabels;
+
+  // Calculate smart lower bound so line uses vertical height without clipping
+  const allValues = [...presentData, ...(targetData || [])].filter(v => typeof v === 'number' && !isNaN(v));
+  const minVal = allValues.length > 0 ? Math.min(...allValues) : 80;
+  const dynamicMin = Math.max(0, Math.min(80, Math.floor((minVal - 6) / 5) * 5));
+
   trendChartInstances[canvasId] = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: customData?.labels || defaultLabels,
+      labels,
       datasets: [
         {
           label: customData?.presentLabel || 'Present rate',
-          data: customData?.presentData || defaultPresentData,
+          data: presentData,
           borderColor: '#2196F3',
-          backgroundColor: grad,
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx: cCtx, chartArea } = chart;
+            if (!chartArea) return isDark ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.12)';
+            const grad = cCtx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            if (isDark) {
+              grad.addColorStop(0, 'rgba(33, 150, 243, 0.40)');
+              grad.addColorStop(1, 'rgba(33, 150, 243, 0.01)');
+            } else {
+              grad.addColorStop(0, 'rgba(33, 150, 243, 0.24)');
+              grad.addColorStop(1, 'rgba(227, 242, 253, 0.02)');
+            }
+            return grad;
+          },
           fill: true,
-          tension: 0.38,
-          pointRadius: 3.5,
-          pointHoverRadius: 7,
+          cubicInterpolationMode: 'monotone',
+          tension: 0.35,
+          pointRadius: 4,
+          pointHoverRadius: 6.5,
           pointHitRadius: 20,
           pointHoverBorderWidth: 2,
           pointHoverBorderColor: '#FFFFFF',
           pointBackgroundColor: '#2196F3',
+          pointBorderColor: '#FFFFFF',
+          pointBorderWidth: 1.5,
           borderWidth: 2.5
         },
         {
           label: customData?.targetLabel || 'Target (92%)',
-          data: customData?.targetData || defaultTargetData,
+          data: targetData,
           borderColor: targetColor,
           borderDash: [5, 4],
           pointRadius: 0,
           pointHoverRadius: 0,
           pointHitRadius: 0,
-          borderWidth: 1.5,
-          tension: 0
+          borderWidth: 1.75,
+          tension: 0,
+          fill: false
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: customData?.hideLegend ? 6 : 10,
+          right: 12,
+          bottom: 4,
+          left: 4
+        }
+      },
       interaction: {
         mode: 'index',
         intersect: false
       },
       plugins: {
         legend: {
-          display: true,
+          display: customData?.hideLegend ? false : true,
+          position: 'top',
+          align: 'end',
           labels: {
             color: textColor,
-            font: { size: 11.5, family: "'Inter', sans-serif" },
-            boxWidth: 10,
-            usePointStyle: true,
-            pointStyle: 'circle'
+            font: { size: 11, family: "'Inter', sans-serif", weight: '500' },
+            boxWidth: 14,
+            boxHeight: 2,
+            usePointStyle: false,
+            padding: 10
           }
         },
         tooltip: {
@@ -100,6 +128,7 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
           borderWidth: 1,
           padding: 10,
           cornerRadius: 8,
+          boxPadding: 4,
           callbacks: {
             label: (c) => ` ${c.dataset.label}: ${c.parsed.y}%`
           }
@@ -107,17 +136,18 @@ export function renderTrendChart(canvasId = 'trendChart', customData = null) {
       },
       scales: {
         x: {
-          ticks: { color: textColor, font: { size: 11 } },
+          ticks: { color: textColor, font: { size: 11, family: "'Inter', sans-serif" } },
           grid: { display: false }
         },
         y: {
           ticks: {
             color: textColor,
-            font: { size: 11 },
-            callback: (v) => v + '%'
+            font: { size: 11, family: "'Inter', sans-serif" },
+            callback: (v) => v + '%',
+            stepSize: 5
           },
           grid: { color: gridColor },
-          min: 70,
+          min: dynamicMin,
           max: 100
         }
       }
@@ -371,6 +401,7 @@ export function renderDailyTimestampsLineChart(canvasId = 'studentAttendanceTren
           borderColor: checkInColor,
           backgroundColor: gradIn,
           fill: true,
+          cubicInterpolationMode: 'monotone',
           tension: 0.35,
           pointRadius: 4.5,
           pointHoverRadius: 7.5,
@@ -386,6 +417,7 @@ export function renderDailyTimestampsLineChart(canvasId = 'studentAttendanceTren
           borderColor: checkOutColor,
           backgroundColor: 'transparent',
           fill: false,
+          cubicInterpolationMode: 'monotone',
           tension: 0.35,
           pointRadius: 4.5,
           pointHoverRadius: 7.5,

@@ -10,6 +10,7 @@ import { attendanceApi } from '../../api/attendanceApi.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
 import { subscribeToAttendanceLogs, unsubscribeChannel } from '../../lib/realtime.js';
 import { showToast } from '../../components/toast.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentTeacher = null;
 let currentPage = 0;
@@ -333,19 +334,19 @@ function updateMonthlyKpiStats(records) {
 }
 
 function updatePaginationControls() {
-  const prevBtn = document.getElementById('prevPageBtn');
-  const nextBtn = document.getElementById('nextPageBtn');
-  const pageInfo = document.getElementById('pageInfoText');
-
-  const start = totalCount === 0 ? 0 : currentPage * pageSize + 1;
-  const end = Math.min((currentPage + 1) * pageSize, totalCount);
-
-  if (pageInfo) {
-    pageInfo.textContent = `Showing ${start} to ${end} of ${totalCount} records`;
-  }
-
-  if (prevBtn) prevBtn.disabled = currentPage === 0;
-  if (nextBtn) nextBtn.disabled = (currentPage + 1) * pageSize >= totalCount;
+  renderNumberedPagination({
+    containerId: 'pageNumbersContainer',
+    prevBtnId: 'prevPageBtn',
+    nextBtnId: 'nextPageBtn',
+    infoTextId: 'pageInfoText',
+    totalRecords: totalCount,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      loadPersonalLogs();
+    }
+  });
 }
 
 

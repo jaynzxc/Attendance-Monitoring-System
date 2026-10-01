@@ -33,7 +33,7 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" aria-label="Student Navigation">
       <div class="brand">
-        <div class="mark">S</div>
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Student</span>
         <span class="sub-tag">SMS 1</span>
       </div>
@@ -89,10 +89,10 @@
         <div class="divider"></div>
         
         <div class="profile" role="button" tabindex="0">
-          <div class="pf-avatar">JD</div>
+          <div class="pf-avatar" id="userAvatar">JD</div>
           <div class="pf-info">
-            <div class="pf-name">Juan Dela Cruz</div>
-            <div class="pf-role">Student · BSIT 3-1</div>
+            <div class="pf-name" id="userName">Juan Dela Cruz</div>
+            <div class="pf-role" id="userRole">Student · BSIT 3-1</div>
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </div>
@@ -100,125 +100,187 @@
 
       <!-- Main Dashboard Content -->
       <main class="main">
+        <!-- Page Header -->
         <div class="pagehead">
           <div>
             <h1 id="greetingHeading">Welcome back, Student</h1>
-            <p id="currentDateSubtitle">BSIT 3-1 · Student ID: <strong id="studentIdDisplay">2024-IT-00101</strong> · RFID Card UID: <strong class="font-mono text-emerald-600 dark:text-emerald-400" id="studentRfidDisplay">E2806894</strong></p>
+            <p id="pageheadDate">Monday, October 1 · Bestlink College of the Philippines</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="pill pill-present text-xs" id="standingPill">In Good Standing</span>
           </div>
         </div>
 
-        <!-- Personal Attendance KPIs (Executive Standard) -->
-        <div class="kpis" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;">
+        <!-- Student Attendance KPI Summary Cards -->
+        <div class="kpis">
           <div class="card kpi">
             <div class="label">Attendance Rate</div>
-            <div class="num tabular-nums" style="color:var(--accent);" id="kpiAttendanceRate">--%</div>
-            <span class="chip chip-good" id="kpiAttendanceChip">Target &ge; 85%</span>
+            <div class="num tabular-nums" id="kAttendanceRate">0%</div>
+            <span class="chip chip-good" id="kAttendanceRateChip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>
+              Target &ge; 85%
+            </span>
           </div>
 
           <div class="card kpi">
             <div class="label">Days Present</div>
-            <div class="num tabular-nums" style="color:var(--present);" id="kpiPresentDays">--</div>
-            <span class="chip chip-good">Verified Ingress</span>
+            <div class="num tabular-nums" id="kPresentDays">0</div>
+            <span class="chip chip-good">
+              Verified Campus Ingress
+            </span>
           </div>
 
           <div class="card kpi">
             <div class="label">Tardy / Late</div>
-            <div class="num tabular-nums" style="color:var(--late);" id="kpiLateDays">--</div>
-            <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
+            <div class="num tabular-nums" id="kLateDays" style="color:var(--late);">0</div>
+            <span class="chip" style="background:var(--late-soft); color:var(--late);" id="kLateDaysChip">
+              Post-Cutoff
+            </span>
           </div>
 
           <div class="card kpi">
             <div class="label">Unexcused Absences</div>
-            <div class="num tabular-nums" style="color:var(--absent);" id="kpiAbsentDays">--</div>
-            <span class="chip chip-bad" id="kpiAbsentChip">Max Allowed: 3</span>
-          </div>
-
-          <div class="card kpi">
-            <div class="label">Active Streak</div>
-            <div class="num tabular-nums" style="color:#6366F1;" id="kpiStreakDays">--</div>
-            <span class="chip" style="background:rgba(99,102,241,0.12); color:#6366F1;">Consecutive</span>
+            <div class="num tabular-nums" id="kAbsentDays" style="color:var(--absent);">0</div>
+            <span class="chip chip-bad" id="kAbsentDaysChip">
+              3 Max Allowed
+            </span>
           </div>
         </div>
 
-        <!-- Two Columns: Recent Ingress Records Chart & Attendance Quick Notice -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Recent Campus Check-In & Time-Out Line Chart (2 cols) -->
-          <div class="card lg:col-span-2 overflow-hidden flex flex-col justify-between" style="min-height: 360px;">
-            <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: var(--raised); color: var(--accent);">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>
-                  </svg>
-                </div>
-                <div>
-                  <h2 class="text-base font-semibold" id="recentAttendanceTitle">Recent Campus Attendance</h2>
-                  <p class="text-xs" style="color: var(--text-2);">Verified daily check-in & check-out timestamps from attendance analytics</p>
-                </div>
+        <!-- Upper Grid: Attendance Performance Trend (Left) & Excuse Slips & Standing (Right) -->
+        <div class="grid2" style="margin-bottom:20px;">
+          <!-- Left: Attendance Performance Trend Analytics Chart -->
+          <div class="card" style="display:flex; flex-direction:column;">
+            <div class="rowhead">
+              <div>
+                <h3 style="margin:0 0 2px;">Attendance Performance Trend</h3>
+                <div class="sub" style="margin:0;">Weekly attendance compliance curve vs. 85% target benchmark</div>
               </div>
-              <div class="flex items-center gap-3">
-                <a href="analytics.html" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
-                  Detailed Analytics
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
-              </div>
+              <a href="analytics.html" class="viewall">Detailed Analytics →</a>
             </div>
 
-            <!-- Line Chart Canvas Container -->
-            <div class="p-4 flex-1">
-              <div class="relative w-full" style="height: 230px;">
-                <canvas id="studentAttendanceTrendChart"></canvas>
-              </div>
+            <div style="position:relative; height:205px; width:100%; margin-top:14px;">
+              <canvas id="studentTrendChart"></canvas>
             </div>
 
-            <!-- Card Footer: Analytics Summary Averages -->
-            <div class="px-5 py-3 border-t text-xs flex flex-wrap items-center justify-between gap-3" style="border-color: var(--border); background: var(--surface-hover);">
-              <div class="flex items-center gap-4 text-xs font-medium" style="color: var(--text-2);">
-                <span>Avg Check-In: <strong id="chartAvgIn" class="font-mono tabular-nums text-emerald-600 dark:text-emerald-400">07:44 AM</strong></span>
-                <span>Avg Check-Out: <strong id="chartAvgOut" class="font-mono tabular-nums text-blue-600 dark:text-blue-400">05:01 PM</strong></span>
-                <span>Avg Daily Stay: <strong id="chartAvgDuration" class="font-mono tabular-nums" style="color: var(--text-1);">9h 17m</strong></span>
+            <div style="font-size:11.5px; color:var(--text-3); margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <span>Target Benchmark: <strong>85%</strong></span>
+
+              <!-- Relocated Legend in the Middle -->
+              <div id="studentTrendLegend" style="display:flex; align-items:center; gap:14px; font-size:11px; font-weight:500;">
+                <div id="legendToggleRate" role="button" tabindex="0" title="Toggle Attendance Rate" style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; transition:opacity 0.2s;">
+                  <span class="trend-legend-solid"></span>
+                  <span style="color:var(--text-2);">Attendance Rate</span>
+                </div>
+                <div id="legendToggleTarget" role="button" tabindex="0" title="Toggle Target Benchmark" style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; transition:opacity 0.2s;">
+                  <span class="trend-legend-dashed"></span>
+                  <span style="color:var(--text-2);">Target (85%)</span>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Cutoff: 08:00 AM
-                </span>
+
+              <span>Current Term Average: <strong id="trendCurrentAvg" class="tabular-nums" style="color:var(--present);">--%</strong></span>
+            </div>
+          </div>
+
+          <!-- Right: Excuse Slips & Standing Workbench -->
+          <div class="card" style="display:flex; flex-direction:column;">
+            <div class="rowhead">
+              <div>
+                <h3 style="margin:0 0 2px;">Excuse Slips & Policy</h3>
+                <div class="sub" style="margin:0;">Recent submissions & disciplinary alert status</div>
+              </div>
+              <a href="excuse-slip-submit.html" class="viewall">Submit Slip →</a>
+            </div>
+
+            <!-- Dynamic Excuse Slips / Policy Callout Container -->
+            <div id="studentSlipsContainer" style="margin-top:14px; flex:1; display:flex; flex-direction:column; justify-content:center; gap:8px;">
+              <div style="padding:16px; text-align:center; color:var(--text-3); font-size:13px;">
+                Loading excuse slip records...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower Grid: Enrolled Classes (Left) & Semester Attendance Distribution (Right) -->
+        <div class="grid2b">
+          <!-- Left: Enrolled Class Schedule with Live Ingress Status -->
+          <div class="card">
+            <div class="rowhead">
+              <div>
+                <h3 style="margin:0 0 2px;">Today's Class Schedule</h3>
+                <div class="sub" style="margin:0;">Enrolled subjects and classroom roll call ingress status</div>
+              </div>
+              <a href="attendance-calendar.html" class="viewall">View Calendar →</a>
+            </div>
+
+            <!-- Dynamic Enrolled Classes Container -->
+            <div id="enrolledScheduleContainer" style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+              <div style="padding:16px; text-align:center; color:var(--text-3); font-size:13px;">
+                Loading scheduled subject classes...
               </div>
             </div>
           </div>
 
-          <!-- Right: Attendance Health Notice & Excuse Status (1 col) -->
-          <div class="space-y-6 lg:col-span-1">
-            <!-- Academic Policy Notice Card -->
-            <div class="card p-5">
-              <div class="flex items-center gap-2 mb-3 text-emerald-600 dark:text-emerald-400">
-                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <h3 class="text-sm font-semibold">Institutional Policy</h3>
+          <!-- Right: Semester Attendance Distribution (Radial Donut Chart) -->
+          <div class="card" style="display:flex; flex-direction:column;">
+            <div class="rowhead">
+              <div>
+                <h3 style="margin:0 0 2px;">Attendance Distribution</h3>
+                <div class="sub" style="margin:0;">Proportion of attendance statuses this semester</div>
               </div>
-              <p class="text-xs leading-relaxed" style="color: var(--text-2);">
-                Bestlink College of the Philippines enforces an <strong>85% minimum attendance rate</strong>. 
-                Students accumulating 3 unexcused absences trigger automated SMS notifications to their parent/guardian mobile number.
-              </p>
-              <div class="mt-4 pt-3 border-t flex items-center justify-between text-xs" style="border-color: var(--border);">
-                <span style="color: var(--text-3);">Parent Alert Contact</span>
-                <span class="font-mono font-semibold" style="color: var(--text-1);">+639171234567</span>
+              <span class="live-badge">
+                <span class="live-dot"></span>
+                Semester 1
+              </span>
+            </div>
+
+            <!-- Horizontal Container: Donut on Left, Legend on Right -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:20px; margin:auto 0; padding:12px 4px;">
+              <!-- Donut Canvas Container -->
+              <div style="position:relative; width:145px; height:145px; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                <canvas id="studentRadialChart"></canvas>
+              </div>
+
+              <!-- Vertical Legend Table matching institutional reference -->
+              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#10B981; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Present</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radPresent">0</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#F59E0B; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Late / Tardy</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radLate">0</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#EF4444; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Absent</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radAbsent">0</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="width:9px; height:9px; border-radius:50%; background:#3B82F6; display:inline-block; flex-shrink:0;"></span>
+                    <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Excused</span>
+                  </div>
+                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radExcused">0</span>
+                </div>
               </div>
             </div>
 
-            <!-- Perfect Attendance Award Card -->
-            <div class="card p-5" style="border-color: var(--border-strong);">
-              <div class="flex items-center gap-2 mb-2" style="color: var(--accent);">
-                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-2.5L17 21l-1.5-8.5"/></svg>
-                <h3 class="text-sm font-semibold">Honor Roll Eligibility</h3>
-              </div>
-              <p class="text-xs leading-relaxed" style="color: var(--text-2);" id="awardEligibilityText">
-                You are currently on track for the <strong>Perfect Attendance Award</strong> for 1st Semester 2026-2027!
-              </p>
-              <div class="mt-3">
-                <a href="analytics.html" class="pillbtn text-xs w-full text-center block">
-                  Check Criteria & Certificate Preview
-                </a>
-              </div>
+            <!-- Bottom summary note -->
+            <div style="font-size:11.5px; color:var(--text-3); margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+              <span>Total Class Attendance: <strong id="radTotalLogged" class="tabular-nums">0</strong></span>
+              <span id="radRatePct">Compliance: <strong class="tabular-nums" style="color:var(--present);">0%</strong></span>
             </div>
           </div>
         </div>

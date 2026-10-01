@@ -9,6 +9,7 @@ import { getCurrentUser } from '../../lib/auth.js';
 import { sectionsApi } from '../../api/sectionsApi.js';
 import { excuseSlipsApi } from '../../api/excuseSlipsApi.js';
 import { showToast } from '../../components/toast.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentTeacher = null;
 let assignedSections = [];
@@ -17,6 +18,8 @@ let activeStatusTab = 'all';
 let selectedSectionFilter = '';
 let currentSlips = [];
 let activeReviewSlip = null;
+let currentPage = 0;
+const pageSize = 15;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce Teacher Role Guard
@@ -76,6 +79,7 @@ function initFilters() {
       btn.style.color = 'var(--accent)';
 
       activeStatusTab = btn.getAttribute('data-status');
+      currentPage = 0;
       renderSlipsTable();
     });
   });
@@ -83,6 +87,7 @@ function initFilters() {
   if (sectionSelect) {
     sectionSelect.addEventListener('change', (e) => {
       selectedSectionFilter = e.target.value;
+      currentPage = 0;
       loadExcuseSlips();
     });
   }
@@ -149,6 +154,20 @@ function renderSlipsTable() {
     return s.status === activeStatusTab;
   });
 
+  renderNumberedPagination({
+    containerId: 'slipsPageNumbersContainer',
+    prevBtnId: 'slipsPrevBtn',
+    nextBtnId: 'slipsNextBtn',
+    infoTextId: 'slipsPageInfoText',
+    totalRecords: filtered.length,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderSlipsTable();
+    }
+  });
+
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -160,7 +179,9 @@ function renderSlipsTable() {
     return;
   }
 
-  tbody.innerHTML = filtered.map(slip => {
+  const pagedSlips = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  tbody.innerHTML = pagedSlips.map(slip => {
     const studentName = slip.student ? `${slip.student.first_name} ${slip.student.last_name}` : 'Student';
     const studentNum = slip.student?.student_number || '2024-IT-00000';
     const sectionName = slip.section?.name || 'Assigned Section';

@@ -9,9 +9,10 @@ import { sectionsApi } from '../../api/sectionsApi.js';
 import { toast } from '../../components/toast.js';
 import { Modal } from '../../components/modal.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentPage = 0;
-const pageSize = 20;
+const pageSize = 15;
 let totalRecords = 0;
 let currentLogs = [];
 
@@ -159,19 +160,19 @@ async function loadLogs() {
  * Updates pagination bar elements
  */
 function updatePaginationUI() {
-  const countText = document.getElementById('recordCountText');
-  const prevBtn = document.getElementById('prevPageBtn');
-  const nextBtn = document.getElementById('nextPageBtn');
-  const pageIndicator = document.getElementById('pageIndicator');
-
-  const start = totalRecords === 0 ? 0 : currentPage * pageSize + 1;
-  const end = Math.min((currentPage + 1) * pageSize, totalRecords);
-
-  if (countText) countText.textContent = `Showing ${start}–${end} of ${totalRecords} records`;
-  if (pageIndicator) pageIndicator.textContent = `Page ${currentPage + 1} of ${Math.max(1, Math.ceil(totalRecords / pageSize))}`;
-
-  if (prevBtn) prevBtn.disabled = currentPage === 0;
-  if (nextBtn) nextBtn.disabled = (currentPage + 1) * pageSize >= totalRecords;
+  renderNumberedPagination({
+    containerId: 'pageNumbersContainer',
+    prevBtnId: 'prevPageBtn',
+    nextBtnId: 'nextPageBtn',
+    infoTextId: 'recordCountText',
+    totalRecords,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      loadLogs();
+    }
+  });
 }
 
 /**

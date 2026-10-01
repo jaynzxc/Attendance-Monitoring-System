@@ -24,13 +24,81 @@
 
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .page-num-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-variant-numeric: tabular-nums;
+    }
+    .page-num-btn:hover {
+      background: var(--raised);
+      color: var(--text-1);
+      border-color: var(--border-strong);
+    }
+    .page-num-btn.active {
+      background: var(--ch-500);
+      border-color: var(--ch-500);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(33, 150, 243, 0.35);
+    }
+    .page-arrow-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .page-arrow-btn:hover:not(:disabled) {
+      background: var(--raised);
+      border-color: var(--border-strong);
+      color: var(--ch-500);
+    }
+    .page-arrow-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: var(--border);
+      color: var(--text-3);
+    }
+    .time-in-text {
+      color: var(--text-1) !important;
+      font-weight: 600;
+    }
+    [data-theme="dark"] .time-in-text {
+      color: #ffffff !important;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <div class="layout">
     <!-- Sidebar Navigation -->
     <aside class="sidebar" aria-label="Student Navigation">
       <div class="brand">
-        <div class="mark">S</div>
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Student</span>
         <span class="sub-tag">SMS 1</span>
       </div>
@@ -149,45 +217,40 @@
         <!-- Filters & History Table Card -->
         <div class="card overflow-hidden">
           <!-- Filter Controls Toolbar -->
-          <div class="p-4 border-b flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4" style="border-color: var(--border);">
-            <div class="flex flex-wrap items-center gap-3">
-              <!-- Quick Search Input -->
-              <div class="search-box">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input type="text" id="filterSearch" class="input-field" placeholder="Search records...">
-              </div>
+          <div class="p-4 border-b flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3" style="border-color: var(--border);">
+            <!-- Left Side: Quick Search Input -->
+            <div class="search-box sm:w-72">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" id="filterSearch" class="input-field" placeholder="Search records...">
+            </div>
 
-              <!-- Date Range Filter -->
-              <div class="flex items-center gap-2">
-                <label for="filterDateFrom" class="text-xs font-semibold" style="color: var(--text-2);">From</label>
-                <input type="date" id="filterDateFrom" class="input-field text-xs" style="padding: 7px 10px;">
-              </div>
-              <div class="flex items-center gap-2">
-                <label for="filterDateTo" class="text-xs font-semibold" style="color: var(--text-2);">To</label>
-                <input type="date" id="filterDateTo" class="input-field text-xs" style="padding: 7px 10px;">
+            <!-- Right Side: Date, Status, Method & Reset grouped closely together -->
+            <div class="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
+              <!-- Single Date Filter -->
+              <div class="flex items-center gap-1.5">
+                <label for="filterDate" class="text-xs font-semibold" style="color: var(--text-2);">Date</label>
+                <input type="date" id="filterDate" class="input-field text-xs" style="padding: 7px 10px;">
               </div>
 
               <!-- Status Filter -->
               <select id="filterStatus" class="select-field text-xs" style="padding: 7px 10px;">
-                <option value="">All Statuses</option>
-                <option value="present">Present (On-Time)</option>
-                <option value="late">Late (Tardy)</option>
+                <option value="">All Status</option>
+                <option value="present">Present</option>
+                <option value="late">Late</option>
                 <option value="absent">Absent</option>
-                <option value="excused">Excused Slip</option>
+                <option value="excused">Excused</option>
               </select>
 
-              <!-- Ingress Method Filter -->
+              <!-- Method Filter -->
               <select id="filterMethod" class="select-field text-xs" style="padding: 7px 10px;">
-                <option value="">All Ingress Methods</option>
-                <option value="rfid">RFID Card Tap</option>
-                <option value="qr">Camera QR Scan</option>
-                <option value="manual">Manual Override</option>
+                <option value="">All Method</option>
+                <option value="rfid">RFID</option>
+                <option value="qr">QR Scan</option>
+                <option value="manual">Manual</option>
               </select>
-            </div>
 
-            <!-- Reset Filter Button -->
-            <div class="flex items-center gap-2">
-              <button id="resetFilterBtn" class="pillbtn text-xs inline-flex items-center gap-1.5" style="color: var(--text-2);">
+              <!-- Reset Filter Button -->
+              <button id="resetFilterBtn" class="pillbtn text-xs inline-flex items-center gap-1.5" style="color: var(--text-2); padding: 7px 12px;">
                 Reset
               </button>
             </div>
@@ -199,17 +262,15 @@
               <thead>
                 <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
                   <th class="py-3 px-4">Date</th>
-                  <th class="py-3 px-4">Check-In</th>
-                  <th class="py-3 px-4">Time-Out</th>
+                  <th class="py-3 px-4">Subject & Section</th>
+                  <th class="py-3 px-4">Time In</th>
                   <th class="py-3 px-4">Status</th>
                   <th class="py-3 px-4">Method</th>
-                  <th class="py-3 px-4">Duration</th>
-                  <th class="py-3 px-4">Remarks</th>
                 </tr>
               </thead>
               <tbody id="attendanceHistoryTableBody" class="divide-y" style="border-color: var(--border);">
                 <tr>
-                  <td colspan="7" class="py-12 text-center text-sm" style="color: var(--text-3);">
+                  <td colspan="5" class="py-12 text-center text-sm" style="color: var(--text-3);">
                     Loading attendance history records...
                   </td>
                 </tr>
@@ -218,11 +279,12 @@
           </div>
 
           <!-- Pagination Footer -->
-          <div class="p-4 border-t flex items-center justify-between text-xs" style="border-color: var(--border); color: var(--text-2);">
-            <span id="pageInfoText">Showing 1 to 10 of 10 records</span>
-            <div class="flex items-center gap-2">
-              <button id="prevPageBtn" class="pillbtn text-xs px-2.5 py-1" disabled>Previous</button>
-              <button id="nextPageBtn" class="pillbtn text-xs px-2.5 py-1" disabled>Next</button>
+          <div class="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style="border-color: var(--border); color: var(--text-2);">
+            <span id="pageInfoText">Showing 1 to 15 records</span>
+            <div class="flex items-center gap-1.5" id="paginationControls">
+              <button id="prevPageBtn" class="page-arrow-btn" disabled aria-label="Previous Page">&lt;</button>
+              <div id="pageNumbersContainer" class="flex items-center gap-1"></div>
+              <button id="nextPageBtn" class="page-arrow-btn" disabled aria-label="Next Page">&gt;</button>
             </div>
           </div>
         </div>

@@ -27,7 +27,8 @@ let cachedTrendData = {
   presentData: [89.4, 91.2, 90.0, 93.8, 93.5],
   targetData: [90, 90, 90, 90, 90],
   presentLabel: 'Class attendance',
-  targetLabel: 'Target (90%)'
+  targetLabel: 'Target Benchmark (90%)',
+  hideLegend: true
 };
 
 /**
@@ -74,8 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     role: 'teacher'
   };
 
-  // 3. Update header date
+  // 3. Update header date and initialize chart legend interactions
   initHeaderDate();
+  initTrendChartLegendInteractions();
 
   // 4. Load faculty sections, analytics, and interactive workbenches
   await loadFacultyWorkspace(currentTeacher.id);
@@ -373,3 +375,42 @@ function renderPendingSlips(slips) {
     `;
   }).join('');
 }
+
+/**
+ * Enables interactive dataset toggling for the relocated trend chart legend
+ */
+function initTrendChartLegendInteractions() {
+  const toggleRate = document.getElementById('legendToggleRate');
+  const toggleTarget = document.getElementById('legendToggleTarget');
+
+  const toggleDataset = (datasetIndex, btn) => {
+    const chart = window.Chart?.getChart?.('facultyTrendChart');
+    if (!chart) return;
+    const isVisible = chart.isDatasetVisible(datasetIndex);
+    chart.setDatasetVisibility(datasetIndex, !isVisible);
+    chart.update();
+    btn.style.opacity = isVisible ? '0.35' : '1';
+    btn.style.textDecoration = isVisible ? 'line-through' : 'none';
+  };
+
+  if (toggleRate) {
+    toggleRate.addEventListener('click', () => toggleDataset(0, toggleRate));
+    toggleRate.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDataset(0, toggleRate);
+      }
+    });
+  }
+
+  if (toggleTarget) {
+    toggleTarget.addEventListener('click', () => toggleDataset(1, toggleTarget));
+    toggleTarget.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDataset(1, toggleTarget);
+      }
+    });
+  }
+}
+

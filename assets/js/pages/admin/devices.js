@@ -8,9 +8,12 @@ import { devicesApi } from '../../api/devicesApi.js';
 import { toast } from '../../components/toast.js';
 import { Modal } from '../../components/modal.js';
 import { subscribeToDeviceStatus } from '../../lib/realtime.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 let devicesList = [];
 let telemetrySubscription = null;
+let currentPage = 0;
+const pageSize = 15;
 
 // ─── QR Session State ───────────────────────────────────────────────────────
 let qrSessionToken    = null;
@@ -56,11 +59,49 @@ async function loadDevices() {
   let gateCount = 0;
   let qrCount = 0;
 
-  tbody.innerHTML = devicesList.map(dev => {
+  devicesList.forEach(dev => {
     const online = isDeviceOnline(dev);
     if (online) onlineCount++; else offlineCount++;
     if (dev.is_gate_scanner) gateCount++;
     if (dev.device_type === 'qr_kiosk') qrCount++;
+  });
+
+  // Update telemetry cards
+  const elOnline = document.getElementById('devicesOnlineCount');
+  const elOffline = document.getElementById('devicesOfflineCount');
+  const elGate = document.getElementById('gateScannersCount');
+  const elQr = document.getElementById('qrKiosksCount');
+
+  if (elOnline) elOnline.textContent = onlineCount;
+  if (elOffline) elOffline.textContent = offlineCount;
+  if (elGate) elGate.textContent = gateCount;
+  if (elQr) elQr.textContent = qrCount;
+
+  renderDevicesTable();
+}
+
+function renderDevicesTable() {
+  const tbody = document.getElementById('devicesTableBody');
+  if (!tbody) return;
+
+  renderNumberedPagination({
+    containerId: 'devicesPageNumbersContainer',
+    prevBtnId: 'devicesPrevBtn',
+    nextBtnId: 'devicesNextBtn',
+    infoTextId: 'devicesPageInfoText',
+    totalRecords: devicesList.length,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderDevicesTable();
+    }
+  });
+
+  const paged = devicesList.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  tbody.innerHTML = paged.map(dev => {
+    const online = isDeviceOnline(dev);
 
     const lastSeen = dev.last_heartbeat ? new Date(dev.last_heartbeat).toLocaleTimeString() : 'Recent';
     const status = dev.status || 'active';
@@ -106,19 +147,8 @@ async function loadDevices() {
     `;
   }).join('');
 
-  // Update telemetry cards
-  const elOnline = document.getElementById('devicesOnlineCount');
-  const elOffline = document.getElementById('devicesOfflineCount');
-  const elGate = document.getElementById('gateScannersCount');
-  const elQr = document.getElementById('qrKiosksCount');
-
-  if (elOnline) elOnline.textContent = onlineCount;
-  if (elOffline) elOffline.textContent = offlineCount;
-  if (elGate) elGate.textContent = gateCount;
-  if (elQr) elQr.textContent = qrCount;
-
   // Wire buttons
-  document.querySelectorAll('.btn-edit-device').forEach(btn => {
+  tbody.querySelectorAll('.btn-edit-device').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const devId = e.currentTarget.getAttribute('data-id');
       openEditDeviceModal(devId);

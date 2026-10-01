@@ -10,13 +10,14 @@ import { usersApi } from '../../api/usersApi.js';
 import { devicesApi } from '../../api/devicesApi.js';
 import { showToast } from '../../components/toast.js';
 import { subscribeToAttendanceLogs } from '../../lib/realtime.js';
+import { renderNumberedPagination } from '../../components/pagination.js';
 
 // Page State Variables
 let allFacultyUsers = [];
 let currentRecordsList = [];
 let totalRecords = 0;
 let currentPage = 0;
-const pageSize = 10;
+const pageSize = 15;
 let realtimeChannel = null;
 let activeFacultySession = null;
 let sessionCountdownInterval = null;
@@ -466,16 +467,19 @@ function renderTeacherTable(records) {
  * Updates pagination info and buttons
  */
 function updatePaginationUI() {
-  const infoEl = document.getElementById('paginationInfo');
-  const btnPrev = document.getElementById('btnPrevPage');
-  const btnNext = document.getElementById('btnNextPage');
-
-  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
-  const currentHuman = currentPage + 1;
-
-  if (infoEl) infoEl.textContent = `Page ${currentHuman} of ${totalPages} (${totalRecords} items)`;
-  if (btnPrev) btnPrev.disabled = (currentPage === 0);
-  if (btnNext) btnNext.disabled = (currentHuman >= totalPages);
+  renderNumberedPagination({
+    containerId: 'pageNumbersContainer',
+    prevBtnId: 'btnPrevPage',
+    nextBtnId: 'btnNextPage',
+    infoTextId: 'paginationInfo',
+    totalRecords,
+    pageSize,
+    currentPage,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      loadTeacherRecords();
+    }
+  });
 }
 
 

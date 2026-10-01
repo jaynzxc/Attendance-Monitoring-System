@@ -103,14 +103,14 @@ function renderArrivalCurve() {
         borderColor: '#2196F3',
         backgroundColor: isDark ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.15)',
         fill: true,
+        cubicInterpolationMode: 'monotone',
         tension: 0.35,
         pointRadius: 4,
         pointHoverRadius: 7,
         pointHitRadius: 20,
         pointBackgroundColor: '#0D47A1',
-        pointHoverBackgroundColor: '#2196F3',
-        pointHoverBorderColor: '#FFFFFF',
-        pointHoverBorderWidth: 2,
+        pointBorderColor: '#FFFFFF',
+        pointBorderWidth: 1.5,
         borderWidth: 2.5
       }]
     },
