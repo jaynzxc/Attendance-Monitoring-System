@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Faculty Profile</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <style>
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      width: 100%;
+    }
+    @media (max-width: 960px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .form-group-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) {
+      .form-group-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .field-locked {
+      background: var(--surface-hover) !important;
+      color: var(--text-2) !important;
+      border: 1px solid var(--border) !important;
+      cursor: not-allowed !important;
+      opacity: 0.88;
+    }
+    .field-locked:focus {
+      outline: none !important;
+      border-color: var(--border) !important;
+      box-shadow: none !important;
+    }
+    .lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(13, 71, 161, 0.09);
+      color: var(--ch-900);
+      border: 1px solid rgba(13, 71, 161, 0.18);
+    }
+    [data-theme="dark"] .lock-badge {
+      background: rgba(144, 202, 249, 0.12);
+      color: var(--ch-200);
+      border-color: rgba(144, 202, 249, 0.25);
+    }
+    .editable-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    [data-theme="dark"] .editable-badge {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+    .form-row label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .form-row label.locked-label {
+      color: var(--text-2);
+    }
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
+  </style>
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation (Exact Standard Faculty Sidebar — No My Profile item) -->
+    <aside class="sidebar" aria-label="Faculty Navigation">
+      <div class="brand">
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
+        <span>AMS Faculty</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="my-classes.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+          My Classes
+        </a>
+        <a href="live-session.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Live Session
+        </a>
+        <a href="attendance-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Attendance Logs
+        </a>
+        <a href="qr-attendance.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          QR Attendance
+        </a>
+        <a href="my-logs.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+          My Attendance Log
+        </a>
+        <a href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a href="excuse-slips.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg>
+          Excuse Slips
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          Section Analytics
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Faculty Attendance Hub
+      </div>
+    </aside>
+
+    <!-- Main Content Column -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <!-- User Profile Dropdown Button -->
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">RS</div>
+          <div class="pf-info">
+            <div class="pf-name">Prof. Reynaldo Santos</div>
+            <div class="pf-role">Teacher · Computer Studies</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Profile Content -->
+      <main class="main">
+        <!-- Page Header -->
+        <div class="pagehead">
+          <div>
+            <h1>Faculty Profile &amp; Account Settings</h1>
+            <p>Official faculty credentials, duty roster assignments, and editable personal contact details</p>
+          </div>
+          <span class="pill pill-present text-xs" id="facultyStatusPill">Active Faculty · Duty Verified</span>
+        </div>
+
+        <!-- Faculty Summary Banner -->
+        <div class="card" style="padding: 20px 24px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 58px; height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, var(--ch-900) 0%, var(--ch-500) 100%); box-shadow: 0 4px 14px rgba(13, 71, 161, 0.25);" id="bannerAvatar">
+              RS
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-1);" id="bannerTeacherName">Prof. Reynaldo Santos</h2>
+                <span class="pill pill-present" style="font-size: 11px; font-weight: 700;">Faculty Active</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-2); margin-top: 4px; font-family: monospace;">
+                <span>Employee ID: <strong style="color: var(--text-1);" id="bannerEmpNo">EMP-2024-0089</strong></span>
+                <span>·</span>
+                <span>Department: <strong style="color: var(--text-1);" id="bannerDept">College of Computer Studies</strong></span>
+                <span>·</span>
+                <span>RFID: <strong style="color: #10B981;" id="bannerRfid">A4B82194</strong></span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-3); text-align: right;">
+            <div>Academic HR &amp; Payroll Subsystem</div>
+            <div style="font-weight: 600; color: var(--text-2);">Automated Duty Tracking Synchronized</div>
+          </div>
+        </div>
+
+        <!-- Two-Column Form Grid -->
+        <form id="teacherProfileForm">
+          <div class="profile-grid">
+            <!-- LEFT COLUMN: Official Admin-Provided Details (READ ONLY / LOCKED) -->
+            <div class="card" style="padding: 22px; display: flex; flex-direction: column;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; color: var(--text-1);">Faculty Institutional Credentials</h3>
+                </div>
+                <span class="lock-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Admin Provided
+                </span>
+              </div>
+
+              <div style="background: rgba(13, 71, 161, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; color: var(--text-2);">
+                <strong style="color: var(--text-1);">Institutional Notice:</strong> Faculty profile records, employee ID, and official BCP credentials are managed directly by Academic HR and the Office of the Registrar.
+              </div>
+
+              <!-- Locked Fields -->
+              <div class="form-group-grid" style="margin-bottom: 14px;">
+                <div class="form-row">
+                  <label class="locked-label">First Name</label>
+                  <input type="text" id="adminFirstName" value="Reynaldo" class="input-field field-locked" readonly>
+                </div>
+                <div class="form-row">
+                  <label class="locked-label">Last Name</label>
+                  <input type="text" id="adminLastName" value="Santos" class="input-field field-locked" readonly>
+                </div>
+              </div>
+
+              <div class="form-group-grid" style="margin-bottom: 14px;">
+                <div class="form-row">
+                  <label class="locked-label">Employee ID Number</label>
+                  <input type="text" id="adminEmpNo" value="EMP-2024-0089" class="input-field field-locked" style="font-family: monospace; font-weight: 700;" readonly>
+                </div>
+                <div class="form-row">
+                  <label class="locked-label">Role &amp; Rank</label>
+                  <input type="text" value="Faculty Member / Instructor" class="input-field field-locked" readonly>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label class="locked-label">Academic Department</label>
+                <input type="text" id="adminDept" value="College of Computer Studies — IT Department" class="input-field field-locked" readonly>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label class="locked-label">Official BCP Faculty Email</label>
+                <input type="email" id="adminEmail" value="r.santos@bcp.edu.ph" class="input-field field-locked" style="font-family: monospace;" readonly>
+              </div>
+
+              <div class="form-row">
+                <label class="locked-label">Faculty Ingress RFID Card UID</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="text" id="adminRfidUid" value="A4B82194" class="input-field field-locked" style="font-family: monospace; font-weight: 700; color: #10B981; flex: 1;" readonly>
+                  <span class="pill pill-present" style="font-size: 11px; white-space: nowrap;">Gate Verified</span>
+                </div>
+                <span class="field-hint">Paired with ESP32 Turnstile Readers for automated duty tracking</span>
+              </div>
+
+              <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text-3); display: flex; align-items: center; justify-content: space-between;">
+                <span>Need updates to teaching rank or department?</span>
+                <a href="mailto:academic.hr@bcp.edu.ph" style="color: var(--accent); font-weight: 600; text-decoration: none;">Contact Academic HR</a>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Editable Self-Service Details (Contact & Consultation) -->
+            <div class="card" style="padding: 22px; display: flex; flex-direction: column;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #10B981;">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; color: var(--text-1);">Self-Service Contact &amp; Availability</h3>
+                </div>
+                <span class="editable-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Editable by You
+                </span>
+              </div>
+
+              <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; color: var(--text-2);">
+                <strong style="color: #059669;">Faculty Notice:</strong> Keep your consultation schedule and personal mobile number up to date so department heads and students can contact you during office hours.
+              </div>
+
+              <!-- Editable Fields -->
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="teacherMobile">Personal Mobile Number <span style="color: #ef4444;">*</span></label>
+                <input type="tel" id="teacherMobile" placeholder="+63 917 888 1234" value="+639178881234" class="input-field" style="font-family: monospace;" required>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="teacherAltEmail">Alternate / Personal Email</label>
+                <input type="email" id="teacherAltEmail" placeholder="prof.reynaldo.santos@gmail.com" value="prof.reynaldo.santos@gmail.com" class="input-field" style="font-family: monospace;">
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="consultationHours">Student Consultation Hours <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="consultationHours" placeholder="e.g. Monday & Wednesday 2:00 PM – 4:00 PM" value="Monday & Wednesday 2:00 PM – 4:00 PM" class="input-field" required>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="officeLocation">Department Office / Desk Location</label>
+                <input type="text" id="officeLocation" placeholder="Faculty Room, 3rd Floor Academic Bldg" value="Room 302, Academic Bldg Faculty Hub" class="input-field">
+              </div>
+
+              <div class="form-group-grid" style="margin-bottom: 14px;">
+                <div class="form-row">
+                  <label for="emergencyName">Emergency Contact Person</label>
+                  <input type="text" id="emergencyName" placeholder="Full Name" value="Elena Santos" class="input-field">
+                </div>
+                <div class="form-row">
+                  <label for="emergencyMobile">Emergency Contact Phone</label>
+                  <input type="tel" id="emergencyMobile" placeholder="+63 919 777 6655" value="+639197776655" class="input-field" style="font-family: monospace;">
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 18px;">
+                <label for="teachingBio">Academic Specialization &amp; Notes</label>
+                <textarea id="teachingBio" rows="2" class="input-field" style="resize: vertical; font-family: inherit; font-size: 12px;">Specializing in Integrative Programming, Network Protocols, and Systems Architecture.</textarea>
+              </div>
+
+              <!-- Form Buttons -->
+              <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                <button type="button" id="btnResetProfile" class="pillbtn" style="background: transparent; font-size: 12.5px; padding: 8px 16px;">
+                  Discard
+                </button>
+                <button type="submit" id="btnSaveProfile" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 8px 20px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span>Save Faculty Changes</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Page Controller Script -->
+  <script type="module" src="../assets/js/pages/teacher/profile.js"></script>
+</body>
+</html>

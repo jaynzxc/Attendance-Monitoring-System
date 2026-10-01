@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Student Profile</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <style>
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      width: 100%;
+    }
+    @media (max-width: 960px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .form-group-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) {
+      .form-group-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .field-locked {
+      background: var(--surface-hover) !important;
+      color: var(--text-2) !important;
+      border: 1px solid var(--border) !important;
+      cursor: not-allowed !important;
+      opacity: 0.88;
+    }
+    .field-locked:focus {
+      outline: none !important;
+      border-color: var(--border) !important;
+      box-shadow: none !important;
+    }
+    .lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(13, 71, 161, 0.09);
+      color: var(--ch-900);
+      border: 1px solid rgba(13, 71, 161, 0.18);
+    }
+    [data-theme="dark"] .lock-badge {
+      background: rgba(144, 202, 249, 0.12);
+      color: var(--ch-200);
+      border-color: rgba(144, 202, 249, 0.25);
+    }
+    .editable-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    [data-theme="dark"] .editable-badge {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+    .form-row label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .form-row label.locked-label {
+      color: var(--text-2);
+    }
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
+  </style>
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation (Exact Standard Student Sidebar — No My Profile item) -->
+    <aside class="sidebar" aria-label="Student Navigation">
+      <div class="brand">
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
+        <span>AMS Student</span>
+        <span class="sub-tag">SMS 1</span>
+      </div>
+      
+      <div class="navgroup">Main</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="scan-qr.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Scan QR Code
+        </a>
+        <a href="attendance-calendar.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Attendance Calendar
+        </a>
+        <a href="attendance-history.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+          Attendance History
+        </a>
+        <a href="excuse-slip-submit.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
+          Submit Excuse Slip
+        </a>
+        <a href="analytics.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/><circle cx="18" cy="6" r="3"/></svg>
+          My Analytics & Honors
+        </a>
+      </nav>
+      
+      <div class="sidebar-foot">
+        SMS 1 · Bestlink College<br>
+        Student Attendance Portal
+      </div>
+    </aside>
+
+    <!-- Main Content Column -->
+    <div class="main-col">
+      <!-- App Header Bar -->
+      <header class="appbar">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+
+        <div class="bell" title="Notifications" role="button" tabindex="0">
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <!-- User Profile Dropdown Button -->
+        <div class="profile" role="button" tabindex="0">
+          <div class="pf-avatar">JD</div>
+          <div class="pf-info">
+            <div class="pf-name">Juan Dela Cruz</div>
+            <div class="pf-role">Student · BSIT 3-1</div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </header>
+
+      <!-- Main Profile Content -->
+      <main class="main">
+        <!-- Page Header -->
+        <div class="pagehead">
+          <div>
+            <h1>Student Profile &amp; Contact Details</h1>
+            <p>Official registrar credentials, RFID ingress tag, and editable parent SMS contact details</p>
+          </div>
+          <span class="pill pill-present text-xs">Official Enrolled Student</span>
+        </div>
+
+        <!-- Student Summary Banner -->
+        <div class="card" style="padding: 20px 24px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 58px; height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, var(--ch-900) 0%, var(--ch-500) 100%); box-shadow: 0 4px 14px rgba(13, 71, 161, 0.25);" id="bannerAvatar">
+              JD
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-1);" id="bannerStudentName">Juan Dela Cruz</h2>
+                <span class="pill pill-present" style="font-size: 11px; font-weight: 700;">Enrolled</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-2); margin-top: 4px; font-family: monospace;">
+                <span>Student No: <strong style="color: var(--text-1);" id="bannerStudentNo">2024-IT-00101</strong></span>
+                <span>·</span>
+                <span>Section: <strong style="color: var(--text-1);" id="bannerSection">BSIT 3-1</strong></span>
+                <span>·</span>
+                <span>RFID: <strong style="color: #10B981;" id="bannerRfid">E2806894</strong></span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-3); text-align: right;">
+            <div>SMS 1 · Attendance Gateway</div>
+            <div style="font-weight: 600; color: var(--text-2);">ESP32 Gate Ingress &amp; QR Fallback Active</div>
+          </div>
+        </div>
+
+        <!-- Two-Column Form Grid -->
+        <form id="studentProfileForm">
+          <div class="profile-grid">
+            <!-- LEFT COLUMN: Official Admin-Provided Details (READ ONLY / LOCKED) -->
+            <div class="card" style="padding: 22px; display: flex; flex-direction: column;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; color: var(--text-1);">Institutional Credentials</h3>
+                </div>
+                <span class="lock-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Admin Provided
+                </span>
+              </div>
+
+              <div style="background: rgba(13, 71, 161, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; color: var(--text-2);">
+                <strong style="color: var(--text-1);">Official Notice:</strong> Student identification, official name, section placement, and RFID hardware tokens are registered by the Office of the Registrar and cannot be edited by students.
+              </div>
+
+              <!-- Locked Fields -->
+              <div class="form-group-grid" style="margin-bottom: 14px;">
+                <div class="form-row">
+                  <label class="locked-label">First Name</label>
+                  <input type="text" id="adminFirstName" value="Juan" class="input-field field-locked" readonly>
+                </div>
+                <div class="form-row">
+                  <label class="locked-label">Last Name</label>
+                  <input type="text" id="adminLastName" value="Dela Cruz" class="input-field field-locked" readonly>
+                </div>
+              </div>
+
+              <div class="form-group-grid" style="margin-bottom: 14px;">
+                <div class="form-row">
+                  <label class="locked-label">Student ID Number</label>
+                  <input type="text" id="adminStudentNo" value="2024-IT-00101" class="input-field field-locked" style="font-family: monospace; font-weight: 700;" readonly>
+                </div>
+                <div class="form-row">
+                  <label class="locked-label">Enrolled Section</label>
+                  <input type="text" id="adminSection" value="BS Information Technology · BSIT 3-1" class="input-field field-locked" readonly>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label class="locked-label">Official BCP Student Email</label>
+                <input type="email" id="adminEmail" value="j.delacruz@bcp.edu.ph" class="input-field field-locked" style="font-family: monospace;" readonly>
+              </div>
+
+              <div class="form-row">
+                <label class="locked-label">Campus Turnstile RFID Card UID</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="text" id="adminRfidUid" value="E2806894" class="input-field field-locked" style="font-family: monospace; font-weight: 700; color: #10B981; flex: 1;" readonly>
+                  <span class="pill pill-present" style="font-size: 11px; white-space: nowrap;">Gate Verified</span>
+                </div>
+                <span class="field-hint">Tapped on gate scanners for automated daily ingress verification</span>
+              </div>
+
+              <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text-3); display: flex; align-items: center; justify-content: space-between;">
+                <span>Need corrections to legal name or section?</span>
+                <a href="mailto:registrar@bcp.edu.ph" style="color: var(--accent); font-weight: 600; text-decoration: none;">Contact Registrar</a>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Editable Self-Service Details (Contact & Guardian) -->
+            <div class="card" style="padding: 22px; display: flex; flex-direction: column;">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #10B981;">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; color: var(--text-1);">Contact &amp; Guardian SMS Alerts</h3>
+                </div>
+                <span class="editable-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Editable by You
+                </span>
+              </div>
+
+              <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; color: var(--text-2);">
+                <strong style="color: #059669;">Important for SMS Alerts:</strong> Keep your parent or guardian mobile number current. Automated arrival and absence notifications will be transmitted to this number.
+              </div>
+
+              <!-- Editable Fields -->
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="studentMobile">Your Personal Mobile Number <span style="color: #ef4444;">*</span></label>
+                <input type="tel" id="studentMobile" placeholder="+63 917 123 4567" value="+639171234567" class="input-field" style="font-family: monospace;" required>
+              </div>
+
+              <div class="form-group-grid" style="margin-bottom: 14px;">
+                <div class="form-row">
+                  <label for="guardianName">Parent / Guardian Full Name <span style="color: #ef4444;">*</span></label>
+                  <input type="text" id="guardianName" placeholder="e.g. Maria Dela Cruz" value="Maria Dela Cruz" class="input-field" required>
+                </div>
+                <div class="form-row">
+                  <label for="guardianRelation">Relationship</label>
+                  <select id="guardianRelation" class="input-field" style="height: 38px;">
+                    <option value="Mother" selected>Mother</option>
+                    <option value="Father">Father</option>
+                    <option value="Guardian">Legal Guardian</option>
+                    <option value="Other">Other Family Member</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="guardianMobile">Guardian Mobile Phone (For SMS Alerts) <span style="color: #ef4444;">*</span></label>
+                <input type="tel" id="guardianMobile" placeholder="+63 918 765 4321" value="+639187654321" class="input-field" style="font-family: monospace;" required>
+                <span class="field-hint">Receives real-time SMS alerts if you arrive late or miss attendance</span>
+              </div>
+
+              <div class="form-row" style="margin-bottom: 14px;">
+                <label for="homeAddress">Permanent Residential Address</label>
+                <input type="text" id="homeAddress" placeholder="Barangay, City, Province" value="Brgy. San Bartolome, Novaliches, Quezon City" class="input-field">
+              </div>
+
+              <div class="form-row" style="margin-bottom: 18px;">
+                <label for="medicalNotes">Medical / Emergency Notes</label>
+                <textarea id="medicalNotes" rows="2" class="input-field" style="resize: vertical; font-family: inherit; font-size: 12px;" placeholder="Any allergies or emergency conditions...">None reported</textarea>
+              </div>
+
+              <!-- Form Buttons -->
+              <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                <button type="button" id="btnResetProfile" class="pillbtn" style="background: transparent; font-size: 12.5px; padding: 8px 16px;">
+                  Discard
+                </button>
+                <button type="submit" id="btnSaveProfile" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 8px 20px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span>Save Contact Changes</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+  <!-- Page Controller Script -->
+  <script type="module" src="../assets/js/pages/student/profile.js"></script>
+</body>
+</html>
