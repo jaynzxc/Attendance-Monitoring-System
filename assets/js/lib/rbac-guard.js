@@ -6,8 +6,9 @@ import { getSupabase } from './supabaseClient.js';
 import { getCurrentUser, logout } from './auth.js';
 import { openSignOutModal } from '../components/signOutModal.js';
 import { initNotifications, addNotification } from '../components/notifications.js';
+import { initProfileDropdown } from '../components/profileDropdown.js';
 
-export { openSignOutModal, initNotifications, addNotification };
+export { openSignOutModal, initNotifications, addNotification, initProfileDropdown };
 
 /**
  * Enforces role restriction for portal views
@@ -32,7 +33,7 @@ export async function requireRole(allowedRoles) {
       ? { first_name: 'Ricardo', last_name: 'Santos', role: 'teacher' }
       : userRole === 'student'
       ? { first_name: 'Juan', last_name: 'Dela Cruz', role: 'student' }
-      : { first_name: 'Elena', last_name: 'Bautista', role: 'admin' };
+      : { first_name: 'Administrator', last_name: '', role: 'admin' };
 
     let profile = defaultProfile;
     const cachedUser = sessionStorage.getItem('ams_cached_user');
@@ -83,7 +84,16 @@ export function initLayoutBindings(user) {
   const avatarEl = document.querySelector('.pf-avatar');
 
   if (nameEl && user) {
-    nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+    if (user.role === 'admin') {
+      let adminTitle = 'Administrator';
+      try {
+        const savedCustom = JSON.parse(localStorage.getItem(`ams_admin_custom_${user.id}`) || '{}');
+        if (savedCustom.adminAccountTitle) adminTitle = savedCustom.adminAccountTitle;
+      } catch (_) {}
+      nameEl.textContent = adminTitle;
+    } else {
+      nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+    }
   }
 
   if (roleEl && user) {
@@ -92,13 +102,18 @@ export function initLayoutBindings(user) {
   }
 
   if (avatarEl && user) {
-    const initials = `${(user.first_name || 'U')[0]}${(user.last_name || '')[0] || ''}`.toUpperCase();
+    const initials = user.role === 'admin'
+      ? 'AD'
+      : `${(user.first_name || 'U')[0]}${(user.last_name || '')[0] || ''}`.toUpperCase();
     avatarEl.textContent = initials;
   }
 
-  // Bind logout modal form on profile card and any sign out triggers
+  // Initialize profile dropdown menu on appbar profile card (Profile, Settings, Logout)
+  initProfileDropdown(user);
+
+  // Bind logout modal form on explicit sign out triggers
   const signoutTriggers = document.querySelectorAll(
-    '.appbar .profile, [data-action="signout"], [data-action="logout"], .logout-btn, #logoutBtn, #btnSignOut'
+    '[data-action="signout"], [data-action="logout"], .logout-btn, #logoutBtn, #btnSignOut'
   );
   signoutTriggers.forEach((trigger) => {
     trigger.setAttribute('title', 'Click to Sign Out');

@@ -293,8 +293,8 @@
               role: demoRole,
               employee_number: demoRole === 'teacher' ? 'EMP-2018-042' : (demoRole === 'admin' ? 'EMP-2020-001' : null),
               student_number: demoRole === 'student' ? '2024-IT-00101' : null,
-              first_name: demoRole === 'admin' ? 'Elena' : (demoRole === 'teacher' ? 'Ricardo' : 'Juan'),
-              last_name: demoRole === 'admin' ? 'Bautista' : (demoRole === 'teacher' ? 'Santos' : 'Dela Cruz')
+              first_name: demoRole === 'admin' ? 'Administrator' : (demoRole === 'teacher' ? 'Ricardo' : 'Juan'),
+              last_name: demoRole === 'admin' ? '' : (demoRole === 'teacher' ? 'Santos' : 'Dela Cruz')
             }));
             window.location.href = getRoleDashboardPath(demoRole);
             return;

@@ -14,7 +14,7 @@ on conflict (id) do nothing;
 -- Fixed UUIDs for consistent development testing
 insert into users (id, role, first_name, last_name, email, student_number, employee_number, status) values
   -- Admin
-  ('a0000000-0000-0000-0000-000000000001', 'admin', 'Elena', 'Bautista', 'admin@bestlink.edu.ph', null, 'EMP-2020-001', 'active'),
+  ('a0000000-0000-0000-0000-000000000001', 'admin', 'Administrator', '', 'admin@bestlink.edu.ph', null, 'EMP-2020-001', 'active'),
   -- Teachers
   ('b0000000-0000-0000-0000-000000000001', 'teacher', 'Ricardo', 'Santos', 'prof.santos@bestlink.edu.ph', null, 'EMP-2018-042', 'active'),
   ('b0000000-0000-0000-0000-000000000002', 'teacher', 'Carmen', 'Reyes', 'prof.reyes@bestlink.edu.ph', null, 'EMP-2019-088', 'active'),
