@@ -10,6 +10,7 @@ import { attendanceApi } from '../../api/attendanceApi.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
 import { subscribeToAttendanceLogs, unsubscribeChannel } from '../../lib/realtime.js';
 import { showToast } from '../../components/toast.js';
+import { openExportModal } from '../../components/exportModal.js';
 
 let currentStudent = null;
 let realtimeChannel = null;
@@ -467,48 +468,52 @@ function getPaginationItems(totalPages, current) {
 
 async function exportHistoryToCsv() {
   try {
-    showToast({ title: 'Exporting...', message: 'Generating CSV file of attendance records', type: 'info' });
-
-    // Fetch all filtered records (up to 100)
+    // Fetch all filtered records (up to 200)
     const { data: records } = await attendanceApi.getStudentDailyAttendance(
       currentStudent.id,
       currentFilters,
       0,
-      100
+      200
     );
 
     if (!records || records.length === 0) {
-      showToast({ title: 'Export Failed', message: 'No records available to export', type: 'error' });
+      showToast({ title: 'Export Notice', message: 'No records available to export', type: 'warning' });
       return;
     }
 
     const headers = ['Date', 'Subject & Section', 'Time In', 'Status', 'Method'];
     const rows = records.map(r => {
-      const inTime = r.time_in ? new Date(r.time_in).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
+      const inTime = r.time_in ? new Date(r.time_in).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
       const { subject, section } = resolveSubjectAndSection(r, currentStudent);
 
       return [
-        r.summary_date,
-        `"${subject} (${section})"`,
-        `"${inTime}"`,
-        `"${r.status || 'present'}"`,
-        `"${(r.scan_method || 'rfid').toUpperCase()}"`
+        r.summary_date || '',
+        `${subject} (${section})`,
+        inTime,
+        (r.status || 'present').toUpperCase(),
+        (r.scan_method || 'rfid').toUpperCase()
       ];
     });
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `BCP_Attendance_History_${currentStudent.student_number || 'student'}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const studentFullName = `${currentStudent.first_name || ''} ${currentStudent.last_name || ''}`.trim() || 'Juan Dela Cruz';
+    const dateStamp = new Date().toISOString().split('T')[0];
 
-    showToast({ title: 'Export Successful', message: 'Attendance history downloaded as CSV', type: 'success' });
+    openExportModal({
+      title: 'Student Attendance History Ledger',
+      filename: `BCP_Attendance_History_${currentStudent.student_number || 'student'}_${dateStamp}`,
+      headers,
+      rows,
+      metadata: {
+        'Student Name': studentFullName,
+        'Student ID': currentStudent.student_number || '2024-IT-00101',
+        'Academic Section': currentStudent.section_name || 'BSIT 3-1',
+        'Academic Term': 'AY 2026-2027 1st Semester',
+        'Total Logged Sessions': `${records.length}`
+      }
+    });
   } catch (err) {
     console.error('[AMS Student History] Export error:', err);
-    showToast({ title: 'Export Error', message: 'Failed to generate CSV export', type: 'error' });
+    showToast({ title: 'Export Error', message: 'Failed to prepare records for export', type: 'error' });
   }
 }
 

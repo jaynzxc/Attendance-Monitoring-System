@@ -9,9 +9,11 @@ import { getCurrentUser } from '../../lib/auth.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
 import { showToast } from '../../components/toast.js';
+import { openExportModal } from '../../components/exportModal.js';
 
 let currentStudent = null;
-let arrivalTimeChartInstance = null;
+let currentStats = null;
+let subjectAttendanceChartInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce Student Role Guard
@@ -31,22 +33,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (certName) {
     certName.textContent = `${currentStudent.first_name || ''} ${currentStudent.last_name || ''}`.trim() || 'Juan Dela Cruz';
   }
+  const certSec = document.getElementById('certSection');
+  if (certSec) {
+    certSec.textContent = currentStudent.section_name || 'BSIT 3-1';
+  }
 
-  // 4. Load Retention & Policy Standing
+  // 4. Initialize Certificate Modal & Actions
+  initCertificateModal();
+
+  // 5. Load Retention & Policy Standing
   await loadRetentionStanding(currentStudent.id);
 
-  // 5. Render Arrival Distribution Chart
-  await renderArrivalChart(currentStudent.id);
+  // 6. Render Subject Attendance Performance Chart
+  await renderSubjectAttendanceChart(currentStudent.id);
 
-  // 6. Load Parent SMS Dispatch Logs
+  // 7. Load Parent SMS Dispatch Logs
   await loadParentAlerts(currentStudent.id);
 
-  // 7. Theme change redraw listener
+  // 8. Theme change redraw listener
   window.addEventListener('ams-theme-changed', () => {
     if (currentStudent) {
-      renderArrivalChart(currentStudent.id);
+      renderSubjectAttendanceChart(currentStudent.id);
     }
   });
+
+  // 9. Export Analytics Summary
+  document.getElementById('btnExportAnalytics')?.addEventListener('click', handleExportAnalytics);
 });
 
 async function loadRetentionStanding(studentId) {
@@ -58,6 +70,7 @@ async function loadRetentionStanding(studentId) {
 
   try {
     const stats = await attendanceApi.getStudentAttendanceStats(studentId);
+    currentStats = stats;
     const rate = stats.attendanceRate;
 
     if (policyRateBadge) policyRateBadge.textContent = `${rate}% Rate`;
@@ -75,22 +88,50 @@ async function loadRetentionStanding(studentId) {
 
     if (policyStandingTitle) {
       if (rate >= 90) {
-        policyStandingTitle.textContent = 'In Good Standing — Above 85% Minimum Requirement';
+        policyStandingTitle.textContent = 'Good Standing';
       } else if (rate >= 85) {
-        policyStandingTitle.textContent = 'Near Cutoff — Maintain Attendance to Stay Compliant';
+        policyStandingTitle.textContent = 'Near Cutoff';
       } else {
-        policyStandingTitle.textContent = 'Academic Warning — Below 85% Attendance Threshold';
+        policyStandingTitle.textContent = 'At Risk';
         policyStandingTitle.className = 'text-base font-bold text-rose-600 dark:text-rose-400';
       }
     }
 
+    const certPanel = document.getElementById('awardCertPanel');
+    const lockedPanel = document.getElementById('awardLockedPanel');
+    const lockedRate = document.getElementById('lockedRate');
+    const lockedRateBar = document.getElementById('lockedRateBar');
+    const lockedAbsences = document.getElementById('lockedAbsences');
+    const certAbsences = document.getElementById('certAbsences');
+    const certPunctuality = document.getElementById('certPunctuality');
+    const awardFooterNote = document.getElementById('awardFooterNote');
+
     if (awardStatusPill) {
       if (stats.isAwardEligible) {
+        // STATE A — Qualified: show certificate
         awardStatusPill.className = 'pill pill-present text-[11px] uppercase font-bold';
         awardStatusPill.textContent = 'Qualified';
+        if (certPanel) certPanel.classList.remove('hidden');
+        if (lockedPanel) lockedPanel.classList.add('hidden');
+        if (certAbsences) certAbsences.textContent = stats.totalAbsences ?? 0;
+        if (certPunctuality) certPunctuality.textContent = `${rate}%`;
+        if (awardFooterNote) awardFooterNote.textContent = 'Conferred at end of semester convocation ceremonies.';
       } else {
+        // STATE B — Not yet earned: show locked progress panel
         awardStatusPill.className = 'pill pill-late text-[11px] uppercase font-bold';
         awardStatusPill.textContent = 'In Progress';
+        if (certPanel) certPanel.classList.add('hidden');
+        if (lockedPanel) lockedPanel.classList.remove('hidden');
+        if (lockedRate) lockedRate.textContent = `${rate}%`;
+        if (lockedRateBar) {
+          lockedRateBar.style.width = `${Math.min(rate, 100)}%`;
+          lockedRateBar.className = `h-full rounded-full transition-all duration-500 ${rate >= 85 ? 'bg-emerald-500' : rate >= 75 ? 'bg-amber-500' : 'bg-rose-500'}`;
+        }
+        if (lockedAbsences) {
+          const absCount = stats.totalAbsences ?? '—';
+          lockedAbsences.textContent = `${absCount} / 3 max`;
+        }
+        if (awardFooterNote) awardFooterNote.textContent = 'Keep a clean record to unlock the Perfect Attendance Award.';
       }
     }
   } catch (err) {
@@ -98,59 +139,84 @@ async function loadRetentionStanding(studentId) {
   }
 }
 
-async function renderArrivalChart(studentId) {
-  const ctx = document.getElementById('arrivalTimeChart');
+async function renderSubjectAttendanceChart(studentId) {
+  const ctx = document.getElementById('subjectAttendanceChart') || document.getElementById('arrivalTimeChart');
   if (!ctx) return;
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
-  if (arrivalTimeChartInstance) {
-    arrivalTimeChartInstance.destroy();
+  if (subjectAttendanceChartInstance) {
+    subjectAttendanceChartInstance.destroy();
   }
 
-  // Sample arrival curve for enrolled student
-  const labels = ['Before 07:30', '07:30 - 07:45', '07:45 - 08:00', '08:01 - 08:30 (Late)', 'After 08:30'];
-  const data = [14, 22, 5, 2, 0];
+  // Realistic course-level attendance data for enrolled student (BSIT 3-1)
+  const courses = [
+    { code: 'IPT 101', name: 'Integrative Programming & Tech 1', rate: 96, attended: 24, total: 25 },
+    { code: 'IAS 101', name: 'Information Assurance & Security', rate: 100, attended: 25, total: 25 },
+    { code: 'NET 102', name: 'Advanced Networking & Admin', rate: 92, attended: 23, total: 25 },
+    { code: 'WEB 301', name: 'Web Systems & Technologies 2', rate: 100, attended: 25, total: 25 },
+    { code: 'SAD 101', name: 'Systems Analysis & Design', rate: 96, attended: 24, total: 25 },
+    { code: 'ETH 102', name: 'Ethics in Information Technology', rate: 98, attended: 24, total: 24 }
+  ];
 
-  arrivalTimeChartInstance = new Chart(ctx, {
+  const labels = courses.map(c => c.code);
+  const data = courses.map(c => c.rate);
+
+  // Semantic attendance colors based on institutional 85% policy threshold
+  const bgColors = courses.map(c => {
+    if (c.rate >= 100) return isDark ? '#10B981' : '#059669';
+    if (c.rate >= 85) return isDark ? '#3B82F6' : '#2196F3';
+    if (c.rate >= 75) return '#F59E0B';
+    return '#EF4444';
+  });
+
+  subjectAttendanceChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'Arrival Taps',
+        label: 'Attendance Rate',
         data,
-        backgroundColor: [
-          '#10B981',
-          '#2196F3',
-          '#60A5FA',
-          '#F59E0B',
-          '#EF4444'
-        ],
+        backgroundColor: bgColors,
         borderRadius: 6,
-        borderSkipped: false
+        borderSkipped: false,
+        maxBarThickness: 38
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 18,
+          bottom: 8,
+          left: 0,
+          right: 6
+        }
+      },
       interaction: {
         mode: 'index',
         intersect: false
       },
       scales: {
         y: {
-          beginAtZero: true,
-          grid: { color: isDark ? '#1A3866' : '#E2ECF7' },
+          min: 0,
+          max: 100,
+          grid: { 
+            color: isDark ? '#1A3866' : '#E2ECF7'
+          },
           ticks: {
-            stepSize: 5,
-            color: isDark ? '#90CAF9' : '#4A657E'
+            stepSize: 20,
+            callback: (val) => `${val}%`,
+            color: isDark ? '#90CAF9' : '#4A657E',
+            font: { size: 10, family: 'Inter, sans-serif' }
           }
         },
         x: {
           grid: { display: false },
           ticks: {
             color: isDark ? '#90CAF9' : '#4A657E',
-            font: { size: 10 }
+            font: { size: 11, weight: '600', family: 'Inter, sans-serif' }
           }
         }
       },
@@ -162,13 +228,72 @@ async function renderArrivalChart(studentId) {
           bodyColor: '#E3F2FD',
           borderColor: '#2196F3',
           borderWidth: 1,
-          padding: 10,
+          padding: 12,
           cornerRadius: 8,
           callbacks: {
-            label: (ctx) => ` Gate Scans: ${ctx.parsed.y} days`
+            title: (items) => {
+              const item = items[0];
+              const course = courses[item.dataIndex];
+              return `${course.code}: ${course.name}`;
+            },
+            label: (ctx) => {
+              const course = courses[ctx.dataIndex];
+              const isPassing = course.rate >= 85;
+              return [
+                ` Attendance Rate: ${course.rate}%`,
+                ` Attended Sessions: ${course.attended} / ${course.total}`,
+                ` Retention Standing: ${isPassing ? 'Compliant (Passed)' : 'At Risk (< 85%)'}`
+              ];
+            }
           }
         }
       }
+    }
+  });
+}
+
+// Backward-compatibility alias
+const renderArrivalChart = renderSubjectAttendanceChart;
+
+function handleExportAnalytics() {
+  const studentFullName = `${currentStudent?.first_name || ''} ${currentStudent?.last_name || ''}`.trim() || 'Juan Dela Cruz';
+  const studentNo = currentStudent?.student_number || '2024-IT-00101';
+  const sectionName = currentStudent?.section_name || 'BSIT 3-1';
+  const overallRate = currentStats?.attendanceRate ?? 95.6;
+
+  const courses = [
+    { code: 'IPT 101', name: 'Integrative Programming & Tech 1', rate: 96, attended: 24, total: 25 },
+    { code: 'IAS 101', name: 'Information Assurance & Security', rate: 100, attended: 25, total: 25 },
+    { code: 'NET 102', name: 'Advanced Networking & Admin', rate: 92, attended: 23, total: 25 },
+    { code: 'WEB 301', name: 'Web Systems & Technologies 2', rate: 100, attended: 25, total: 25 },
+    { code: 'SAD 101', name: 'Systems Analysis & Design', rate: 96, attended: 24, total: 25 },
+    { code: 'ETH 102', name: 'Ethics in Information Technology', rate: 98, attended: 24, total: 24 }
+  ];
+
+  const headers = ['Course Code', 'Descriptive Course Title', 'Attended', 'Total Sessions', 'Attendance Rate', 'Policy Status'];
+  const rows = courses.map(c => [
+    c.code,
+    c.name,
+    String(c.attended),
+    String(c.total),
+    `${c.rate}%`,
+    c.rate >= 85 ? 'COMPLIANT' : 'AT RISK'
+  ]);
+
+  const dateStamp = new Date().toISOString().split('T')[0];
+
+  openExportModal({
+    title: 'Student Course Attendance Performance Report',
+    filename: `BCP_Attendance_Analytics_${studentNo}_${dateStamp}`,
+    headers,
+    rows,
+    metadata: {
+      'Student Name': studentFullName,
+      'Student Number': studentNo,
+      'Section': sectionName,
+      'Overall Attendance Rate': `${overallRate}%`,
+      'Institutional Policy Threshold': '85% Minimum',
+      'Perfect Attendance Standing': currentStats?.isAwardEligible ? 'Qualified / Candidate' : 'In Progress'
     }
   });
 }
@@ -219,5 +344,96 @@ async function loadParentAlerts(studentId) {
     }
   } catch (err) {
     console.warn('[AMS Student Analytics] Alerts load note:', err);
+  }
+}
+
+/**
+ * Certificate Modal Controller
+ * Handles open, close, ESC keyboard dismissal, backdrop click, and clean print trigger
+ */
+function initCertificateModal() {
+  const modal = document.getElementById('certificateModal');
+  const btnOpen = document.getElementById('btnOpenCertModal');
+  const btnCloseBottom = document.getElementById('btnCloseCertificateModalBottom');
+  const btnPrintBottom = document.getElementById('btnPrintCertificateBottom');
+
+  if (!modal) return;
+
+  function populateAndOpenModal(e) {
+    if (e) e.preventDefault();
+
+    const studentName = `${currentStudent?.first_name || ''} ${currentStudent?.last_name || ''}`.trim() || 'Juan Dela Cruz';
+    const studentNo = currentStudent?.student_number || '2024-IT-00101';
+    const sectionName = currentStudent?.section_name || 'BSIT 3-1';
+    const rate = currentStats?.attendanceRate ?? 100;
+
+    const nameEl = document.getElementById('modalCertStudentName');
+    const noEl = document.getElementById('modalCertStudentNo');
+    const secEl = document.getElementById('modalCertSection');
+    const rateEl = document.getElementById('modalCertRate');
+    const serialEl = document.getElementById('modalCertSerial');
+    const dateEl = document.getElementById('modalCertDate');
+
+    if (nameEl) nameEl.textContent = studentName;
+    if (noEl) noEl.textContent = studentNo;
+    if (secEl) secEl.textContent = sectionName;
+    if (rateEl) rateEl.textContent = `${rate}%`;
+    if (serialEl) {
+      const cleanNo = studentNo.replace(/[^a-zA-Z0-9]/g, '');
+      serialEl.textContent = `BCP-AMS-2026-PA-${cleanNo || '00101'}`;
+    }
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function handlePrint(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    window.print();
+  }
+
+  if (btnOpen) {
+    btnOpen.addEventListener('click', populateAndOpenModal);
+  }
+
+  if (btnCloseBottom) {
+    btnCloseBottom.addEventListener('click', closeModal);
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal(e);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display !== 'none' && !modal.classList.contains('hidden')) {
+      closeModal(e);
+    }
+  });
+
+  if (btnPrintBottom) {
+    btnPrintBottom.addEventListener('click', handlePrint);
   }
 }

@@ -8,6 +8,7 @@ import { sectionsApi } from '../../api/sectionsApi.js';
 import { attendanceApi } from '../../api/attendanceApi.js';
 import { excuseSlipsApi } from '../../api/excuseSlipsApi.js';
 import { toast } from '../../components/toast.js';
+import { openExportModal } from '../../components/exportModal.js';
 
 /**
  * Utility to trigger browser download of CSV string
@@ -59,8 +60,17 @@ async function generateConfiguredReport() {
         `"${l.scan_method || ''}"`
       ]);
 
-      downloadCsv(`AMS_Attendance_Logs_${startDate || 'all'}_${endDate || 'all'}.csv`, headers, rows);
-      toast.show('Audit logs CSV exported successfully.', 'success');
+      openExportModal({
+        title: 'Raw Gate Ingress Audit Logs',
+        filename: `AMS_Attendance_Logs_${startDate || 'all'}_${endDate || 'all'}`,
+        headers,
+        rows,
+        metadata: {
+          'Report Type': 'Gate Ingress Audit Records',
+          'Date Period': `${startDate || 'Start'} to ${endDate || 'Today'}`,
+          'Total Scans': `${data.length}`
+        }
+      });
 
     } else if (template === 'excuse_slips') {
       const data = await excuseSlipsApi.getExcuseSlips({ sectionId });
@@ -71,35 +81,52 @@ async function generateConfiguredReport() {
 
       const headers = ['Submitted At', 'Student ID', 'Student Name', 'Section', 'Start Date', 'End Date', 'Category', 'Reason', 'Status', 'Reviewer Notes'];
       const rows = data.map(s => [
-        `"${new Date(s.submitted_at).toLocaleString()}"`,
-        `"${s.student?.student_number || ''}"`,
-        `"${s.student?.first_name || ''} ${s.student?.last_name || ''}"`,
-        `"${s.section?.name || ''}"`,
-        `"${s.start_date || ''}"`,
-        `"${s.end_date || ''}"`,
-        `"${s.reason_category || ''}"`,
-        `"${(s.reason || '').replace(/"/g, '""')}"`,
-        `"${s.status || ''}"`,
-        `"${(s.reviewer_notes || '').replace(/"/g, '""')}"`
+        new Date(s.submitted_at).toLocaleString(),
+        s.student?.student_number || '',
+        `${s.student?.first_name || ''} ${s.student?.last_name || ''}`,
+        s.section?.name || '',
+        s.start_date || '',
+        s.end_date || '',
+        s.reason_category || '',
+        s.reason || '',
+        s.status || '',
+        s.reviewer_notes || ''
       ]);
 
-      downloadCsv('AMS_Excuse_Slips_Ledger.csv', headers, rows);
-      toast.show('Excuse slips CSV exported successfully.', 'success');
+      openExportModal({
+        title: 'Excuse Slip Resolution Ledger',
+        filename: 'AMS_Excuse_Slips_Ledger',
+        headers,
+        rows,
+        metadata: {
+          'Report Type': 'Digital Excuse Slip Audit History',
+          'Total Records': `${data.length}`
+        }
+      });
 
     } else {
       // Default summary export
       const headers = ['Section', 'Total Enrolled', 'Present Rate (%)', 'Late Count', 'Absent Count', 'Status'];
       const rows = [
-        ['"BSIT 3-1"', '42', '94.2', '2', '1', '"Good"'],
-        ['"BSIT 3-2"', '40', '92.5', '3', '2', '"Good"'],
-        ['"BSIS 2-1"', '38', '89.1', '5', '4', '"Needs Intervention"']
+        ['BSIT 3-1', '42', '94.2%', '2', '1', 'Good'],
+        ['BSIT 3-2', '40', '92.5%', '3', '2', 'Good'],
+        ['BSIS 2-1', '38', '89.1%', '5', '4', 'Needs Intervention']
       ];
-      downloadCsv('AMS_Institutional_Summary.csv', headers, rows);
-      toast.show('Summary report downloaded successfully.', 'success');
+
+      openExportModal({
+        title: 'Section Attendance Rate Summary',
+        filename: 'AMS_Institutional_Summary',
+        headers,
+        rows,
+        metadata: {
+          'Academic Term': 'AY 2026-2027 First Semester',
+          'Report Type': 'Institutional Attendance Summary'
+        }
+      });
     }
   } catch (err) {
     console.error('[Export Error]', err);
-    toast.show('Failed to generate export: ' + (err.message || 'Error'), 'error');
+    toast.show('Failed to prepare export: ' + (err.message || 'Error'), 'error');
   }
 }
 
@@ -135,44 +162,70 @@ async function init() {
   document.getElementById('btnGenerateReport')?.addEventListener('click', generateConfiguredReport);
 
   document.getElementById('btnQuickToday')?.addEventListener('click', async () => {
-    toast.show("Exporting today's logs...", 'info');
+    toast.show("Fetching today's logs...", 'info', 1000);
     const { data } = await attendanceApi.getAttendanceLogs({ dateFrom: todayStr, dateTo: todayStr }, 0, 500);
     const headers = ['Timestamp', 'Student Number', 'Student Name', 'Section', 'Status', 'Terminal', 'Method'];
     const rows = (data || []).map(l => [
-      `"${new Date(l.scanned_at).toLocaleTimeString()}"`,
-      `"${l.student?.student_number || ''}"`,
-      `"${l.student?.first_name || ''} ${l.student?.last_name || ''}"`,
-      `"${l.section?.name || ''}"`,
-      `"${l.status || ''}"`,
-      `"${l.device?.location || ''}"`,
-      `"${l.scan_method || ''}"`
+      new Date(l.scanned_at).toLocaleTimeString(),
+      l.student?.student_number || '',
+      `${l.student?.first_name || ''} ${l.student?.last_name || ''}`,
+      l.section?.name || '',
+      l.status || '',
+      l.device?.location || '',
+      l.scan_method || ''
     ]);
-    downloadCsv(`AMS_Today_Logs_${todayStr}.csv`, headers, rows);
+
+    openExportModal({
+      title: "Today's Gate Ingress Tally",
+      filename: `AMS_Today_Logs_${todayStr}`,
+      headers,
+      rows,
+      metadata: {
+        'Date': todayStr,
+        'Ingress Gate': 'Campus Ingress Terminals',
+        'Total Scans Recorded': `${rows.length}`
+      }
+    });
   });
 
   document.getElementById('btnQuickWeekly')?.addEventListener('click', () => {
     const headers = ['Section', 'Week Start', 'Average Attendance Rate', 'Tardy Incidents'];
     const rows = [
-      ['"BSIT 3-1"', '"2026-09-20"', '"94.2%"', '12'],
-      ['"BSIT 3-2"', '"2026-09-20"', '"92.8%"', '14'],
-      ['"BSIS 2-1"', '"2026-09-20"', '"89.0%"', '19']
+      ['BSIT 3-1', '2026-09-20', '94.2%', '12'],
+      ['BSIT 3-2', '2026-09-20', '92.8%', '14'],
+      ['BSIS 2-1', '2026-09-20', '89.0%', '19']
     ];
-    downloadCsv('AMS_Weekly_Rates.csv', headers, rows);
-    toast.show('Weekly rates CSV downloaded.', 'success');
+    openExportModal({
+      title: 'Weekly Section Attendance Performance',
+      filename: 'AMS_Weekly_Rates',
+      headers,
+      rows,
+      metadata: {
+        'Time Horizon': 'Past 7 Days Aggregation',
+        'Academic Term': 'AY 2026-2027 1st Semester'
+      }
+    });
   });
 
   document.getElementById('btnQuickSlips')?.addEventListener('click', async () => {
     const data = await excuseSlipsApi.getExcuseSlips();
     const headers = ['Submitted Date', 'Student Name', 'Section', 'Reason Category', 'Status'];
     const rows = (data || []).map(s => [
-      `"${s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : ''}"`,
-      `"${s.student?.first_name || ''} ${s.student?.last_name || ''}"`,
-      `"${s.section?.name || ''}"`,
-      `"${s.reason_category || ''}"`,
-      `"${s.status || ''}"`
+      s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : '',
+      `${s.student?.first_name || ''} ${s.student?.last_name || ''}`,
+      s.section?.name || '',
+      s.reason_category || '',
+      s.status || ''
     ]);
-    downloadCsv('AMS_Quick_Excuse_Slips.csv', headers, rows);
-    toast.show('Excuse slips CSV downloaded.', 'success');
+    openExportModal({
+      title: 'Excuse Slip Masterlist',
+      filename: 'AMS_Quick_Excuse_Slips',
+      headers,
+      rows,
+      metadata: {
+        'Total Filed Slips': `${rows.length}`
+      }
+    });
   });
 }
 

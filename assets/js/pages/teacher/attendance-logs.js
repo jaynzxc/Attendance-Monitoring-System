@@ -9,6 +9,7 @@ import { getCurrentUser } from '../../lib/auth.js';
 import { sectionsApi } from '../../api/sectionsApi.js';
 import { showToast } from '../../components/toast.js';
 import { renderNumberedPagination } from '../../components/pagination.js';
+import { openExportModal } from '../../components/exportModal.js';
 
 let currentTeacher = null;
 let assignedSections = [];
@@ -364,32 +365,30 @@ function exportLogsToCsv() {
   ];
 
   const rows = filteredLogs.map(l => [
-    `"${l.student_number || ''}"`,
-    `"${l.first_name || ''}"`,
-    `"${l.last_name || ''}"`,
-    `"${l.subject_code || ''}"`,
-    `"${l.subject_name || ''}"`,
-    `"${l.section_name || ''}"`,
-    `"${(l.status || '').toUpperCase()}"`,
-    `"${l.scanned_at || ''}"`,
-    `"${(l.scan_method || '').toUpperCase()}"`,
-    `"${l.is_voided ? 'VOIDED' : 'VALID'}"`
+    l.student_number || '',
+    l.first_name || '',
+    l.last_name || '',
+    l.subject_code || '',
+    l.subject_name || '',
+    l.section_name || '',
+    (l.status || '').toUpperCase(),
+    l.scanned_at ? new Date(l.scanned_at).toLocaleTimeString() : '',
+    (l.scan_method || 'rfid').toUpperCase(),
+    l.is_voided ? 'VOIDED' : 'VALID'
   ]);
 
-  const csvContent = 'data:text/csv;charset=utf-8,' +
-    [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const teacherName = `${currentTeacher?.first_name || ''} ${currentTeacher?.last_name || ''}`.trim() || 'Faculty';
 
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `BCP_Attendance_Logs_${selectedDate}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  showToast({
-    title: 'CSV Export Generated',
-    message: `Exported ${filteredLogs.length} student attendance logs.`,
-    type: 'success'
+  openExportModal({
+    title: 'Teacher Section Attendance Logs Ledger',
+    filename: `BCP_Attendance_Logs_${selectedDate}`,
+    headers,
+    rows,
+    metadata: {
+      'Faculty Member': teacherName,
+      'Log Date': selectedDate,
+      'Total Records': `${rows.length}`,
+      'Academic Term': 'AY 2026-2027 1st Semester'
+    }
   });
 }
