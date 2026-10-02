@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     last_name: 'Dela Cruz',
     student_number: '2024-IT-00101',
     role: 'student',
-    section_name: 'BSIT 3-1'
+    section_name: '31001'
   };
 
   // 3. Initialize Header Profile, Date, and Chart Legend Interactions
@@ -112,7 +112,7 @@ function initStudentProfile(user) {
 
   const firstName = user.first_name || 'Student';
   const fullName = `${user.first_name || 'Juan'} ${user.last_name || 'Dela Cruz'}`.trim();
-  const sectionName = user.section_name || 'BSIT 3-1';
+  const sectionName = user.section_name || '31001';
 
   if (greetingEl) {
     greetingEl.textContent = `${timeGreeting}, ${firstName}!`;
@@ -123,8 +123,8 @@ function initStudentProfile(user) {
     dateEl.textContent = `${now.toLocaleDateString('en-US', options)} · Bestlink College of the Philippines`;
   }
 
-  if (userNameEl) userNameEl.textContent = fullName;
-  if (userRoleEl) userRoleEl.textContent = `Student · ${sectionName}`;
+  const formattedSec = sectionName.includes(' - ') ? sectionName : `BSIT - ${sectionName}`;
+  if (userRoleEl) userRoleEl.textContent = `Student · ${formattedSec}`;
 
   if (userAvatarEl) {
     const initials = fullName

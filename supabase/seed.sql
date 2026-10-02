@@ -5,10 +5,15 @@
 
 -- 1. SECTIONS
 insert into sections (id, name, grade_level, school_year) values
-  ('11111111-1111-1111-1111-111111111111', 'BSIT 3-1', '3rd Year', '2026-2027'),
-  ('22222222-2222-2222-2222-222222222222', 'BSIT 3-2', '3rd Year', '2026-2027'),
-  ('33333333-3333-3333-3333-333333333333', 'BSIS 2-1', '2nd Year', '2026-2027')
-on conflict (id) do nothing;
+  ('11111111-1111-1111-1111-111111111111', '31001', '3rd Year', '2026-2027'),
+  ('22222222-2222-2222-2222-222222222222', '31002', '3rd Year', '2026-2027'),
+  ('33333333-3333-3333-3333-333333333333', '21001', '2nd Year', '2026-2027'),
+  ('44444444-4444-4444-4444-444444444444', '11001', '1st Year', '2026-2027'),
+  ('55555555-5555-5555-5555-555555555555', '41001', '4th Year', '2026-2027')
+on conflict (id) do update set
+  name = excluded.name,
+  grade_level = excluded.grade_level,
+  school_year = excluded.school_year;
 
 -- 2. AUTH USERS (Supabase Auth - Default Password: Bestlink@2026)
 insert into auth.users (
@@ -49,14 +54,14 @@ insert into users (id, role, first_name, last_name, email, student_number, emplo
   -- Teachers
   ('b0000000-0000-0000-0000-000000000001', 'teacher', 'Ricardo', 'Santos', 'prof.santos@bestlink.edu.ph', null, 'EMP-2018-042', 'active'),
   ('b0000000-0000-0000-0000-000000000002', 'teacher', 'Carmen', 'Reyes', 'prof.reyes@bestlink.edu.ph', null, 'EMP-2019-088', 'active'),
-  -- Students (BSIT 3-1)
+  -- Students (Section 31001)
   ('c0000000-0000-0000-0000-000000000001', 'student', 'Juan', 'Dela Cruz', 'juan.delacruz@student.bestlink.edu.ph', '2024-IT-00101', null, 'active'),
   ('c0000000-0000-0000-0000-000000000002', 'student', 'Maria', 'Clara', 'maria.clara@student.bestlink.edu.ph', '2024-IT-00102', null, 'active'),
   ('c0000000-0000-0000-0000-000000000003', 'student', 'Jose', 'Rizal', 'jose.rizal@student.bestlink.edu.ph', '2024-IT-00103', null, 'active'),
-  -- Students (BSIT 3-2)
+  -- Students (Section 31002)
   ('c0000000-0000-0000-0000-000000000004', 'student', 'Andres', 'Bonifacio', 'andres.bonifacio@student.bestlink.edu.ph', '2024-IT-00201', null, 'active'),
   ('c0000000-0000-0000-0000-000000000005', 'student', 'Gabriela', 'Silang', 'gabriela.silang@student.bestlink.edu.ph', '2024-IT-00202', null, 'active'),
-  -- Student (BSIS 2-1)
+  -- Student (Section 21001)
   ('c0000000-0000-0000-0000-000000000006', 'student', 'Emilio', 'Aguinaldo', 'emilio.aguinaldo@student.bestlink.edu.ph', '2025-IS-00012', null, 'active')
 on conflict (id) do nothing;
 

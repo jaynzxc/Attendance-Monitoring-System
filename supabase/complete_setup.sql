@@ -1392,10 +1392,15 @@ on conflict (id) do nothing;
 
 -- 1. SECTIONS
 insert into public.sections (id, name, grade_level, school_year) values
-  ('11111111-1111-1111-1111-111111111111', 'BSIT 3-1', '3rd Year', '2026-2027'),
-  ('22222222-2222-2222-2222-222222222222', 'BSIT 3-2', '3rd Year', '2026-2027'),
-  ('33333333-3333-3333-3333-333333333333', 'BSIS 2-1', '2nd Year', '2026-2027')
-on conflict (id) do nothing;
+  ('11111111-1111-1111-1111-111111111111', '31001', '3rd Year', '2026-2027'),
+  ('22222222-2222-2222-2222-222222222222', '31002', '3rd Year', '2026-2027'),
+  ('33333333-3333-3333-3333-333333333333', '21001', '2nd Year', '2026-2027'),
+  ('44444444-4444-4444-4444-444444444444', '11001', '1st Year', '2026-2027'),
+  ('55555555-5555-5555-5555-555555555555', '41001', '4th Year', '2026-2027')
+on conflict (id) do update set
+  name = excluded.name,
+  grade_level = excluded.grade_level,
+  school_year = excluded.school_year;
 
 -- 2. USERS
 insert into public.users (id, role, first_name, last_name, email, student_number, employee_number, status) values

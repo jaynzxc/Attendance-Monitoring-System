@@ -261,9 +261,9 @@ export function renderSectionComparisonChart(canvasId = 'sectionComparisonChart'
   }
 
   const defaultSections = [
-    { name: 'BSIT 3-1', rate: 94.3 },
-    { name: 'BSIT 3-2', rate: 89.1 },
-    { name: 'BSIS 2-1', rate: 92.5 }
+    { name: '31001', rate: 94.3 },
+    { name: '31002', rate: 89.1 },
+    { name: '21001', rate: 92.5 }
   ];
 
   const items = sectionData && sectionData.length > 0 ? sectionData : defaultSections;

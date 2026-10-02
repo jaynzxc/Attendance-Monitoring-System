@@ -110,8 +110,8 @@ async function loadFacultyWorkspace(teacherId) {
     assignedSections = await sectionsApi.getSectionsByTeacher(teacherId);
     if (!assignedSections || assignedSections.length === 0) {
       assignedSections = [
-        { id: '11111111-1111-1111-1111-111111111111', name: 'BSIT 3-1', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 35 },
-        { id: '22222222-2222-2222-2222-222222222222', name: 'BSIT 3-2', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 32 }
+        { id: '11111111-1111-1111-1111-111111111111', name: '31001', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 35 },
+        { id: '22222222-2222-2222-2222-222222222222', name: '31002', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 32 }
       ];
     }
     assignedSectionIds = new Set(assignedSections.map(s => s.id));
@@ -131,8 +131,8 @@ async function loadFacultyWorkspace(teacherId) {
     } catch (e) {
       console.warn('[AMS Teacher Dashboard] Fallback excuse slips:', e);
       pendingSlips = [
-        { id: 'f5000000-0000-0000-0000-000000000001', student_name: 'Maria Clara', section_name: 'BSIT 3-1', reason_category: 'Medical', reason: 'High fever and medical clinic visit', date: 'Today' },
-        { id: 'f5000000-0000-0000-0000-000000000002', student_name: 'Andres Bonifacio', section_name: 'BSIT 3-2', reason_category: 'Family Emergency', reason: 'Urgent family emergency in province', date: 'Today' }
+        { id: 'f5000000-0000-0000-0000-000000000001', student_name: 'Maria Clara', section_name: '31001', reason_category: 'Medical', reason: 'High fever and medical clinic visit', date: 'Today' },
+        { id: 'f5000000-0000-0000-0000-000000000002', student_name: 'Andres Bonifacio', section_name: '31002', reason_category: 'Family Emergency', reason: 'Urgent family emergency in province', date: 'Today' }
       ];
     }
 

@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     last_name: 'Dela Cruz',
     student_number: '2024-IT-00101',
     email: 'juan.delacruz@student.bestlink.edu.ph',
-    section_name: 'BSIT 3-1',
+    section_name: '31001',
     role: 'student'
   };
 
@@ -96,7 +96,7 @@ async function loadStudentProfileData() {
     // Derived fields
     const fullName = `${profile.first_name || 'Juan'} ${profile.last_name || 'Dela Cruz'}`.trim();
     const studentNo = profile.student_number || '2024-IT-00101';
-    const sectionName = profile.student_sections?.[0]?.sections?.name || profile.section_name || 'BSIT 3-1';
+    const sectionName = profile.student_sections?.[0]?.sections?.name || profile.section_name || '31001';
     const activeRfid = profile.rfid_cards?.find(c => c.is_active)?.card_uid || 'E2806894';
     const email = profile.email || 'juan.delacruz@student.bestlink.edu.ph';
     const initials = (profile.first_name || 'J')[0].toUpperCase();
@@ -111,11 +111,12 @@ async function loadStudentProfileData() {
     const metaRfid = document.getElementById('metaRfid');
     const metaQr = document.getElementById('metaQr');
 
+    const combinedSec = sectionName.includes(' - ') ? sectionName : `BSIT - ${sectionName}`;
     if (pfAvatar) pfAvatar.textContent = initials;
     if (pfFullName) pfFullName.textContent = fullName;
     if (metaEmail) metaEmail.textContent = email;
     if (metaStudentNo) metaStudentNo.textContent = studentNo;
-    if (metaSection) metaSection.textContent = sectionName;
+    if (metaSection) metaSection.textContent = combinedSec;
     if (metaRfid) metaRfid.textContent = activeRfid;
     if (metaQr) metaQr.textContent = qrCodeVal;
 
@@ -134,7 +135,7 @@ async function loadStudentProfileData() {
     if (adminFullName) adminFullName.value = fullName;
     if (adminNo) adminNo.value = studentNo;
     if (adminMail) adminMail.value = email;
-    if (adminSec) adminSec.value = `BS Information Technology · ${sectionName}`;
+    if (adminSec) adminSec.value = combinedSec;
     if (adminRfid) adminRfid.value = activeRfid;
     if (qrEl) qrEl.value = qrCodeVal;
 

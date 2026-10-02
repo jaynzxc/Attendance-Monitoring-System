@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const certSec = document.getElementById('certSection');
   if (certSec) {
-    certSec.textContent = currentStudent.section_name || 'BSIT 3-1';
+    certSec.textContent = currentStudent.section_name || '31001';
   }
 
   // 4. Initialize Certificate Modal & Actions
@@ -149,7 +149,7 @@ async function renderSubjectAttendanceChart(studentId) {
     subjectAttendanceChartInstance.destroy();
   }
 
-  // Realistic course-level attendance data for enrolled student (BSIT 3-1)
+  // Realistic course-level attendance data for enrolled student (Section 31001)
   const courses = [
     { code: 'IPT 101', name: 'Integrative Programming & Tech 1', rate: 96, attended: 24, total: 25 },
     { code: 'IAS 101', name: 'Information Assurance & Security', rate: 100, attended: 25, total: 25 },
@@ -258,7 +258,7 @@ const renderArrivalChart = renderSubjectAttendanceChart;
 function handleExportAnalytics() {
   const studentFullName = `${currentStudent?.first_name || ''} ${currentStudent?.last_name || ''}`.trim() || 'Juan Dela Cruz';
   const studentNo = currentStudent?.student_number || '2024-IT-00101';
-  const sectionName = currentStudent?.section_name || 'BSIT 3-1';
+  const sectionName = currentStudent?.section_name || '31001';
   const overallRate = currentStats?.attendanceRate ?? 95.6;
 
   const courses = [
@@ -364,7 +364,7 @@ function initCertificateModal() {
 
     const studentName = `${currentStudent?.first_name || ''} ${currentStudent?.last_name || ''}`.trim() || 'Juan Dela Cruz';
     const studentNo = currentStudent?.student_number || '2024-IT-00101';
-    const sectionName = currentStudent?.section_name || 'BSIT 3-1';
+    const sectionName = currentStudent?.section_name || '31001';
     const rate = currentStats?.attendanceRate ?? 100;
 
     const nameEl = document.getElementById('modalCertStudentName');

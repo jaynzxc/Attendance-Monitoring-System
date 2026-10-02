@@ -88,7 +88,7 @@ async function loadTeacherSubjectsAndLogs() {
       assignedSections = [
         {
           id: '11111111-1111-1111-1111-111111111111',
-          name: 'BSIT 3-1',
+          name: '31001',
           subject_code: 'IT 301',
           subject_name: 'Systems Architecture & Integration',
           schedule: '08:00 AM – 10:00 AM',
@@ -97,7 +97,7 @@ async function loadTeacherSubjectsAndLogs() {
         },
         {
           id: '22222222-2222-2222-2222-222222222222',
-          name: 'BSIT 3-2',
+          name: '31002',
           subject_code: 'IT 302',
           subject_name: 'Database Systems Administration',
           schedule: '01:00 PM – 03:00 PM',

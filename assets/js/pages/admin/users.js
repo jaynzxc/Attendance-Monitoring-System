@@ -67,11 +67,11 @@ function renderUsersTable(users) {
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
     const email = user.email || '—';
     const idNumber = user.student_number || '—';
-    const sectionName = user.sections?.name || '—';
+    const sectionName = user.sections?.name || user.student_sections?.[0]?.sections?.name || '—';
     const roleCapitalized = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Student';
-    const rfidCard = user.rfid_credentials?.find(c => c.is_active)?.card_uid || null;
+    const rfidCard = user.rfid_credentials?.find(c => c.is_active)?.card_uid || user.rfid_cards?.find(c => c.is_active)?.card_uid || null;
     const parent = user.parent_contacts?.[0];
-    const parentPhone = parent ? `${parent.phone_number} (${parent.relationship || 'Guardian'})` : 'No SMS Contact';
+    const parentPhone = parent ? `${parent.mobile_number || parent.phone_number} (${parent.relationship || 'Guardian'})` : 'No SMS Contact';
     const status = user.status || 'active';
 
     return `

@@ -108,9 +108,9 @@ async function generateConfiguredReport() {
       // Default summary export
       const headers = ['Section', 'Total Enrolled', 'Present Rate (%)', 'Late Count', 'Absent Count', 'Status'];
       const rows = [
-        ['BSIT 3-1', '42', '94.2%', '2', '1', 'Good'],
-        ['BSIT 3-2', '40', '92.5%', '3', '2', 'Good'],
-        ['BSIS 2-1', '38', '89.1%', '5', '4', 'Needs Intervention']
+        ['31001', '42', '94.2%', '2', '1', 'Good'],
+        ['31002', '40', '92.5%', '3', '2', 'Good'],
+        ['21001', '38', '89.1%', '5', '4', 'Needs Intervention']
       ];
 
       openExportModal({
@@ -191,9 +191,9 @@ async function init() {
   document.getElementById('btnQuickWeekly')?.addEventListener('click', () => {
     const headers = ['Section', 'Week Start', 'Average Attendance Rate', 'Tardy Incidents'];
     const rows = [
-      ['BSIT 3-1', '2026-09-20', '94.2%', '12'],
-      ['BSIT 3-2', '2026-09-20', '92.8%', '14'],
-      ['BSIS 2-1', '2026-09-20', '89.0%', '19']
+      ['31001', '2026-09-20', '94.2%', '12'],
+      ['31002', '2026-09-20', '92.8%', '14'],
+      ['21001', '2026-09-20', '89.0%', '19']
     ];
     openExportModal({
       title: 'Weekly Section Attendance Performance',

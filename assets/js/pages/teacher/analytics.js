@@ -336,7 +336,7 @@ function renderAtRiskRadar(stats) {
       first_name: 'Jose',
       last_name: 'Rizal',
       student_number: '2024-IT-00103',
-      sectionName: stats[0]?.name || 'BSIT 3-1',
+      sectionName: stats[0]?.name || '31001',
       absences: 4,
       rate: 68
     });

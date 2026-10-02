@@ -687,7 +687,7 @@ function generateSeedNotifications(role) {
       {
         id: 'seed_t_1',
         title: 'Excuse Slip Awaiting Approval',
-        message: 'Student Juan Dela Cruz (BSIT 3-1) submitted an excuse slip with medical proof attachment.',
+        message: 'Student Juan Dela Cruz (Section 31001) submitted an excuse slip with medical proof attachment.',
         type: 'excuse',
         link: 'excuse-slips.html',
         is_read: false,
@@ -705,7 +705,7 @@ function generateSeedNotifications(role) {
       {
         id: 'seed_t_3',
         title: 'Attendance Roll Call Alert',
-        message: 'Section BSIT 3-1 attendance roll call is now open for your scheduled 09:00 AM lecture.',
+        message: 'Section 31001 attendance roll call is now open for your scheduled 09:00 AM lecture.',
         type: 'info',
         link: 'attendance.html',
         is_read: true,

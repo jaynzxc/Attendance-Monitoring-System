@@ -11,7 +11,7 @@ export class Modal {
    * @param {string} options.content - HTML content inside modal body
    * @param {Array<{label: string, class?: string, onClick: Function}>} [options.actions]
    */
-  static open({ id = 'ams-modal', title = '', content = '', actions = [] }) {
+  static open({ id = 'ams-modal', title = '', content = '', actions = [], maxWidth = '520px' }) {
     // Remove existing modal if any
     Modal.close(id);
 
@@ -42,7 +42,7 @@ export class Modal {
       border-radius: 14px;
       box-shadow: 0 16px 40px rgba(13, 71, 161, 0.2);
       width: 100%;
-      max-width: 520px;
+      max-width: ${maxWidth};
       max-height: 90vh;
       overflow-y: auto;
       display: flex;
@@ -69,6 +69,7 @@ export class Modal {
 
     // Body
     const body = document.createElement('div');
+    body.className = 'ams-modal-body';
     body.style.cssText = `
       padding: 22px;
       flex: 1;
@@ -153,6 +154,15 @@ export class Modal {
       setTimeout(() => {
         if (el.parentNode) el.parentNode.removeChild(el);
       }, 200);
+    }
+  }
+
+  static updateContent(id, newHtml) {
+    const overlay = document.getElementById(id);
+    if (!overlay) return;
+    const body = overlay.querySelector('.ams-modal-body');
+    if (body) {
+      body.innerHTML = newHtml;
     }
   }
 }

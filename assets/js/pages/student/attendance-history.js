@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     first_name: 'Juan',
     last_name: 'Dela Cruz',
     student_number: '2024-IT-00101',
-    section_name: 'BSIT 3-1',
+    section_name: '31001',
     role: 'student'
   };
 
@@ -71,8 +71,8 @@ function initStudentProfile(user) {
 
   const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Juan Dela Cruz';
   if (nameEl) nameEl.textContent = fullName;
-  if (numEl) numEl.textContent = user.student_number || '2024-IT-00101';
-  if (sectionEl) sectionEl.textContent = user.section_name || 'BSIT 3-1';
+  const rawSec = user.section_name || '31001';
+  if (sectionEl) sectionEl.textContent = rawSec.includes(' - ') ? rawSec : `BSIT - ${rawSec}`;
 
   loadStudentRfidUid(user.id);
 }
@@ -220,7 +220,7 @@ function readFilterInputs() {
  * Resolves the subject and section display for an attendance record
  */
 function resolveSubjectAndSection(rec, student) {
-  const section = rec.section_name || student?.section_name || 'BSIT 3-1';
+  const section = rec.section_name || student?.section_name || '31001';
 
   if (rec.subject_name || rec.subject) {
     return { subject: rec.subject_name || rec.subject, section };
@@ -506,7 +506,7 @@ async function exportHistoryToCsv() {
       metadata: {
         'Student Name': studentFullName,
         'Student ID': currentStudent.student_number || '2024-IT-00101',
-        'Academic Section': currentStudent.section_name || 'BSIT 3-1',
+        'Academic Section': currentStudent.section_name || '31001',
         'Academic Term': 'AY 2026-2027 1st Semester',
         'Total Logged Sessions': `${records.length}`
       }

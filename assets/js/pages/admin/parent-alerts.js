@@ -13,11 +13,11 @@ const pageSize = 15;
 
 // Seed data for at-risk students (replaced by live Supabase query when connected)
 const SEED_RISK = [
-  { name: 'John Reyes',      num: '2024-00109', section: 'BSIT 3-1', absent: 4, tardy: 6, rate: 82.5, priority: 'High',     parent: '+639171234567' },
-  { name: 'Maria Santos',    num: '2024-00102', section: 'BSIT 3-1', absent: 3, tardy: 5, rate: 86.0, priority: 'High',     parent: '+639182345678' },
-  { name: 'Kevin De Vera',   num: '2024-00103', section: 'BSIS 2-1', absent: 3, tardy: 4, rate: 88.2, priority: 'Moderate', parent: '+639193456789' },
-  { name: 'Angela Lim',      num: '2024-00104', section: 'BSIT 3-2', absent: 2, tardy: 7, rate: 89.1, priority: 'Moderate', parent: '+639204567890' },
-  { name: 'Carlo Mendoza',   num: '2024-00211', section: 'BSEMC 4A', absent: 3, tardy: 3, rate: 87.4, priority: 'Moderate', parent: '+639215678901' }
+  { name: 'John Reyes',      num: '2024-00109', section: '31001', absent: 4, tardy: 6, rate: 82.5, priority: 'High',     parent: '+639171234567' },
+  { name: 'Maria Santos',    num: '2024-00102', section: '31001', absent: 3, tardy: 5, rate: 86.0, priority: 'High',     parent: '+639182345678' },
+  { name: 'Kevin De Vera',   num: '2024-00103', section: '21001', absent: 3, tardy: 4, rate: 88.2, priority: 'Moderate', parent: '+639193456789' },
+  { name: 'Angela Lim',      num: '2024-00104', section: '31002', absent: 2, tardy: 7, rate: 89.1, priority: 'Moderate', parent: '+639204567890' },
+  { name: 'Carlo Mendoza',   num: '2024-00211', section: '41001', absent: 3, tardy: 3, rate: 87.4, priority: 'Moderate', parent: '+639215678901' }
 ];
 
 // Seed data for recent alert history

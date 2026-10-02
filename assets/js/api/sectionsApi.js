@@ -6,18 +6,148 @@
 
 import { getSupabase } from '../lib/supabaseClient.js';
 
+/**
+ * Parses Bestlink College 5-digit section code convention:
+ * Digit 1: Year Level (1 = 1st Year, 2 = 2nd Year, 3 = 3rd Year, 4 = 4th Year)
+ * Digit 2: Semester (1 = 1st Sem, 2 = 2nd Sem)
+ * Digits 3-5: Section sequence (001, 002, 003...)
+ * Example: "11001" -> Year 1, 1st Sem, Section 001
+ * Example: "31001" -> Year 3, 1st Sem, Section 001
+ * Example: "41001" -> Year 4, 1st Sem, Section 001
+ *
+ * Distinction Note:
+ * - 41001 is the Section Code (applicable only as the section identifier).
+ * - "4th Year" is the Year Level itself (an independent academic curriculum standing).
+ * - When combining Program and Section, the official standard is: "BSIT - 41001".
+ */
+export function parseBcpSectionCode(nameOrCode) {
+  if (!nameOrCode) return { yearLevel: 1, yearLevelName: '1st Year', semester: '1st Sem', sequence: '001', rawCode: '' };
+
+  const str = String(nameOrCode).trim();
+  const match = str.match(/([1-4])([1-2])(\d{3})/);
+  if (match) {
+    const y = parseInt(match[1], 10);
+    const s = match[2];
+    const seq = match[3];
+    return {
+      yearLevel: y,
+      yearLevelName: `${y}${y === 1 ? 'st' : y === 2 ? 'nd' : y === 3 ? 'rd' : 'th'} Year`,
+      semester: s === '1' ? '1st Sem' : '2nd Sem',
+      sequence: seq,
+      rawCode: match[0]
+    };
+  }
+
+  // Fallback for legacy format e.g. "BSIT 3-1"
+  const legacyMatch = str.match(/(\d+)-(\d+)/);
+  if (legacyMatch) {
+    const y = parseInt(legacyMatch[1], 10);
+    return {
+      yearLevel: y,
+      yearLevelName: `${y}${y === 1 ? 'st' : y === 2 ? 'nd' : y === 3 ? 'rd' : 'th'} Year`,
+      semester: '1st Sem',
+      sequence: legacyMatch[2].padStart(3, '0'),
+      rawCode: `${y}1${legacyMatch[2].padStart(3, '0')}`
+    };
+  }
+
+  return { yearLevel: 1, yearLevelName: '1st Year', semester: '1st Sem', sequence: '001', rawCode: '' };
+}
+
+/**
+ * Combines Program and Section code according to BCP standard convention
+ * Example: formatProgramSection('BSIT', '41001') -> "BSIT - 41001"
+ * @param {string} program e.g. "BSIT", "BSIS"
+ * @param {string} section e.g. "41001", "31001"
+ * @returns {string} e.g. "BSIT - 41001"
+ */
+export function formatProgramSection(program, section) {
+  const p = (program || '').trim();
+  const s = (section || '').trim();
+  if (p && s) {
+    if (s.includes(' - ')) return s;
+    if (s.startsWith(p)) return s.replace(new RegExp(`^${p}\\s*[-–]?\\s*`), `${p} - `);
+    return `${p} - ${s}`;
+  }
+  return s || p || '';
+}
+
+let mockSections = [
+  {
+    id: '11111111-1111-1111-1111-111111111111',
+    name: '31001',
+    program_code: 'BSIT',
+    year_level: 3,
+    grade_level: '3rd Year',
+    school_year: '2026-2027',
+    academic_year: '2026-2027',
+    semester: '1st Sem',
+    advisor: { id: 'b0000000-0000-0000-0000-000000000001', first_name: 'Ricardo', last_name: 'Santos', email: 'prof.santos@bestlink.edu.ph' },
+    advisor_teacher_id: 'b0000000-0000-0000-0000-000000000001',
+    active_student_count: 35
+  },
+  {
+    id: '22222222-2222-2222-2222-222222222222',
+    name: '31002',
+    program_code: 'BSIT',
+    year_level: 3,
+    grade_level: '3rd Year',
+    school_year: '2026-2027',
+    academic_year: '2026-2027',
+    semester: '1st Sem',
+    advisor: { id: 'b0000000-0000-0000-0000-000000000001', first_name: 'Ricardo', last_name: 'Santos', email: 'prof.santos@bestlink.edu.ph' },
+    advisor_teacher_id: 'b0000000-0000-0000-0000-000000000001',
+    active_student_count: 32
+  },
+  {
+    id: '33333333-3333-3333-3333-333333333333',
+    name: '21001',
+    program_code: 'BSIS',
+    year_level: 2,
+    grade_level: '2nd Year',
+    school_year: '2026-2027',
+    academic_year: '2026-2027',
+    semester: '1st Sem',
+    advisor: { id: 'b0000000-0000-0000-0000-000000000002', first_name: 'Carmen', last_name: 'Reyes', email: 'prof.reyes@bestlink.edu.ph' },
+    advisor_teacher_id: 'b0000000-0000-0000-0000-000000000002',
+    active_student_count: 28
+  },
+  {
+    id: '44444444-4444-4444-4444-444444444444',
+    name: '11001',
+    program_code: 'BSIT',
+    year_level: 1,
+    grade_level: '1st Year',
+    school_year: '2026-2027',
+    academic_year: '2026-2027',
+    semester: '1st Sem',
+    advisor: null,
+    advisor_teacher_id: null,
+    active_student_count: 0
+  },
+  {
+    id: '55555555-5555-5555-5555-555555555555',
+    name: '41001',
+    program_code: 'BSIT',
+    year_level: 4,
+    grade_level: '4th Year',
+    school_year: '2026-2027',
+    academic_year: '2026-2027',
+    semester: '1st Sem',
+    advisor: null,
+    advisor_teacher_id: null,
+    active_student_count: 0
+  }
+];
+
 export const sectionsApi = {
   /**
-   * Fetches all sections with student headcount
+   * Fetches all sections with student headcount and assigned advisory teachers
    */
   async getSections() {
     const sb = getSupabase();
     if (!sb) {
-      return [
-        { id: '11111111-1111-1111-1111-111111111111', name: 'BSIT 3-1', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 35 },
-        { id: '22222222-2222-2222-2222-222222222222', name: 'BSIT 3-2', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 32 },
-        { id: '33333333-3333-3333-3333-333333333333', name: 'BSIS 2-1', grade_level: '2nd Year', school_year: '2026-2027', active_student_count: 28 }
-      ];
+      return [...mockSections];
     }
 
     try {
@@ -40,20 +170,58 @@ export const sectionsApi = {
         }
       });
 
-      return (sections || []).map(sec => ({
-        id: sec.id,
-        name: sec.name,
-        grade_level: sec.grade_level,
-        school_year: sec.school_year,
-        active_student_count: countMap.get(sec.id) || 0
-      }));
+      // Query advisory/subject teacher assignments via teacher_sections junction
+      const { data: teacherSections } = await sb
+        .from('teacher_sections')
+        .select(`
+          section_id,
+          subject,
+          teacher:users!teacher_id ( id, first_name, last_name, email )
+        `);
+
+      const teacherMap = new Map();
+      (teacherSections || []).forEach(ts => {
+        if (ts.teacher && !teacherMap.has(ts.section_id)) {
+          teacherMap.set(ts.section_id, ts.teacher);
+        }
+      });
+
+      return (sections || []).map(sec => {
+        let cleanName = sec.name.replace(/^[A-Za-z\s_-]+(\d{5})$/, '$1').replace(/^(BSIT|BSIS|BSCS|ACT|BLIS|BSEMC)\s+/i, '').trim();
+        const bcp = parseBcpSectionCode(cleanName || sec.name);
+
+        // Auto-upgrade legacy format (e.g. "3-1" or "BSIT 3-1") to 5-digit BCP format ("31001")
+        if (!/^\d{5}$/.test(cleanName) && bcp.rawCode && /^\d{5}$/.test(bcp.rawCode)) {
+          cleanName = bcp.rawCode;
+          // Sync database in background so it's permanently upgraded in Supabase
+          sb.from('sections').update({ name: bcp.rawCode, grade_level: bcp.yearLevelName }).eq('id', sec.id).then();
+        }
+
+        // Program detection
+        let program_code = 'BSIT';
+        if (sec.name.toUpperCase().includes('BSIS')) program_code = 'BSIS';
+        else if (sec.name.toUpperCase().includes('BSCS')) program_code = 'BSCS';
+        else if (sec.name.toUpperCase().includes('ACT')) program_code = 'ACT';
+        else if (sec.name.toUpperCase().includes('BLIS')) program_code = 'BLIS';
+        else if (sec.name.toUpperCase().includes('BSEMC')) program_code = 'BSEMC';
+
+        return {
+          id: sec.id,
+          name: cleanName || sec.name,
+          program_code,
+          year_level: bcp.yearLevel,
+          grade_level: bcp.yearLevelName,
+          school_year: sec.school_year || '2026-2027',
+          academic_year: sec.school_year || '2026-2027',
+          semester: bcp.semester,
+          advisor: assignedAdvisor,
+          advisor_teacher_id: assignedAdvisor ? assignedAdvisor.id : null,
+          active_student_count: countMap.get(sec.id) || 0
+        };
+      });
     } catch (err) {
       console.warn('[AMS API] getSections fallback:', err);
-      return [
-        { id: '11111111-1111-1111-1111-111111111111', name: 'BSIT 3-1', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 35 },
-        { id: '22222222-2222-2222-2222-222222222222', name: 'BSIT 3-2', grade_level: '3rd Year', school_year: '2026-2027', active_student_count: 32 },
-        { id: '33333333-3333-3333-3333-333333333333', name: 'BSIS 2-1', grade_level: '2nd Year', school_year: '2026-2027', active_student_count: 28 }
-      ];
+      return [...mockSections];
     }
   },
 
@@ -87,7 +255,25 @@ export const sectionsApi = {
    */
   async createSection(sectionData) {
     const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client unavailable');
+    if (!sb) {
+      const yearMatch = sectionData.grade_level ? sectionData.grade_level.match(/\d+/) : null;
+      const year_level = yearMatch ? parseInt(yearMatch[0], 10) : 1;
+      const newSec = {
+        id: crypto.randomUUID ? crypto.randomUUID() : 'sec-' + Date.now(),
+        name: sectionData.name,
+        grade_level: sectionData.grade_level || `Year ${year_level}`,
+        school_year: sectionData.school_year || '2026-2027',
+        academic_year: sectionData.school_year || '2026-2027',
+        semester: '1st Sem',
+        program_code: sectionData.name.includes(' ') ? sectionData.name.split(' ')[0] : 'BSIT',
+        year_level,
+        active_student_count: 0,
+        advisor: null,
+        advisor_teacher_id: null
+      };
+      mockSections.push(newSec);
+      return newSec;
+    }
 
     const { data, error } = await sb
       .from('sections')
@@ -104,7 +290,11 @@ export const sectionsApi = {
    */
   async updateSection(id, updates) {
     const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client unavailable');
+    if (!sb) {
+      const sec = mockSections.find(s => s.id === id);
+      if (sec) Object.assign(sec, updates);
+      return sec;
+    }
 
     const { data, error } = await sb
       .from('sections')
@@ -118,6 +308,42 @@ export const sectionsApi = {
   },
 
   /**
+   * Assigns or updates the advisory teacher for a section
+   * Inserts or replaces in teacher_sections table
+   * @param {string} sectionId
+   * @param {string|null} teacherId
+   * @param {string} [subject]
+   */
+  async assignTeacherToSection(sectionId, teacherId, subject = 'Advisory / General') {
+    const sb = getSupabase();
+    if (!sb) {
+      const sec = mockSections.find(s => s.id === sectionId);
+      if (sec) {
+        sec.advisor_teacher_id = teacherId;
+      }
+      return { success: true };
+    }
+
+    try {
+      // First clean up previous assignment for this section
+      await sb.from('teacher_sections').delete().eq('section_id', sectionId);
+
+      if (teacherId) {
+        const { data, error } = await sb
+          .from('teacher_sections')
+          .insert([{ section_id: sectionId, teacher_id: teacherId, subject }])
+          .select();
+        if (error) throw error;
+        return data;
+      }
+      return true;
+    } catch (err) {
+      console.error('[AMS API] assignTeacherToSection error:', err);
+      throw err;
+    }
+  },
+
+  /**
    * Fetches sections assigned to a specific teacher
    * Queries teacher_sections junction table and computes active student counts
    * @param {string} teacherId
@@ -126,7 +352,7 @@ export const sectionsApi = {
     const defaultFallback = [
       {
         id: '11111111-1111-1111-1111-111111111111',
-        name: 'BSIT 3-1',
+        name: '31001',
         grade_level: '3rd Year',
         school_year: '2026-2027',
         subject: 'Systems Architecture',
@@ -138,7 +364,7 @@ export const sectionsApi = {
       },
       {
         id: '22222222-2222-2222-2222-222222222222',
-        name: 'BSIT 3-2',
+        name: '31002',
         grade_level: '3rd Year',
         school_year: '2026-2027',
         subject: 'Database Systems',
@@ -150,7 +376,7 @@ export const sectionsApi = {
       },
       {
         id: '33333333-3333-3333-3333-333333333333',
-        name: 'BSIS 2-1',
+        name: '21001',
         grade_level: '2nd Year',
         school_year: '2026-2027',
         subject: 'Object-Oriented Programming',
@@ -360,7 +586,7 @@ export const sectionsApi = {
    * @param {string} date
    */
   _getMockSectionRoster(sectionId, date) {
-    // 1. BSIT 3-2: 32 Enrolled (27 Present, 3 Late, 2 Absent)
+    // 1. 31002: 32 Enrolled (27 Present, 3 Late, 2 Absent)
     if (sectionId === '22222222-2222-2222-2222-222222222222') {
       const roster = [
         {
@@ -423,7 +649,7 @@ export const sectionsApi = {
       return roster.sort((a, b) => a.last_name.localeCompare(b.last_name));
     }
 
-    // 2. BSIS 2-1: 28 Enrolled (24 Present, 2 Late, 2 Absent)
+    // 2. 21001: 28 Enrolled (24 Present, 2 Late, 2 Absent)
     if (sectionId === '33333333-3333-3333-3333-333333333333') {
       const roster = [
         {
@@ -475,7 +701,7 @@ export const sectionsApi = {
       return roster.sort((a, b) => a.last_name.localeCompare(b.last_name));
     }
 
-    // 3. Default / BSIT 3-1: 35 Enrolled (31 Present, 2 Late, 2 Absent) -> 94.3% attendance rate
+    // 3. Default / 31001: 35 Enrolled (31 Present, 2 Late, 2 Absent) -> 94.3% attendance rate
     const roster = [
       {
         id: 'c0000000-0000-0000-0000-000000000001',
@@ -549,6 +775,49 @@ export const sectionsApi = {
   },
 
   /**
+   * Fetches enrolled students in a section (with credentials)
+   * @param {string} sectionId
+   */
+  async getSectionRoster(sectionId) {
+    const sb = getSupabase();
+    if (!sb) {
+      return this._getMockSectionRoster(sectionId, new Date().toISOString().split('T')[0]);
+    }
+
+    try {
+      const { data, error } = await sb
+        .from('student_sections')
+        .select(`
+          section_id,
+          student:users!student_id (
+            id,
+            student_number,
+            first_name,
+            last_name,
+            email,
+            status,
+            rfid_cards ( card_uid, is_active )
+          )
+        `)
+        .eq('section_id', sectionId);
+
+      if (error) throw error;
+
+      return (data || [])
+        .map(row => row.student)
+        .filter(Boolean)
+        .map(st => ({
+          ...st,
+          card_uid: st.rfid_cards?.find(c => c.is_active)?.card_uid || 'No Card'
+        }))
+        .sort((a, b) => (a.last_name || '').localeCompare(b.last_name || ''));
+    } catch (err) {
+      console.warn('[AMS API] getSectionRoster fallback:', err);
+      return this._getMockSectionRoster(sectionId, new Date().toISOString().split('T')[0]);
+    }
+  },
+
+  /**
    * Enrolls a student into a section
    * @param {string} sectionId
    * @param {string} studentId
@@ -556,6 +825,8 @@ export const sectionsApi = {
   async enrollStudent(sectionId, studentId) {
     const sb = getSupabase();
     if (!sb) {
+      const sec = mockSections.find(s => s.id === sectionId);
+      if (sec) sec.active_student_count = (sec.active_student_count || 0) + 1;
       return { success: true, message: 'Enrolled in demo mode' };
     }
 
@@ -587,6 +858,8 @@ export const sectionsApi = {
   async unenrollStudent(sectionId, studentId) {
     const sb = getSupabase();
     if (!sb) {
+      const sec = mockSections.find(s => s.id === sectionId);
+      if (sec && sec.active_student_count > 0) sec.active_student_count--;
       return { success: true, message: 'Unenrolled in demo mode' };
     }
 
@@ -601,6 +874,39 @@ export const sectionsApi = {
       return true;
     } catch (err) {
       console.error('[AMS API] unenrollStudent error:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Bulk enrolls multiple students into a section
+   * @param {string} sectionId
+   * @param {string[]} studentIds
+   */
+  async bulkEnrollStudents(sectionId, studentIds) {
+    if (!studentIds || studentIds.length === 0) return { count: 0, success: true };
+    const sb = getSupabase();
+    if (!sb) {
+      const sec = mockSections.find(s => s.id === sectionId);
+      if (sec) sec.active_student_count = (sec.active_student_count || 0) + studentIds.length;
+      return { count: studentIds.length, success: true };
+    }
+
+    try {
+      const rows = studentIds.map(sid => ({
+        section_id: sectionId,
+        student_id: sid
+      }));
+
+      const { data, error } = await sb
+        .from('student_sections')
+        .upsert(rows, { onConflict: 'student_id,section_id' })
+        .select();
+
+      if (error) throw error;
+      return { count: data?.length || studentIds.length, success: true };
+    } catch (err) {
+      console.error('[AMS API] bulkEnrollStudents error:', err);
       throw err;
     }
   }

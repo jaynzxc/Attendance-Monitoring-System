@@ -273,7 +273,7 @@ function getMockTeacherRecords(date) {
       id: 'tlog-01',
       date: date,
       teacher: { id: 't0000000-0000-0000-0000-000000000001', first_name: 'Ricardo', last_name: 'Santos', employee_number: '2024-FAC-001', email: 'r.santos@bcp.edu.ph' },
-      section: { name: 'BSIT 3-1', subject: 'Advanced Web Systems' },
+      section: { name: '31001', subject: 'Advanced Web Systems' },
       schedule: '08:00 AM – 10:00 AM',
       time_in: `${date}T07:52:14.000Z`,
       time_out: `${date}T10:05:22.000Z`,
@@ -299,7 +299,7 @@ function getMockTeacherRecords(date) {
       id: 'tlog-03',
       date: date,
       teacher: { id: 't0000000-0000-0000-0000-000000000002', first_name: 'Maria', last_name: 'Corazon', employee_number: '2024-FAC-002', email: 'm.corazon@bcp.edu.ph' },
-      section: { name: 'BSCS 3-1', subject: 'Database Architecture' },
+      section: { name: '31002', subject: 'Database Architecture' },
       schedule: '02:00 PM – 04:00 PM',
       time_in: `${date}T13:48:30.000Z`,
       time_out: `${date}T16:05:12.000Z`,
@@ -894,11 +894,11 @@ function recordTeacherCardTap(teacher, cardUid = null) {
 
   // Academic schedule assignment
   const sampleSections = [
-    { name: 'BSIT 3-1', subject: 'Advanced Web Systems', schedule: '08:00 AM – 10:00 AM' },
-    { name: 'BSIT 2-2', subject: 'Systems Analysis & Design', schedule: '01:00 PM – 03:00 PM' },
-    { name: 'BSCS 3-1', subject: 'Database Architecture', schedule: '02:00 PM – 04:00 PM' },
-    { name: 'BSIS 1-1', subject: 'Intro to Computing', schedule: '08:00 AM – 10:00 AM' },
-    { name: 'BSEMC 2-1', subject: '2D Animation & Design', schedule: '03:00 PM – 05:00 PM' }
+    { name: '31001', subject: 'Advanced Web Systems', schedule: '08:00 AM – 10:00 AM' },
+    { name: '22001', subject: 'Systems Analysis & Design', schedule: '01:00 PM – 03:00 PM' },
+    { name: '31002', subject: 'Database Architecture', schedule: '02:00 PM – 04:00 PM' },
+    { name: '11001', subject: 'Intro to Computing', schedule: '08:00 AM – 10:00 AM' },
+    { name: '21001', subject: '2D Animation & Design', schedule: '03:00 PM – 05:00 PM' }
   ];
   const assigned = sampleSections[sessionTappedTeachers.length % sampleSections.length];
 

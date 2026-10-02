@@ -464,7 +464,7 @@ async function initStudentProfile() {
     student_number: '2024-IT-00101',
     role: 'student',
     section_id: '11111111-1111-1111-1111-111111111111',
-    section_name: 'BSIT 3-1'
+    section_name: '31001'
   };
 
   const nameEl = document.getElementById('studentHeaderName');
@@ -472,9 +472,10 @@ async function initStudentProfile() {
   const sumSec = document.getElementById('summarySection');
   const dateBadge = document.getElementById('todayDateBadge');
 
-  if (nameEl) nameEl.textContent = `${currentStudent.first_name || 'Student'} ${currentStudent.last_name || ''}`.trim();
-  if (secEl) secEl.textContent = `Student · ${currentStudent.section_name || 'BSIT 3-1'}`;
-  if (sumSec) sumSec.textContent = currentStudent.section_name || 'BSIT 3-1';
+  const rawSec = currentStudent.section_name || '31001';
+  const formattedSec = rawSec.includes(' - ') ? rawSec : `BSIT - ${rawSec}`;
+  if (secEl) secEl.textContent = `Student · ${formattedSec}`;
+  if (sumSec) sumSec.textContent = formattedSec;
   if (dateBadge) {
     const opts = { month: 'short', day: 'numeric', year: 'numeric' };
     dateBadge.textContent = new Date().toLocaleDateString('en-US', opts);

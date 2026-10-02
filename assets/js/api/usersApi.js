@@ -6,15 +6,139 @@
 
 import { getSupabase } from '../lib/supabaseClient.js';
 
+let mockUsers = [
+  {
+    id: 'a0000000-0000-0000-0000-000000000001',
+    role: 'admin',
+    first_name: 'Administrator',
+    last_name: 'Registrar',
+    email: 'admin@bestlink.edu.ph',
+    employee_number: 'EMP-2020-001',
+    status: 'active'
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000001',
+    role: 'teacher',
+    first_name: 'Ricardo',
+    last_name: 'Santos',
+    email: 'prof.santos@bestlink.edu.ph',
+    employee_number: 'EMP-2018-042',
+    status: 'active'
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000002',
+    role: 'teacher',
+    first_name: 'Carmen',
+    last_name: 'Reyes',
+    email: 'prof.reyes@bestlink.edu.ph',
+    employee_number: 'EMP-2019-088',
+    status: 'active'
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000001',
+    role: 'student',
+    first_name: 'Juan',
+    last_name: 'Dela Cruz',
+    student_number: '2024-IT-00101',
+    email: 'juan.delacruz@student.bestlink.edu.ph',
+    status: 'active',
+    sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
+    student_sections: [{ section_id: '11111111-1111-1111-1111-111111111111', sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' } }],
+    rfid_credentials: [{ card_uid: 'E2806894', is_active: true }]
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000002',
+    role: 'student',
+    first_name: 'Maria',
+    last_name: 'Clara',
+    student_number: '2024-IT-00102',
+    email: 'maria.clara@student.bestlink.edu.ph',
+    status: 'active',
+    sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
+    student_sections: [{ section_id: '11111111-1111-1111-1111-111111111111', sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' } }],
+    rfid_credentials: [{ card_uid: 'A1B2C3D4', is_active: true }]
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000003',
+    role: 'student',
+    first_name: 'Jose',
+    last_name: 'Rizal',
+    student_number: '2024-IT-00103',
+    email: 'jose.rizal@student.bestlink.edu.ph',
+    status: 'active',
+    sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
+    student_sections: [{ section_id: '11111111-1111-1111-1111-111111111111', sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' } }],
+    rfid_credentials: [{ card_uid: 'B2C3D4E5', is_active: true }]
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000004',
+    role: 'student',
+    first_name: 'Andres',
+    last_name: 'Bonifacio',
+    student_number: '2024-IT-00201',
+    email: 'andres.bonifacio@student.bestlink.edu.ph',
+    status: 'active',
+    sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' },
+    student_sections: [{ section_id: '22222222-2222-2222-2222-222222222222', sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' } }],
+    rfid_credentials: [{ card_uid: 'C3D4E5F6', is_active: true }]
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000005',
+    role: 'student',
+    first_name: 'Gabriela',
+    last_name: 'Silang',
+    student_number: '2024-IT-00202',
+    email: 'gabriela.silang@student.bestlink.edu.ph',
+    status: 'active',
+    sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' },
+    student_sections: [{ section_id: '22222222-2222-2222-2222-222222222222', sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' } }],
+    rfid_credentials: [{ card_uid: 'D4E5F6A7', is_active: true }]
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000006',
+    role: 'student',
+    first_name: 'Emilio',
+    last_name: 'Aguinaldo',
+    student_number: '2025-IS-00012',
+    email: 'emilio.aguinaldo@student.bestlink.edu.ph',
+    status: 'active',
+    sections: { id: '33333333-3333-3333-3333-333333333333', name: '21001' },
+    student_sections: [{ section_id: '33333333-3333-3333-3333-333333333333', sections: { id: '33333333-3333-3333-3333-333333333333', name: '21001' } }],
+    rfid_credentials: [{ card_uid: 'E5F6A7B8', is_active: true }]
+  }
+];
+
 export const usersApi = {
   /**
    * Fetches paginated users with optional role, section, and search filtering
    */
   async getUsers({ role = null, sectionId = null, search = '', status = 'active', page = 0, pageSize = 20 } = {}) {
     const sb = getSupabase();
-    if (!sb) return { data: [], count: 0 };
+    if (!sb) {
+      let filtered = [...mockUsers];
+      if (role) filtered = filtered.filter(u => u.role === role);
+      if (status) filtered = filtered.filter(u => u.status === status);
+      if (sectionId) {
+        filtered = filtered.filter(u => u.student_sections?.some(ss => ss.sections?.id === sectionId || ss.section_id === sectionId));
+      }
+      if (search) {
+        const q = search.toLowerCase();
+        filtered = filtered.filter(u => 
+          (u.first_name || '').toLowerCase().includes(q) ||
+          (u.last_name || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q) ||
+          (u.student_number || '').toLowerCase().includes(q) ||
+          (u.employee_number || '').toLowerCase().includes(q)
+        );
+      }
+      return { data: filtered.slice(page * pageSize, (page + 1) * pageSize), count: filtered.length };
+    }
 
     try {
+      const studentSectionsSelect = sectionId 
+        ? 'student_sections!inner ( section_id, sections ( id, name, grade_level ) )'
+        : 'student_sections ( sections ( id, name, grade_level ) )';
+
       let query = sb
         .from('users')
         .select(`
@@ -29,7 +153,7 @@ export const usersApi = {
           created_at,
           rfid_cards ( id, card_uid, is_active ),
           parent_contacts ( id, full_name, relationship, mobile_number ),
-          student_sections ( sections ( id, name, grade_level ) ),
+          ${studentSectionsSelect},
           teacher_sections ( sections ( id, name ), subject )
         `, { count: 'exact' });
 
@@ -38,6 +162,9 @@ export const usersApi = {
       }
       if (status) {
         query = query.eq('status', status);
+      }
+      if (sectionId) {
+        query = query.eq('student_sections.section_id', sectionId);
       }
       if (search) {
         query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,student_number.ilike.%${search}%,employee_number.ilike.%${search}%,email.ilike.%${search}%`);

@@ -146,7 +146,7 @@ export const attendanceApi = {
         status: 'present',
         scan_method: 'rfid',
         student: { id: 'c0000000-0000-0000-0000-000000000001', first_name: 'Juan', last_name: 'Dela Cruz', student_number: '2024-IT-00101', role: 'student' },
-        sections: { id: '11111111-1111-1111-1111-111111111111', name: 'BSIT 3-1' },
+        sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
         scan_devices: { id: '70000000-0000-0000-0000-000000000001', device_code: 'GATE-01-ESP32', location: 'Main Gate Turnstile A' }
       },
       {
@@ -156,7 +156,7 @@ export const attendanceApi = {
         status: 'present',
         scan_method: 'qr',
         student: { id: 'c0000000-0000-0000-0000-000000000004', first_name: 'Andres', last_name: 'Bonifacio', student_number: '2024-IT-00201', role: 'student' },
-        sections: { id: '22222222-2222-2222-2222-222222222222', name: 'BSIT 3-2' },
+        sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' },
         scan_devices: { id: '70000000-0000-0000-0000-000000000002', device_code: 'GATE-02-ESP32', location: 'East Annex Gate Turnstile B' }
       },
       {
@@ -166,7 +166,7 @@ export const attendanceApi = {
         status: 'late',
         scan_method: 'rfid',
         student: { id: 'c0000000-0000-0000-0000-000000000002', first_name: 'Maria', last_name: 'Clara', student_number: '2024-IT-00102', role: 'student' },
-        sections: { id: '11111111-1111-1111-1111-111111111111', name: 'BSIT 3-1' },
+        sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
         scan_devices: { id: '70000000-0000-0000-0000-000000000001', device_code: 'GATE-01-ESP32', location: 'Main Gate Turnstile A' }
       }
     ];
@@ -1034,7 +1034,7 @@ export const attendanceApi = {
       teacher_lat: teacherLat,
       teacher_lng: teacherLng,
       geo_radius_meters: 50,
-      sections: sectionId ? { id: sectionId, name: 'BSIT 3-1', grade_level: '3rd Year' } : null,
+      sections: sectionId ? { id: sectionId, name: '31001', grade_level: '3rd Year' } : null,
       scan_devices: deviceId ? { id: deviceId, device_code: 'GATE-01-ESP32', location: 'Main Gate Turnstile A' } : null
     };
 

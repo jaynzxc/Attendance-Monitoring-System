@@ -12,7 +12,7 @@ import { showToast } from '../../components/toast.js';
 import { renderNumberedPagination } from '../../components/pagination.js';
 
 let currentStudent = null;
-let studentSectionId = '11111111-1111-1111-1111-111111111111'; // Default BSIT 3-1
+let studentSectionId = '11111111-1111-1111-1111-111111111111'; // Default Section 31001
 let allSlips = [];
 let currentPage = 0;
 const pageSize = 15;
