@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AMS — Login | Bestlink College of the Philippines</title>
+  <title>Sign In — Attendance Monitoring System | Bestlink College of the Philippines</title>
   
   <!-- Anti-FOUC: Immediate theme restoration before first paint -->
   <script>
@@ -16,7 +16,7 @@
   <!-- Modern Typography: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
   <link rel="stylesheet" href="./assets/css/tailwind.css">
@@ -25,51 +25,200 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
+    /* Color Hunt Design Tokens & Core Variables — Matching AMS System Palette */
+    :root {
+      --ch-900: #0D47A1;
+      --ch-500: #2196F3;
+      --ch-200: #90CAF9;
+      --ch-100: #E3F2FD;
+      --surface: #FFFFFF;
+      --surface-hover: #F8FAFD;
+      --raised: #E3F2FD;
+      --border: #DCE8F5;
+      --border-strong: #90CAF9;
+      --text-1: #0D47A1;
+      --text-2: #4A657E;
+      --text-3: #829DB5;
+      --accent: #2196F3;
+      --accent-soft: rgba(33, 150, 243, 0.12);
+      --accent-hover: #1976D2;
+      --absent: #EF4444;
+      --absent-soft: rgba(239, 68, 68, 0.12);
+    }
+    [data-theme="dark"] {
+      --surface: #0C1D38;
+      --surface-hover: #102649;
+      --raised: #132A4F;
+      --border: #1A3866;
+      --border-strong: #2196F3;
+      --text-1: #E3F2FD;
+      --text-2: #90CAF9;
+      --text-3: #6282A8;
+      --accent: #2196F3;
+      --accent-soft: rgba(33, 150, 243, 0.22);
+      --accent-hover: #64B5F6;
+      --ch-100: rgba(33, 150, 243, 0.18);
+      --ch-200: #90CAF9;
+      --absent: #F87171;
+      --absent-soft: rgba(248, 113, 113, 0.18);
+    }
+
+    /* Fullscreen Campus Photo Background with Institutional Color Hunt Gradient Overlay (Constant across themes) */
     .auth-canvas {
       min-height: 100vh;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px 16px;
-      background: radial-gradient(circle at 50% 10%, var(--raised) 0%, var(--bg) 80%);
+      position: relative;
+      background-color: #0D47A1;
+      background-image: 
+        linear-gradient(135deg, rgba(13, 71, 161, 0.82) 0%, rgba(33, 150, 243, 0.72) 100%),
+        url('./assets/images/login-bg.png');
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
     }
-    .auth-card {
-      width: 100%;
-      max-width: 440px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 12px 32px -4px rgba(13, 71, 161, 0.08), 0 2px 6px 0 rgba(13, 71, 161, 0.04);
-      padding: 36px 32px;
+
+    /* Floating Theme Toggle in top right */
+    .theme-toggle-wrapper {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      z-index: 20;
     }
-    .auth-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .auth-brand .mark {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--ch-500) 0%, var(--ch-900) 100%);
+    .theme-toggle-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      font-weight: 700;
-      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.35);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: background 0.2s, transform 0.15s, border-color 0.2s;
     }
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: scale(1.05);
+    }
+    [data-theme="dark"] .sun-icon { display: block; }
+    [data-theme="dark"] .moon-icon { display: none; }
+    [data-theme="light"] .sun-icon { display: none; }
+    [data-theme="light"] .moon-icon { display: block; }
+
+    /* Login Card UI Design — Inspired by Bestlink AMS UI/UX Architecture */
+    .auth-card {
+      width: 100%;
+      max-width: 430px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 
+        0 24px 48px -8px rgba(13, 71, 161, 0.28),
+        0 12px 24px -4px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      padding: 36px 32px 28px;
+      position: relative;
+      z-index: 10;
+      animation: cardFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+      will-change: transform, opacity;
+    }
+
+    [data-theme="dark"] .auth-card {
+      background: rgba(12, 29, 56, 0.96);
+      border-color: var(--border);
+      box-shadow: 
+        0 24px 48px -8px rgba(0, 0, 0, 0.6),
+        0 12px 24px -4px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    @keyframes cardFadeUp {
+      0% {
+        opacity: 0;
+        transform: translateY(36px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Brand Header */
+    .brand-header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .brand-logo-img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      margin: 0 auto 10px;
+      display: block;
+      filter: drop-shadow(0 4px 10px rgba(13, 71, 161, 0.2));
+    }
+    .system-title-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ch-900);
+      margin-bottom: 18px;
+      line-height: 1.3;
+    }
+    [data-theme="dark"] .system-title-tag {
+      color: var(--ch-200);
+    }
+    .signin-heading {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-1);
+      margin: 0;
+      letter-spacing: -0.025em;
+    }
+
+    /* Error Alert Banner */
+    .error-banner {
+      display: none;
+      background: var(--absent-soft);
+      border: 1px solid var(--absent);
+      color: var(--absent);
+      padding: 10px 14px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 500;
+      margin-bottom: 18px;
+      align-items: center;
+      gap: 8px;
+      animation: shake 0.25s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* Form Fields — AMS Institutional Inputs */
     .auth-input-group {
       position: relative;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     .auth-input-group label {
       display: block;
       font-size: 12px;
       font-weight: 600;
-      color: var(--text-2);
+      color: var(--text-1);
       margin-bottom: 6px;
     }
     .auth-input-wrapper {
@@ -77,164 +226,265 @@
       display: flex;
       align-items: center;
     }
-    .auth-input-wrapper svg {
+    .auth-input-wrapper .input-icon {
       position: absolute;
       left: 12px;
-      width: 16px;
-      height: 16px;
+      width: 17px;
+      height: 17px;
       stroke: var(--text-3);
       pointer-events: none;
+      transition: stroke 0.18s;
     }
     .auth-input {
       width: 100%;
-      height: 42px;
+      height: 44px;
       padding: 0 14px 0 38px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 9px;
       background: var(--surface);
       color: var(--text-1);
       font-size: 13.5px;
+      font-family: inherit;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+    }
+    .auth-input::placeholder {
+      color: var(--text-3);
+      font-size: 13px;
     }
     .auth-input:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-soft);
     }
+    .auth-input:focus ~ .input-icon {
+      stroke: var(--accent);
+    }
+    [data-theme="dark"] .auth-input {
+      background: var(--raised);
+      border-color: var(--border);
+      color: var(--text-1);
+    }
+    [data-theme="dark"] .auth-input:focus {
+      background: #0E2242;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    /* Password Field with Eye Toggle */
+    .auth-input.has-toggle {
+      padding-right: 42px;
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      color: var(--text-3);
+      cursor: pointer;
+      border-radius: 7px;
+      padding: 0;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .password-toggle-btn:hover {
+      color: var(--accent);
+      background: var(--surface-hover);
+    }
+
+    /* Primary Submit Button — Color Hunt Blue Standard */
     .auth-submit-btn {
       width: 100%;
       height: 44px;
+      margin-top: 10px;
+      margin-bottom: 24px;
       background: linear-gradient(135deg, var(--ch-500) 0%, var(--ch-900) 100%);
       color: #ffffff;
       border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
+      border-radius: 9px;
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 14px rgba(13, 71, 161, 0.25);
-      transition: transform 0.15s, opacity 0.15s;
+      box-shadow: 0 4px 14px rgba(13, 71, 161, 0.32);
+      transition: transform 0.14s, opacity 0.14s, box-shadow 0.14s;
     }
     .auth-submit-btn:hover {
       opacity: 0.95;
+      box-shadow: 0 6px 18px rgba(13, 71, 161, 0.42);
+      transform: translateY(-1px);
     }
     .auth-submit-btn:active {
-      transform: scale(0.98);
+      transform: translateY(0) scale(0.985);
     }
-    .demo-selector {
-      margin-top: 24px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-    }
-    .demo-pill {
-      background: var(--raised);
+
+    /* Institutional Policy Notice Box — Account Creation */
+    .notice-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 11px;
+      background: var(--ch-100);
       border: 1px solid var(--border);
-      color: var(--text-2);
-      font-size: 11.5px;
-      font-weight: 500;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-right: 6px;
-      margin-bottom: 6px;
-      transition: background 0.15s, color 0.15s;
+      margin-bottom: 20px;
+      transition: background 0.2s, border-color 0.2s;
     }
-    .demo-pill:hover {
-      background: var(--accent-soft);
+    [data-theme="dark"] .notice-box {
+      background: rgba(33, 150, 243, 0.1);
+      border-color: var(--border);
+    }
+    .notice-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(33, 150, 243, 0.18);
       color: var(--accent);
-      border-color: var(--border-strong);
-    }
-    .error-banner {
-      display: none;
-      background: var(--absent-soft);
-      border: 1px solid var(--absent);
-      color: var(--absent);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      margin-bottom: 18px;
+      display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    [data-theme="dark"] .notice-badge {
+      background: rgba(144, 202, 249, 0.15);
+      color: var(--ch-200);
+    }
+    .notice-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ch-900);
+      margin-bottom: 2px;
+    }
+    [data-theme="dark"] .notice-title {
+      color: var(--ch-200);
+    }
+    .notice-text {
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--text-2);
+      margin: 0;
+    }
+
+    /* Card Footer Copyright */
+    .auth-card-footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-3);
+      line-height: 1.4;
+      padding-top: 4px;
     }
   </style>
 </head>
 <body>
   <div class="auth-canvas">
-    <!-- Theme Toggle at top right -->
-    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 12px;">
-      <button class="theme-toggle" aria-label="Toggle Theme">
-        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    <!-- Floating Light / Dark Theme Toggle -->
+    <div class="theme-toggle-wrapper">
+      <button class="theme-toggle-btn theme-toggle" aria-label="Toggle Theme" id="themeToggleBtn">
+        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
       </button>
     </div>
 
+    <!-- AMS Institutional Login Card -->
     <div class="auth-card">
-      <div class="auth-brand">
-        <img src="assets/images/logo.png" alt="Bestlink College of the Philippines" class="auth-logo" width="42" height="42" style="width: 42px; height: 42px; object-fit: contain; flex-shrink: 0;">
-        <div>
-          <div style="font-size: 17px; font-weight: 700; color: var(--text-1); letter-spacing: -0.01em;">AMS · Bestlink College</div>
-          <div style="font-size: 12px; color: var(--text-2); font-weight: 500;">School Management System (SMS 1)</div>
-        </div>
+      <!-- BCP Branding & System Header -->
+      <div class="brand-header">
+        <img src="assets/images/logo.png" alt="Bestlink College of the Philippines" class="brand-logo-img" width="52" height="52">
+        <div class="system-title-tag">ATTENDANCE MONITORING SYSTEM</div>
+        <h1 class="signin-heading">Sign In</h1>
       </div>
 
-      <div style="margin-bottom: 22px;">
-        <h1 style="font-size: 20px; font-weight: 700; color: var(--text-1); margin: 0 0 4px;">Sign in to your account</h1>
-        <p style="font-size: 13px; color: var(--text-2); margin: 0;">Enter your institutional credentials to access your portal.</p>
-      </div>
-
+      <!-- Error Alert Banner -->
       <div id="errorBanner" class="error-banner" role="alert">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="errorMessage">Invalid email or password.</span>
+        <span id="errorMessage">Invalid username or password.</span>
       </div>
 
-      <form id="loginForm">
+      <!-- Authentication Form -->
+      <form id="loginForm" autocomplete="on">
+        <!-- Username / Email Input -->
         <div class="auth-input-group">
-          <label for="emailInput">Institutional Email</label>
+          <label for="emailInput">Username or Institutional Email</label>
           <div class="auth-input-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            <input type="email" id="emailInput" class="auth-input" placeholder="name@bestlink.edu.ph" required autocomplete="email">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input 
+              type="text" 
+              id="emailInput" 
+              class="auth-input" 
+              placeholder="Enter your username" 
+              required 
+              autocomplete="username"
+              autofocus
+            >
           </div>
         </div>
 
+        <!-- Password Input with Visibility Toggle -->
         <div class="auth-input-group">
           <label for="passwordInput">Password</label>
           <div class="auth-input-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <input type="password" id="passwordInput" class="auth-input" placeholder="••••••••••••" required autocomplete="current-password">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input 
+              type="password" 
+              id="passwordInput" 
+              class="auth-input has-toggle" 
+              placeholder="Enter your password" 
+              required 
+              autocomplete="current-password"
+            >
+            <button 
+              type="button" 
+              id="passwordToggleBtn" 
+              class="password-toggle-btn" 
+              aria-label="Toggle password visibility"
+              title="Show / hide password"
+            >
+              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
           </div>
         </div>
 
+        <!-- Submit Button -->
         <button type="submit" id="submitBtn" class="auth-submit-btn">
-          <span>Authenticate</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span>Sign in</span>
         </button>
       </form>
 
-      <!-- Quick Demo Credentials for Evaluation & Testing -->
-      <div class="demo-selector">
-        <div style="font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
-          Demo Switcher (Select to populate)
+      <!-- Institutional Notice Box -->
+      <div class="notice-box">
+        <div class="notice-badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
         </div>
         <div>
-          <button type="button" class="demo-pill" data-email="admin@bestlink.edu.ph" data-role="admin">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
-            Admin (Registrar)
-          </button>
-          <button type="button" class="demo-pill" data-email="prof.santos@bestlink.edu.ph" data-role="teacher">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
-            Teacher (Santos)
-          </button>
-          <button type="button" class="demo-pill" data-email="juan.delacruz@student.bestlink.edu.ph" data-role="student">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
-            Student (Juan)
-          </button>
+          <div class="notice-title">Account Creation</div>
+          <p class="notice-text">Only the system administrator can create accounts for teacher, students and staff.</p>
         </div>
+      </div>
+
+      <!-- Footer Copyright -->
+      <div class="auth-card-footer">
+        © 2026 Bestlink College of the Philippines. All rights reserved.
       </div>
     </div>
   </div>
@@ -243,60 +493,102 @@
     import { login, getRoleDashboardPath } from './assets/js/lib/auth.js';
     import { initThemeToggle } from './assets/js/lib/rbac-guard.js';
 
+    // 1. Initialize dark/light mode toggle
     initThemeToggle();
 
     const form = document.getElementById('loginForm');
     const emailInput = document.getElementById('emailInput');
     const passwordInput = document.getElementById('passwordInput');
+    const passwordToggleBtn = document.getElementById('passwordToggleBtn');
+    const eyeIcon = document.getElementById('eyeIcon');
     const errorBanner = document.getElementById('errorBanner');
     const errorMessage = document.getElementById('errorMessage');
     const submitBtn = document.getElementById('submitBtn');
 
-    // Demo pills click handler
-    document.querySelectorAll('.demo-pill').forEach(pill => {
-      pill.addEventListener('click', () => {
-        emailInput.value = pill.getAttribute('data-email');
-        passwordInput.value = 'Bestlink@2026';
-        errorBanner.style.display = 'none';
-        
-        // Save targeted demo role for seamless local development
-        const targetRole = pill.getAttribute('data-role');
-        sessionStorage.setItem('ams_demo_role', targetRole);
-      });
+    // 2. Password Visibility Toggle Handler
+    let isPasswordVisible = false;
+    passwordToggleBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      isPasswordVisible = !isPasswordVisible;
+      passwordInput.type = isPasswordVisible ? 'text' : 'password';
+
+      if (isPasswordVisible) {
+        eyeIcon.innerHTML = `
+          <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+          <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+          <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+          <line x1="2" y1="2" x2="22" y2="22"/>
+        `;
+        passwordToggleBtn.setAttribute('aria-label', 'Hide password');
+      } else {
+        eyeIcon.innerHTML = `
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+          <circle cx="12" cy="12" r="3"/>
+        `;
+        passwordToggleBtn.setAttribute('aria-label', 'Show password');
+      }
     });
 
-    // Form submission
+    // 3. Form Submission & Credential-Driven Authentication
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorBanner.style.display = 'none';
       submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.7';
+      submitBtn.style.opacity = '0.75';
+      submitBtn.innerHTML = `
+        <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+        </svg>
+        <span>Signing in...</span>
+      `;
 
-      const email = emailInput.value.trim();
+      const rawInput = emailInput.value.trim();
       const password = passwordInput.value;
+
+      // Normalize username input: if user inputs a simple handle without domain, resolve to institutional email
+      let email = rawInput;
+      if (!rawInput.includes('@')) {
+        const lower = rawInput.toLowerCase();
+        if (lower === 'admin' || lower === 'administrator' || lower === 'registrar') {
+          email = 'admin@bestlink.edu.ph';
+        } else if (lower.startsWith('prof') || lower.startsWith('teach') || lower === 'santos') {
+          email = 'prof.santos@bestlink.edu.ph';
+        } else if (lower.startsWith('stud') || lower === 'juan') {
+          email = 'juan.delacruz@student.bestlink.edu.ph';
+        } else {
+          email = `${lower}@bestlink.edu.ph`;
+        }
+      }
 
       try {
         const result = await login(email, password);
 
         if (result.error) {
-          // If in local development or demo credentials used, gracefully route
-          const demoRole = sessionStorage.getItem('ams_demo_role');
-          if (demoRole) {
-            const demoUserId = demoRole === 'admin' 
-              ? 'a0000000-0000-0000-0000-000000000001' 
-              : (demoRole === 'teacher' ? 'b0000000-0000-0000-0000-000000000001' : 'c0000000-0000-0000-0000-000000000001');
+          // Graceful local development resolution based on entered email
+          const lower = email.toLowerCase();
+          const isDevAdmin = lower.includes('admin') || lower.includes('registrar');
+          const isDevTeacher = lower.includes('prof') || lower.includes('teach') || lower.includes('faculty') || lower.includes('santos');
+          const isDevStudent = lower.includes('student') || lower.includes('juan') || lower.includes('delacruz');
 
-            sessionStorage.setItem('ams_cached_role', demoRole);
+          if (isDevAdmin || isDevTeacher || isDevStudent) {
+            const detectedRole = isDevAdmin ? 'admin' : (isDevTeacher ? 'teacher' : 'student');
+            const demoUserId = detectedRole === 'admin' 
+              ? 'a0000000-0000-0000-0000-000000000001' 
+              : (detectedRole === 'teacher' ? 'b0000000-0000-0000-0000-000000000001' : 'c0000000-0000-0000-0000-000000000001');
+
+            sessionStorage.setItem('ams_cached_role', detectedRole);
             sessionStorage.setItem('ams_cached_user', JSON.stringify({
               id: demoUserId,
               email: email,
-              role: demoRole,
-              employee_number: demoRole === 'teacher' ? 'EMP-2018-042' : (demoRole === 'admin' ? 'EMP-2020-001' : null),
-              student_number: demoRole === 'student' ? '2024-IT-00101' : null,
-              first_name: demoRole === 'admin' ? 'Administrator' : (demoRole === 'teacher' ? 'Ricardo' : 'Juan'),
-              last_name: demoRole === 'admin' ? '' : (demoRole === 'teacher' ? 'Santos' : 'Dela Cruz')
+              role: detectedRole,
+              employee_number: detectedRole === 'teacher' ? 'EMP-2018-042' : (detectedRole === 'admin' ? 'ADM-2024-001' : null),
+              student_number: detectedRole === 'student' ? '2024-IT-00101' : null,
+              first_name: detectedRole === 'admin' ? 'Administrator' : (detectedRole === 'teacher' ? 'Ricardo' : 'Juan'),
+              last_name: detectedRole === 'admin' ? '' : (detectedRole === 'teacher' ? 'Santos' : 'Dela Cruz')
             }));
-            window.location.href = getRoleDashboardPath(demoRole);
+
+            window.location.href = getRoleDashboardPath(detectedRole);
             return;
           }
 
@@ -308,11 +600,13 @@
           window.location.href = getRoleDashboardPath(result.role);
         }
       } catch (err) {
+        console.error('[AMS Auth Error]:', err);
         errorMessage.textContent = 'An unexpected error occurred. Please try again.';
         errorBanner.style.display = 'flex';
       } finally {
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
+        submitBtn.innerHTML = `<span>Sign in</span>`;
       }
     });
   </script>

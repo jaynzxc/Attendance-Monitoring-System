@@ -10,7 +10,38 @@ insert into sections (id, name, grade_level, school_year) values
   ('33333333-3333-3333-3333-333333333333', 'BSIS 2-1', '2nd Year', '2026-2027')
 on conflict (id) do nothing;
 
--- 2. USERS
+-- 2. AUTH USERS (Supabase Auth - Default Password: Bestlink@2026)
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  recovery_sent_at,
+  last_sign_in_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
+) values
+  ('00000000-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'admin@bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"admin"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'prof.santos@bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"teacher"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'prof.reyes@bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"teacher"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'c0000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'juan.delacruz@student.bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"student"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'c0000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'maria.clara@student.bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"student"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'c0000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'jose.rizal@student.bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"student"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'c0000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'andres.bonifacio@student.bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"student"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'c0000000-0000-0000-0000-000000000005', 'authenticated', 'authenticated', 'gabriela.silang@student.bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"student"}', now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', 'c0000000-0000-0000-0000-000000000006', 'authenticated', 'authenticated', 'emilio.aguinaldo@student.bestlink.edu.ph', crypt('Bestlink@2026', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"student"}', now(), now(), '', '', '', '')
+on conflict (id) do nothing;
+
+-- 3. USERS (Public Profiles & Roles)
 -- Fixed UUIDs for consistent development testing
 insert into users (id, role, first_name, last_name, email, student_number, employee_number, status) values
   -- Admin
