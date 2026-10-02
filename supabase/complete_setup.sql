@@ -138,6 +138,16 @@ create table if not exists public.attendance_logs (
   created_at timestamptz not null default now()
 );
 
+-- Defensive migration: Ensure session_id and override columns exist if attendance_logs pre-existed
+alter table public.attendance_logs
+  add column if not exists session_id uuid references public.attendance_sessions(id) on delete set null,
+  add column if not exists is_voided boolean not null default false,
+  add column if not exists voided_by uuid references public.users(id) on delete set null,
+  add column if not exists voided_at timestamptz,
+  add column if not exists is_manual boolean not null default false,
+  add column if not exists student_lat float8,
+  add column if not exists student_lng float8;
+
 -- 10. ATTENDANCE SUMMARY
 create table if not exists public.attendance_summary (
   id uuid primary key default gen_random_uuid(),
@@ -152,6 +162,13 @@ create table if not exists public.attendance_summary (
   created_at timestamptz not null default now(),
   unique (user_id, summary_date)
 );
+
+-- Defensive migration: Ensure paired Time-In/Time-Out columns exist if attendance_summary pre-existed
+alter table public.attendance_summary
+  add column if not exists time_in timestamptz,
+  add column if not exists time_out timestamptz,
+  add column if not exists scan_method text default 'rfid',
+  add column if not exists device_id uuid references public.scan_devices(id) on delete set null;
 
 -- 11. HOLIDAYS
 create table if not exists public.holidays (
@@ -295,6 +312,7 @@ as $$
 $$;
 
 -- Users policies
+drop policy if exists "users_select_policy" on public.users;
 create policy "users_select_policy" on public.users
 for select using (
   auth.uid() = id or
@@ -309,13 +327,16 @@ for select using (
   )
 );
 
+drop policy if exists "users_admin_write_policy" on public.users;
 create policy "users_admin_write_policy" on public.users
 for all using (auth_role() = 'admin');
 
 -- Parent contacts policies
+drop policy if exists "parent_contacts_student_read" on public.parent_contacts;
 create policy "parent_contacts_student_read" on public.parent_contacts
 for select using (student_id = auth.uid());
 
+drop policy if exists "parent_contacts_teacher_read" on public.parent_contacts;
 create policy "parent_contacts_teacher_read" on public.parent_contacts
 for select using (
   auth_role() = 'teacher' and
@@ -326,17 +347,21 @@ for select using (
   )
 );
 
+drop policy if exists "parent_contacts_admin_all" on public.parent_contacts;
 create policy "parent_contacts_admin_all" on public.parent_contacts
 for all using (auth_role() = 'admin');
 
 -- Sections policies
+drop policy if exists "sections_read_all_authenticated" on public.sections;
 create policy "sections_read_all_authenticated" on public.sections
 for select using (auth.role() = 'authenticated');
 
+drop policy if exists "sections_admin_all" on public.sections;
 create policy "sections_admin_all" on public.sections
 for all using (auth_role() = 'admin');
 
 -- Student sections policies
+drop policy if exists "student_sections_read_policy" on public.student_sections;
 create policy "student_sections_read_policy" on public.student_sections
 for select using (
   student_id = auth.uid() or
@@ -346,23 +371,28 @@ for select using (
   )
 );
 
+drop policy if exists "student_sections_admin_all" on public.student_sections;
 create policy "student_sections_admin_all" on public.student_sections
 for all using (auth_role() = 'admin');
 
 -- Teacher sections policies
+drop policy if exists "teacher_sections_read_policy" on public.teacher_sections;
 create policy "teacher_sections_read_policy" on public.teacher_sections
 for select using (
   teacher_id = auth.uid() or
   auth_role() = 'admin'
 );
 
+drop policy if exists "teacher_sections_admin_all" on public.teacher_sections;
 create policy "teacher_sections_admin_all" on public.teacher_sections
 for all using (auth_role() = 'admin');
 
 -- Attendance logs policies
+drop policy if exists "attendance_logs_student_read" on public.attendance_logs;
 create policy "attendance_logs_student_read" on public.attendance_logs
 for select using (student_id = auth.uid());
 
+drop policy if exists "attendance_logs_teacher_read" on public.attendance_logs;
 create policy "attendance_logs_teacher_read" on public.attendance_logs
 for select using (
   teacher_id = auth.uid() or
@@ -371,10 +401,12 @@ for select using (
   )
 );
 
+drop policy if exists "attendance_logs_admin_all" on public.attendance_logs;
 create policy "attendance_logs_admin_all" on public.attendance_logs
 for all using (auth_role() = 'admin');
 
 -- Attendance sessions policies
+drop policy if exists "sessions_select_policy" on public.attendance_sessions;
 create policy "sessions_select_policy" on public.attendance_sessions
   for select using (
     auth_role() = 'admin' or
@@ -391,6 +423,7 @@ create policy "sessions_select_policy" on public.attendance_sessions
     )
   );
 
+drop policy if exists "sessions_insert_policy" on public.attendance_sessions;
 create policy "sessions_insert_policy" on public.attendance_sessions
   for insert with check (
     auth_role() = 'admin' or
@@ -401,6 +434,7 @@ create policy "sessions_insert_policy" on public.attendance_sessions
     )
   );
 
+drop policy if exists "sessions_update_policy" on public.attendance_sessions;
 create policy "sessions_update_policy" on public.attendance_sessions
   for update using (
     auth_role() = 'admin' or
@@ -411,13 +445,16 @@ create policy "sessions_update_policy" on public.attendance_sessions
     (auth_role() = 'teacher' and created_by = auth.uid())
   );
 
+drop policy if exists "sessions_delete_admin" on public.attendance_sessions;
 create policy "sessions_delete_admin" on public.attendance_sessions
   for delete using (auth_role() = 'admin');
 
 -- Attendance summary policies
+drop policy if exists "attendance_summary_student_read" on public.attendance_summary;
 create policy "attendance_summary_student_read" on public.attendance_summary
 for select using (user_id = auth.uid());
 
+drop policy if exists "attendance_summary_teacher_read" on public.attendance_summary;
 create policy "attendance_summary_teacher_read" on public.attendance_summary
 for select using (
   user_id = auth.uid() or
@@ -428,27 +465,34 @@ for select using (
   )
 );
 
+drop policy if exists "attendance_summary_admin_all" on public.attendance_summary;
 create policy "attendance_summary_admin_all" on public.attendance_summary
 for all using (auth_role() = 'admin');
 
 -- Academic schedules policies
+drop policy if exists "academic_schedules_read_all" on public.academic_schedules;
 create policy "academic_schedules_read_all" on public.academic_schedules
 for select using (auth.role() = 'authenticated');
 
+drop policy if exists "academic_schedules_admin_all" on public.academic_schedules;
 create policy "academic_schedules_admin_all" on public.academic_schedules
 for all using (auth_role() = 'admin');
 
 -- Holidays policies
+drop policy if exists "holidays_read_all" on public.holidays;
 create policy "holidays_read_all" on public.holidays
 for select using (auth.role() = 'authenticated');
 
+drop policy if exists "holidays_admin_all" on public.holidays;
 create policy "holidays_admin_all" on public.holidays
 for all using (auth_role() = 'admin');
 
 -- Excuse slips policies
+drop policy if exists "excuse_slips_student_policy" on public.excuse_slips;
 create policy "excuse_slips_student_policy" on public.excuse_slips
 for all using (student_id = auth.uid());
 
+drop policy if exists "excuse_slips_teacher_policy" on public.excuse_slips;
 create policy "excuse_slips_teacher_policy" on public.excuse_slips
 for all using (
   auth_role() = 'teacher' and section_id in (
@@ -456,37 +500,48 @@ for all using (
   )
 );
 
+drop policy if exists "excuse_slips_admin_all" on public.excuse_slips;
 create policy "excuse_slips_admin_all" on public.excuse_slips
 for all using (auth_role() = 'admin');
 
 -- Scan devices, Alerts, Awards, Settings, Audit policies
+drop policy if exists "scan_devices_admin_all" on public.scan_devices;
 create policy "scan_devices_admin_all" on public.scan_devices
 for all using (auth_role() = 'admin');
 
+drop policy if exists "alerts_log_student_read" on public.alerts_log;
 create policy "alerts_log_student_read" on public.alerts_log
 for select using (student_id = auth.uid());
 
+drop policy if exists "alerts_log_admin_all" on public.alerts_log;
 create policy "alerts_log_admin_all" on public.alerts_log
 for all using (auth_role() = 'admin');
 
+drop policy if exists "award_periods_read_all" on public.award_periods;
 create policy "award_periods_read_all" on public.award_periods
 for select using (auth.role() = 'authenticated');
 
+drop policy if exists "award_periods_admin_all" on public.award_periods;
 create policy "award_periods_admin_all" on public.award_periods
 for all using (auth_role() = 'admin');
 
+drop policy if exists "award_qualifications_read_policy" on public.award_qualifications;
 create policy "award_qualifications_read_policy" on public.award_qualifications
 for select using (student_id = auth.uid() or auth_role() in ('admin', 'teacher'));
 
+drop policy if exists "award_qualifications_admin_all" on public.award_qualifications;
 create policy "award_qualifications_admin_all" on public.award_qualifications
 for all using (auth_role() = 'admin');
 
+drop policy if exists "system_settings_read_all" on public.system_settings;
 create policy "system_settings_read_all" on public.system_settings
 for select using (auth.role() = 'authenticated');
 
+drop policy if exists "system_settings_admin_all" on public.system_settings;
 create policy "system_settings_admin_all" on public.system_settings
 for all using (auth_role() = 'admin');
 
+drop policy if exists "audit_log_admin_read" on public.audit_log;
 create policy "audit_log_admin_read" on public.audit_log
 for select using (auth_role() = 'admin');
 
