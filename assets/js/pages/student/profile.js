@@ -3,8 +3,9 @@
  * Bestlink College of the Philippines - Attendance Monitoring System (AMS)
  * 
  * Enforces security boundaries:
- * - Admin-provided fields (Legal name, student number, section, RFID UID, email) are strictly READ-ONLY.
+ * - Admin-provided fields (Legal name, student number, section, RFID UID, email, QR token) are strictly READ-ONLY.
  * - Self-service fields (Personal mobile, guardian name, relationship, guardian mobile, address, notes) are editable.
+ * - Implements dual-tab navigation (Personal Information vs Security & Password).
  */
 
 import { requireRole } from '../../lib/rbac-guard.js';
@@ -26,17 +27,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     first_name: 'Juan',
     last_name: 'Dela Cruz',
     student_number: '2024-IT-00101',
-    email: 'j.delacruz@bcp.edu.ph',
+    email: 'juan.delacruz@student.bestlink.edu.ph',
     section_name: 'BSIT 3-1',
     role: 'student'
   };
 
-  // 3. Load profile data from database and local preferences
+  // 3. Setup tabs
+  setupTabs();
+
+  // 4. Load profile data from database and local preferences
   await loadStudentProfileData();
 
-  // 4. Setup form listeners
+  // 5. Setup form listeners
   setupFormListeners();
 });
+
+/**
+ * Tab switcher navigation
+ */
+function setupTabs() {
+  const tabPersonal = document.getElementById('tabBtnPersonal');
+  const tabSecurity = document.getElementById('tabBtnSecurity');
+  const panelPersonal = document.getElementById('panelPersonal');
+  const panelSecurity = document.getElementById('panelSecurity');
+
+  if (!tabPersonal || !tabSecurity || !panelPersonal || !panelSecurity) return;
+
+  tabPersonal.addEventListener('click', () => {
+    tabPersonal.classList.add('active');
+    tabPersonal.setAttribute('aria-selected', 'true');
+    tabSecurity.classList.remove('active');
+    tabSecurity.setAttribute('aria-selected', 'false');
+
+    panelPersonal.style.display = 'block';
+    panelSecurity.style.display = 'none';
+  });
+
+  tabSecurity.addEventListener('click', () => {
+    tabSecurity.classList.add('active');
+    tabSecurity.setAttribute('aria-selected', 'true');
+    tabPersonal.classList.remove('active');
+    tabPersonal.setAttribute('aria-selected', 'false');
+
+    panelSecurity.style.display = 'block';
+    panelPersonal.style.display = 'none';
+  });
+}
 
 /**
  * Loads student record, RFID tag, section, and guardian details
@@ -57,40 +93,50 @@ async function loadStudentProfileData() {
     // Merge session with DB profile
     const profile = fullProfile || currentStudent;
 
-    // Populate Banner Elements
+    // Derived fields
     const fullName = `${profile.first_name || 'Juan'} ${profile.last_name || 'Dela Cruz'}`.trim();
     const studentNo = profile.student_number || '2024-IT-00101';
     const sectionName = profile.student_sections?.[0]?.sections?.name || profile.section_name || 'BSIT 3-1';
     const activeRfid = profile.rfid_cards?.find(c => c.is_active)?.card_uid || 'E2806894';
-    const email = profile.email || 'j.delacruz@bcp.edu.ph';
-    const initials = `${(profile.first_name || 'J')[0]}${(profile.last_name || 'D')[0]}`.toUpperCase();
+    const email = profile.email || 'juan.delacruz@student.bestlink.edu.ph';
+    const initials = (profile.first_name || 'J')[0].toUpperCase();
+    const qrCodeVal = profile.qr_codes?.find(q => q.is_active)?.code_value || 'bcp_qr_sec_tok_delacruz_01';
 
-    const bannerName = document.getElementById('bannerStudentName');
-    const bannerNo = document.getElementById('bannerStudentNo');
-    const bannerSec = document.getElementById('bannerSection');
-    const bannerRfid = document.getElementById('bannerRfid');
-    const bannerAvatar = document.getElementById('bannerAvatar');
+    // Left Column Profile Card
+    const pfAvatar = document.getElementById('profileAvatar');
+    const pfFullName = document.getElementById('profileFullName');
+    const metaEmail = document.getElementById('metaEmail');
+    const metaStudentNo = document.getElementById('metaStudentNo');
+    const metaSection = document.getElementById('metaSection');
+    const metaRfid = document.getElementById('metaRfid');
+    const metaQr = document.getElementById('metaQr');
 
-    if (bannerName) bannerName.textContent = fullName;
-    if (bannerNo) bannerNo.textContent = studentNo;
-    if (bannerSec) bannerSec.textContent = sectionName;
-    if (bannerRfid) bannerRfid.textContent = activeRfid;
-    if (bannerAvatar) bannerAvatar.textContent = initials;
+    if (pfAvatar) pfAvatar.textContent = initials;
+    if (pfFullName) pfFullName.textContent = fullName;
+    if (metaEmail) metaEmail.textContent = email;
+    if (metaStudentNo) metaStudentNo.textContent = studentNo;
+    if (metaSection) metaSection.textContent = sectionName;
+    if (metaRfid) metaRfid.textContent = activeRfid;
+    if (metaQr) metaQr.textContent = qrCodeVal;
 
-    // Populate Locked Admin Fields
-    const adminFirst = document.getElementById('adminFirstName');
-    const adminLast = document.getElementById('adminLastName');
+    // Locked Admin Fields in Personal Form
+    const adminFirstName = document.getElementById('adminFirstName');
+    const adminLastName = document.getElementById('adminLastName');
+    const adminFullName = document.getElementById('adminFullName');
     const adminNo = document.getElementById('adminStudentNo');
-    const adminSec = document.getElementById('adminSection');
     const adminMail = document.getElementById('adminEmail');
+    const adminSec = document.getElementById('adminSection');
     const adminRfid = document.getElementById('adminRfidUid');
+    const qrEl = document.getElementById('studentQrCodeVal');
 
-    if (adminFirst) adminFirst.value = profile.first_name || 'Juan';
-    if (adminLast) adminLast.value = profile.last_name || 'Dela Cruz';
+    if (adminFirstName) adminFirstName.value = profile.first_name || 'Juan';
+    if (adminLastName) adminLastName.value = profile.last_name || 'Dela Cruz';
+    if (adminFullName) adminFullName.value = fullName;
     if (adminNo) adminNo.value = studentNo;
-    if (adminSec) adminSec.value = `BS Information Technology · ${sectionName}`;
     if (adminMail) adminMail.value = email;
+    if (adminSec) adminSec.value = `BS Information Technology · ${sectionName}`;
     if (adminRfid) adminRfid.value = activeRfid;
+    if (qrEl) qrEl.value = qrCodeVal;
 
     // Populate Editable Self-Service Fields (Check local storage cache first, then parent_contacts)
     const savedCustom = JSON.parse(localStorage.getItem(`ams_student_custom_${currentStudent.id}`) || '{}');
@@ -104,9 +150,9 @@ async function loadStudentProfileData() {
     const medicalNotes = document.getElementById('medicalNotes');
 
     if (studentMobile) studentMobile.value = savedCustom.studentMobile || '+639171234567';
-    if (guardianName) guardianName.value = savedCustom.guardianName || guardian.full_name || 'Maria Dela Cruz';
+    if (guardianName) guardianName.value = savedCustom.guardianName || guardian.full_name || 'Teresa Dela Cruz';
     if (guardianRelation) guardianRelation.value = savedCustom.guardianRelation || guardian.relationship || 'Mother';
-    if (guardianMobile) guardianMobile.value = savedCustom.guardianMobile || guardian.mobile_number || '+639187654321';
+    if (guardianMobile) guardianMobile.value = savedCustom.guardianMobile || guardian.mobile_number || '+639171234567';
     if (homeAddress) homeAddress.value = savedCustom.homeAddress || 'Brgy. San Bartolome, Novaliches, Quezon City';
     if (medicalNotes) medicalNotes.value = savedCustom.medicalNotes || 'None reported';
 
@@ -155,10 +201,12 @@ function normalizePhone(phone) {
  * Binds submission and reset actions
  */
 function setupFormListeners() {
-  const form = document.getElementById('studentProfileForm');
+  const profileForm = document.getElementById('studentProfileForm');
+  const securityForm = document.getElementById('studentSecurityForm');
   const btnReset = document.getElementById('btnResetProfile');
 
-  form?.addEventListener('submit', async (e) => {
+  // 1. Personal & Contact Form Submission
+  profileForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const studentMobile = document.getElementById('studentMobile')?.value.trim();
@@ -259,7 +307,7 @@ function setupFormListeners() {
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
             <polyline points="17 21 17 13 7 13 7 21"/>
             <polyline points="7 3 7 8 15 8"/>
@@ -270,7 +318,70 @@ function setupFormListeners() {
     }
   });
 
-  // Discard / Reset handler
+  // 2. Security & Password Form Submission
+  securityForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const currentPass = document.getElementById('studentCurrentPass')?.value;
+    const newPass = document.getElementById('studentNewPass')?.value;
+    const confirmPass = document.getElementById('studentConfirmPass')?.value;
+
+    if (!currentPass) {
+      showToast({ title: 'Missing Password', message: 'Please enter your current password.', type: 'warning' });
+      return;
+    }
+
+    if (newPass.length < 8) {
+      showToast({ title: 'Password Too Short', message: 'New password must be at least 8 characters long.', type: 'warning' });
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      showToast({ title: 'Passwords Mismatch', message: 'The new passwords do not match. Please verify.', type: 'warning' });
+      return;
+    }
+
+    const btnUpdate = document.getElementById('btnUpdatePassword');
+    if (btnUpdate) {
+      btnUpdate.disabled = true;
+      btnUpdate.innerHTML = `
+        <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path></svg>
+        <span>Updating...</span>
+      `;
+    }
+
+    try {
+      const sb = getSupabase();
+      if (sb) {
+        const { error } = await sb.auth.updateUser({ password: newPass });
+        if (error) throw error;
+      }
+
+      securityForm.reset();
+      showToast({
+        title: 'Password Updated',
+        message: 'Your student account password has been successfully updated.',
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('[AMS Student Profile] Password update error:', err);
+      showToast({
+        title: 'Update Error',
+        message: err.message || 'Failed to update password. Please check your credentials.',
+        type: 'error'
+      });
+    } finally {
+      if (btnUpdate) {
+        btnUpdate.disabled = false;
+        btnUpdate.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Update Password</span>
+        `;
+      }
+    }
+  });
+
+  // 3. Discard / Reset handler
   btnReset?.addEventListener('click', () => {
     if (document.getElementById('studentMobile')) document.getElementById('studentMobile').value = initialFormData.studentMobile || '';
     if (document.getElementById('guardianName')) document.getElementById('guardianName').value = initialFormData.guardianName || '';

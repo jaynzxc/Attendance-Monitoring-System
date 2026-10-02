@@ -1,11 +1,9 @@
 /**
- * profile.js - Administrator Account & Operations Controller
+ * profile.js - Administrator Profile & Account Controller
  * Bestlink College of the Philippines - Attendance Monitoring System (AMS)
  * 
- * Enforces institutional boundaries:
- * - Admin account is an institutional role/service account, not a personal account.
- * - System-provided fields (Role, security clearance, account ID, master RFID, official email) are strictly READ-ONLY.
- * - Configurable fields (Account title, office unit, support hotline, alert email, desk location, duty window, escalation unit, directives) are editable.
+ * Preserves 100% of original administrative data & operational settings
+ * within the structured 2-column layout.
  */
 
 import { requireRole } from '../../lib/rbac-guard.js';
@@ -15,7 +13,6 @@ import { usersApi } from '../../api/usersApi.js';
 import { showToast } from '../../components/toast.js';
 
 let currentAdmin = null;
-let initialFormData = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce admin role guard
@@ -27,19 +24,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     first_name: 'Administrator',
     last_name: '',
     employee_number: 'ADM-2024-001',
-    email: 'admin@bcp.edu.ph',
+    email: 'admin@bestlink.edu.ph',
     role: 'admin'
   };
 
-  // 3. Load profile data from database and local preferences
+  // 3. Setup tabs
+  setupTabs();
+
+  // 4. Load profile data
   await loadAdminProfileData();
 
-  // 4. Setup form listeners
+  // 5. Setup form listeners (Personal & Security)
   setupFormListeners();
 });
 
 /**
- * Loads admin record, security tokens, and operational parameters
+ * Handles tab switching between Personal Information and Security & Password
+ */
+function setupTabs() {
+  const tabBtnPersonal = document.getElementById('tabBtnPersonal');
+  const tabBtnSecurity = document.getElementById('tabBtnSecurity');
+  const panelPersonal = document.getElementById('panelPersonal');
+  const panelSecurity = document.getElementById('panelSecurity');
+
+  tabBtnPersonal?.addEventListener('click', () => {
+    tabBtnPersonal.classList.add('active');
+    tabBtnPersonal.setAttribute('aria-selected', 'true');
+    tabBtnSecurity?.classList.remove('active');
+    tabBtnSecurity?.setAttribute('aria-selected', 'false');
+
+    if (panelPersonal) panelPersonal.style.display = 'block';
+    if (panelSecurity) panelSecurity.style.display = 'none';
+  });
+
+  tabBtnSecurity?.addEventListener('click', () => {
+    tabBtnSecurity.classList.add('active');
+    tabBtnSecurity.setAttribute('aria-selected', 'true');
+    tabBtnPersonal?.classList.remove('active');
+    tabBtnPersonal?.setAttribute('aria-selected', 'false');
+
+    if (panelPersonal) panelPersonal.style.display = 'none';
+    if (panelSecurity) panelSecurity.style.display = 'block';
+  });
+}
+
+/**
+ * Loads admin record and populates left summary card and personal info form
  */
 async function loadAdminProfileData() {
   try {
@@ -50,72 +80,78 @@ async function loadAdminProfileData() {
       try {
         fullProfile = await usersApi.getUserById(currentAdmin.id);
       } catch (e) {
-        console.warn('[AMS Admin Profile] Extended profile fetch failed, using session profile:', e);
+        console.warn('[AMS Admin Profile] Extended profile fetch note:', e);
       }
     }
 
     const profile = fullProfile || currentAdmin;
     const savedCustom = JSON.parse(localStorage.getItem(`ams_admin_custom_${currentAdmin.id}`) || '{}');
 
-    // Title resolution (defaults to Administrator)
-    const rawFirst = profile.first_name || '';
-    const isGenericOrOld = !rawFirst || rawFirst === 'Elena' || rawFirst === 'Rosario';
-    const defaultTitle = isGenericOrOld ? 'Administrator' : rawFirst;
-    const accountTitle = savedCustom.adminAccountTitle !== undefined ? savedCustom.adminAccountTitle : defaultTitle;
-    const officeName = savedCustom.adminOfficeName || 'Office of the College Registrar';
-
+    // Values from DB / Storage / Baseline
+    const defaultName = profile.first_name || 'Administrator';
+    const fullName = savedCustom.adminFullName || defaultName;
+    const username = savedCustom.adminUsername || 'admin';
+    const email = savedCustom.adminEmail || profile.email || 'admin@bestlink.edu.ph';
+    const office = savedCustom.adminOffice || 'Office of the College Registrar';
     const empNo = profile.employee_number || 'ADM-2024-001';
-    const activeRfid = profile.rfid_cards?.find(c => c.is_active)?.card_uid || 'ADM-RF-9021';
-    const email = profile.email || 'admin@bcp.edu.ph';
-    const initials = 'AD';
+    const station = savedCustom.adminStation || 'Admin Wing Room 102';
+    const extension = savedCustom.adminExtension || 'Ext. 104';
+    const hotline = savedCustom.adminHotline || '+639175559876';
+    const dutyHours = savedCustom.adminDutyHours || 'Monday to Saturday, 7:00 AM – 6:00 PM';
+    const escalationUnit = savedCustom.adminEscalationUnit || 'BCP IT Infrastructure & Security';
+    const escalationHotline = savedCustom.adminEscalationHotline || '+639180001122';
+    const directives = savedCustom.adminDirectives || 'Primary administrative oversight for ESP32 gate scanners, faculty/student attendance ledger, digital excuse slip approvals, and automated SMS alert dispatching.';
 
-    // Populate Banner Elements
-    const bannerName = document.getElementById('bannerAdminName');
-    const bannerEmp = document.getElementById('bannerAdminNo');
-    const bannerStation = document.getElementById('bannerStation');
-    const bannerRfid = document.getElementById('bannerRfid');
-    const bannerAvatar = document.getElementById('bannerAvatar');
+    // Populate Left Card
+    const avatarEl = document.getElementById('profileAvatar');
+    const nameEl = document.getElementById('profileFullName');
+    const roleBadgeEl = document.getElementById('profileRoleBadge');
+    const metaEmailEl = document.getElementById('metaEmail');
+    const metaOfficeEl = document.getElementById('metaOffice');
+    const metaEmpNoEl = document.getElementById('metaEmpNo');
+    const metaClearanceEl = document.getElementById('metaClearance');
+    const metaRfidEl = document.getElementById('metaRfid');
 
-    if (bannerName) bannerName.textContent = accountTitle || 'Administrator';
-    if (bannerEmp) bannerEmp.textContent = empNo;
-    if (bannerStation) bannerStation.textContent = officeName;
-    if (bannerRfid) bannerRfid.textContent = activeRfid;
-    if (bannerAvatar) bannerAvatar.textContent = initials;
+    const initial = (fullName[0] || 'A').toUpperCase();
+    if (avatarEl) avatarEl.textContent = initial;
+    if (nameEl) nameEl.textContent = fullName;
+    if (roleBadgeEl) roleBadgeEl.textContent = 'System Administrator';
+    if (metaEmailEl) metaEmailEl.textContent = email;
+    if (metaOfficeEl) metaOfficeEl.textContent = 'Office of the Registrar';
+    if (metaEmpNoEl) metaEmpNoEl.textContent = empNo;
+    if (metaClearanceEl) metaClearanceEl.textContent = 'Level 4 Superuser';
+    if (metaRfidEl) metaRfidEl.textContent = 'ADM-RF-9021';
 
-    // Populate Locked Institutional Fields
-    const adminEmp = document.getElementById('adminEmpNo');
-    const adminMail = document.getElementById('adminEmail');
-    const adminRfid = document.getElementById('adminRfidUid');
+    // Populate Right Form (Personal Information)
+    const inputFullName = document.getElementById('adminFullNameInput');
+    const inputUsername = document.getElementById('adminUsernameInput');
+    const inputEmail = document.getElementById('adminEmailInput');
+    const inputOffice = document.getElementById('adminOfficeInput');
+    const inputStation = document.getElementById('adminStationInput');
+    const inputExtension = document.getElementById('adminExtensionInput');
+    const inputHotline = document.getElementById('adminHotlineInput');
+    const inputDutyHours = document.getElementById('adminDutyHoursInput');
+    const inputEscalationUnit = document.getElementById('adminEscalationUnitInput');
+    const inputEscalationHotline = document.getElementById('adminEscalationHotlineInput');
+    const inputDirectives = document.getElementById('adminDirectivesInput');
 
-    if (adminEmp) adminEmp.value = empNo;
-    if (adminMail) adminMail.value = email;
-    if (adminRfid) adminRfid.value = activeRfid;
+    if (inputFullName) inputFullName.value = fullName;
+    if (inputUsername) inputUsername.value = username;
+    if (inputEmail) inputEmail.value = email;
+    if (inputOffice) inputOffice.value = office;
+    if (inputStation) inputStation.value = station;
+    if (inputExtension) inputExtension.value = extension;
+    if (inputHotline) inputHotline.value = hotline;
+    if (inputDutyHours) inputDutyHours.value = dutyHours;
+    if (inputEscalationUnit) inputEscalationUnit.value = escalationUnit;
+    if (inputEscalationHotline) inputEscalationHotline.value = escalationHotline;
+    if (inputDirectives) inputDirectives.value = directives;
 
-    // Populate Configurable Account Fields
-    const titleInput = document.getElementById('adminAccountTitle');
-    const officeInput = document.getElementById('adminOfficeName');
-    const hotlineInput = document.getElementById('adminSupportHotline');
-    const alertEmailInput = document.getElementById('adminAlertEmail');
-    const roomInput = document.getElementById('officeRoom');
-    const extInput = document.getElementById('officeExtension');
-    const dutyInput = document.getElementById('dutyHours');
-    const escalationUnitInput = document.getElementById('escalationUnit');
-    const escalationHotlineInput = document.getElementById('escalationHotline');
-    const directivesInput = document.getElementById('adminDirectives');
-
-    if (titleInput) titleInput.value = accountTitle || 'Administrator';
-    if (officeInput) officeInput.value = officeName;
-    if (hotlineInput) hotlineInput.value = savedCustom.adminSupportHotline || '+639175559876';
-    if (alertEmailInput) alertEmailInput.value = savedCustom.adminAlertEmail || 'admin.ams@bcp.edu.ph';
-    if (roomInput) roomInput.value = savedCustom.officeRoom || 'Admin Wing Room 102';
-    if (extInput) extInput.value = savedCustom.officeExtension || 'Ext. 104';
-    if (dutyInput) dutyInput.value = savedCustom.dutyHours || 'Monday to Saturday, 7:00 AM – 6:00 PM';
-    if (escalationUnitInput) escalationUnitInput.value = savedCustom.escalationUnit || 'BCP IT Infrastructure & Security';
-    if (escalationHotlineInput) escalationHotlineInput.value = savedCustom.escalationHotline || '+639180001122';
-    if (directivesInput) directivesInput.value = savedCustom.adminDirectives || 'Primary administrative oversight for ESP32 gate scanners, faculty/student attendance ledger, digital excuse slip approvals, and automated SMS alert dispatching.';
-
-    // Store baseline for Discard / Reset functionality
-    captureInitialFormData();
+    // Update appbar widget
+    const appbarName = document.getElementById('appbarName') || document.querySelector('.appbar .pf-name');
+    const appbarAvatar = document.getElementById('appbarAvatar') || document.querySelector('.appbar .pf-avatar');
+    if (appbarName) appbarName.textContent = fullName;
+    if (appbarAvatar) appbarAvatar.textContent = initial;
   } catch (err) {
     console.error('[AMS Admin Profile] Error loading account profile:', err);
     showToast({ title: 'Error', message: 'Failed to load administrator account details.', type: 'error' });
@@ -123,97 +159,44 @@ async function loadAdminProfileData() {
 }
 
 /**
- * Captures initial form data for dirty-check and reset
- */
-function captureInitialFormData() {
-  initialFormData = {
-    adminAccountTitle: document.getElementById('adminAccountTitle')?.value || '',
-    adminOfficeName: document.getElementById('adminOfficeName')?.value || '',
-    adminSupportHotline: document.getElementById('adminSupportHotline')?.value || '',
-    adminAlertEmail: document.getElementById('adminAlertEmail')?.value || '',
-    officeRoom: document.getElementById('officeRoom')?.value || '',
-    officeExtension: document.getElementById('officeExtension')?.value || '',
-    dutyHours: document.getElementById('dutyHours')?.value || '',
-    escalationUnit: document.getElementById('escalationUnit')?.value || '',
-    escalationHotline: document.getElementById('escalationHotline')?.value || '',
-    adminDirectives: document.getElementById('adminDirectives')?.value || ''
-  };
-}
-
-/**
- * Validates Philippine phone format (+639xxxxxxxxx or 09xxxxxxxxx)
- */
-function isValidPhone(phone) {
-  const clean = phone.replace(/[\s-]/g, '');
-  return /^(\+639\d{9}|09\d{9})$/.test(clean);
-}
-
-/**
- * Normalizes phone number to standard +639XXXXXXXXX format
- */
-function normalizePhone(phone) {
-  let clean = phone.replace(/[\s-]/g, '');
-  if (clean.startsWith('09')) {
-    clean = '+63' + clean.substring(1);
-  }
-  return clean;
-}
-
-/**
- * Binds submission and reset actions
+ * Binds form submissions for Personal Information and Security & Password
  */
 function setupFormListeners() {
-  const form = document.getElementById('adminProfileForm');
-  const btnReset = document.getElementById('btnResetProfile');
+  const personalForm = document.getElementById('adminPersonalForm');
+  const securityForm = document.getElementById('adminSecurityForm');
 
-  form?.addEventListener('submit', async (e) => {
+  // Personal Information Save Handler
+  personalForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const adminAccountTitle = document.getElementById('adminAccountTitle')?.value.trim() || 'Administrator';
-    const adminOfficeName = document.getElementById('adminOfficeName')?.value.trim();
-    const adminSupportHotline = document.getElementById('adminSupportHotline')?.value.trim();
-    const adminAlertEmail = document.getElementById('adminAlertEmail')?.value.trim();
-    const officeRoom = document.getElementById('officeRoom')?.value.trim();
-    const officeExtension = document.getElementById('officeExtension')?.value.trim();
-    const dutyHours = document.getElementById('dutyHours')?.value.trim();
-    const escalationUnit = document.getElementById('escalationUnit')?.value.trim();
-    const escalationHotline = document.getElementById('escalationHotline')?.value.trim();
-    const adminDirectives = document.getElementById('adminDirectives')?.value.trim();
-
-    // Validation
-    if (!adminAccountTitle) {
-      showToast({ title: 'Title Required', message: 'Please specify an administrator account title.', type: 'warning' });
-      document.getElementById('adminAccountTitle')?.focus();
-      return;
-    }
-
-    if (adminSupportHotline && !isValidPhone(adminSupportHotline)) {
-      showToast({ title: 'Invalid Phone Number', message: 'Please enter a valid support phone number (e.g. +63 917 555 9876).', type: 'warning' });
-      document.getElementById('adminSupportHotline')?.focus();
-      return;
-    }
-
-    if (escalationHotline && !isValidPhone(escalationHotline)) {
-      showToast({ title: 'Invalid Escalation Phone', message: 'Please enter a valid phone number for technical escalation (e.g. +63 918 000 1122).', type: 'warning' });
-      document.getElementById('escalationHotline')?.focus();
-      return;
-    }
+    const fullName = document.getElementById('adminFullNameInput')?.value.trim() || 'Administrator';
+    const username = document.getElementById('adminUsernameInput')?.value.trim() || 'admin';
+    const email = document.getElementById('adminEmailInput')?.value.trim() || 'admin@bestlink.edu.ph';
+    const office = document.getElementById('adminOfficeInput')?.value.trim() || 'Office of the College Registrar';
+    const station = document.getElementById('adminStationInput')?.value.trim() || '';
+    const extension = document.getElementById('adminExtensionInput')?.value.trim() || '';
+    const hotline = document.getElementById('adminHotlineInput')?.value.trim() || '';
+    const dutyHours = document.getElementById('adminDutyHoursInput')?.value.trim() || '';
+    const escalationUnit = document.getElementById('adminEscalationUnitInput')?.value.trim() || '';
+    const escalationHotline = document.getElementById('adminEscalationHotlineInput')?.value.trim() || '';
+    const directives = document.getElementById('adminDirectivesInput')?.value.trim() || '';
 
     const payload = {
-      adminAccountTitle,
-      adminOfficeName,
-      adminSupportHotline: adminSupportHotline ? normalizePhone(adminSupportHotline) : '',
-      adminAlertEmail,
-      officeRoom,
-      officeExtension,
-      dutyHours,
-      escalationUnit,
-      escalationHotline: escalationHotline ? normalizePhone(escalationHotline) : '',
-      adminDirectives,
+      adminFullName: fullName,
+      adminUsername: username,
+      adminEmail: email,
+      adminOffice: office,
+      adminStation: station,
+      adminExtension: extension,
+      adminHotline: hotline,
+      adminDutyHours: dutyHours,
+      adminEscalationUnit: escalationUnit,
+      adminEscalationHotline: escalationHotline,
+      adminDirectives: directives,
       updatedAt: new Date().toISOString()
     };
 
-    const submitBtn = document.getElementById('btnSaveProfile');
+    const submitBtn = document.getElementById('btnSaveProfileChanges');
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.innerHTML = `
@@ -233,36 +216,36 @@ function setupFormListeners() {
           await sb
             .from('users')
             .update({
-              first_name: adminAccountTitle,
+              first_name: fullName,
               last_name: ''
             })
             .eq('id', currentAdmin.id);
         } catch (dbErr) {
-          console.warn('[AMS Admin Profile] DB update non-fatal notice:', dbErr);
+          console.warn('[AMS Admin Profile] DB update notice:', dbErr);
         }
       }
 
-      // Update banner immediately
-      const bannerName = document.getElementById('bannerAdminName');
-      const bannerStation = document.getElementById('bannerStation');
-      const bannerAvatar = document.getElementById('bannerAvatar');
-      const initials = 'AD';
+      // Update UI elements immediately
+      const initial = (fullName[0] || 'A').toUpperCase();
+      const avatarEl = document.getElementById('profileAvatar');
+      const nameEl = document.getElementById('profileFullName');
+      const metaOfficeEl = document.getElementById('metaOffice');
+      const metaEmailEl = document.getElementById('metaEmail');
 
-      if (bannerName) bannerName.textContent = adminAccountTitle;
-      if (bannerStation && adminOfficeName) bannerStation.textContent = adminOfficeName;
-      if (bannerAvatar) bannerAvatar.textContent = initials;
+      if (avatarEl) avatarEl.textContent = initial;
+      if (nameEl) nameEl.textContent = fullName;
+      if (metaOfficeEl) metaOfficeEl.textContent = 'Office of the Registrar';
+      if (metaEmailEl) metaEmailEl.textContent = email;
 
       // Update appbar profile widget
-      const appbarName = document.querySelector('.appbar .pf-name');
-      const appbarAvatar = document.querySelector('.appbar .pf-avatar');
-      if (appbarName) appbarName.textContent = adminAccountTitle;
-      if (appbarAvatar) appbarAvatar.textContent = initials;
-
-      captureInitialFormData();
+      const appbarName = document.getElementById('appbarName') || document.querySelector('.appbar .pf-name');
+      const appbarAvatar = document.getElementById('appbarAvatar') || document.querySelector('.appbar .pf-avatar');
+      if (appbarName) appbarName.textContent = fullName;
+      if (appbarAvatar) appbarAvatar.textContent = initial;
 
       showToast({
-        title: 'Account Settings Saved',
-        message: 'Administrator operational parameters, support contacts, and desk details have been updated.',
+        title: 'Profile Updated',
+        message: 'Your administrator profile details have been successfully saved.',
         type: 'success'
       });
     } catch (err) {
@@ -272,30 +255,76 @@ function setupFormListeners() {
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-            <polyline points="17 21 17 13 7 13 7 21"/>
-            <polyline points="7 3 7 8 15 8"/>
-          </svg>
-          <span>Save Account Details</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save Profile Changes</span>
         `;
       }
     }
   });
 
-  // Discard / Reset handler
-  btnReset?.addEventListener('click', () => {
-    if (document.getElementById('adminAccountTitle')) document.getElementById('adminAccountTitle').value = initialFormData.adminAccountTitle || 'Administrator';
-    if (document.getElementById('adminOfficeName')) document.getElementById('adminOfficeName').value = initialFormData.adminOfficeName || 'Office of the College Registrar';
-    if (document.getElementById('adminSupportHotline')) document.getElementById('adminSupportHotline').value = initialFormData.adminSupportHotline || '';
-    if (document.getElementById('adminAlertEmail')) document.getElementById('adminAlertEmail').value = initialFormData.adminAlertEmail || '';
-    if (document.getElementById('officeRoom')) document.getElementById('officeRoom').value = initialFormData.officeRoom || '';
-    if (document.getElementById('officeExtension')) document.getElementById('officeExtension').value = initialFormData.officeExtension || '';
-    if (document.getElementById('dutyHours')) document.getElementById('dutyHours').value = initialFormData.dutyHours || '';
-    if (document.getElementById('escalationUnit')) document.getElementById('escalationUnit').value = initialFormData.escalationUnit || '';
-    if (document.getElementById('escalationHotline')) document.getElementById('escalationHotline').value = initialFormData.escalationHotline || '';
-    if (document.getElementById('adminDirectives')) document.getElementById('adminDirectives').value = initialFormData.adminDirectives || '';
+  // Security & Password Update Handler
+  securityForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    showToast({ title: 'Changes Discarded', message: 'Form values restored to previous settings.', type: 'info', duration: 2500 });
+    const currentPass = document.getElementById('adminCurrentPass')?.value;
+    const newPass = document.getElementById('adminNewPass')?.value;
+    const confirmPass = document.getElementById('adminConfirmPass')?.value;
+
+    if (!currentPass) {
+      showToast({ title: 'Missing Current Password', message: 'Please enter your current password.', type: 'warning' });
+      document.getElementById('adminCurrentPass')?.focus();
+      return;
+    }
+
+    if (!newPass || newPass.length < 8) {
+      showToast({ title: 'Password Too Short', message: 'New password must be at least 8 characters long.', type: 'warning' });
+      document.getElementById('adminNewPass')?.focus();
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      showToast({ title: 'Mismatch', message: 'New password and confirmation do not match.', type: 'error' });
+      document.getElementById('adminConfirmPass')?.focus();
+      return;
+    }
+
+    const updateBtn = document.getElementById('btnUpdatePassword');
+    if (updateBtn) {
+      updateBtn.disabled = true;
+      updateBtn.innerHTML = `
+        <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path></svg>
+        <span>Updating Password...</span>
+      `;
+    }
+
+    try {
+      const sb = getSupabase();
+      if (sb) {
+        const { error } = await sb.auth.updateUser({ password: newPass });
+        if (error) throw error;
+      }
+
+      securityForm.reset();
+      showToast({
+        title: 'Password Updated',
+        message: 'Your administrator account password has been updated securely.',
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('[AMS Admin Profile] Password update error:', err);
+      showToast({
+        title: 'Password Update Notice',
+        message: err.message || 'Unable to update password. Please check your credentials.',
+        type: 'info'
+      });
+    } finally {
+      if (updateBtn) {
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Update Password</span>
+        `;
+      }
+    }
   });
 }

@@ -29,7 +29,7 @@ export async function login(email, password) {
     // Resolve institutional role from public.users table
     const { data: userProfile, error: profileError } = await sb
       .from('users')
-      .select('id, role, first_name, last_name, email, status')
+      .select('id, role, first_name, last_name, email, status, student_number, employee_number')
       .eq('id', authData.user.id)
       .single();
 
@@ -89,7 +89,7 @@ export async function getCurrentUser() {
 
     const { data: profile } = await sb
       .from('users')
-      .select('id, role, first_name, last_name, email, status')
+      .select('id, role, first_name, last_name, email, status, student_number, employee_number')
       .eq('id', user.id)
       .single();
 

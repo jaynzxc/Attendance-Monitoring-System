@@ -21,98 +21,151 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
 
   <style>
-    .profile-grid {
+    /* Two-column layout container matching reference structure */
+    .profile-layout-container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 22px;
-      width: 100%;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
     }
     @media (max-width: 960px) {
-      .profile-grid {
+      .profile-layout-container {
         grid-template-columns: 1fr;
       }
     }
-    .form-group-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 600px) {
-      .form-group-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .field-locked {
-      background: var(--surface-hover) !important;
-      color: var(--text-2) !important;
-      border: 1px solid var(--border) !important;
-      cursor: not-allowed !important;
-      opacity: 0.88;
-    }
-    .field-locked:focus {
-      outline: none !important;
-      border-color: var(--border) !important;
-      box-shadow: none !important;
-    }
-    .lock-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 3px 8px;
-      border-radius: 5px;
-      background: rgba(13, 71, 161, 0.09);
-      color: var(--ch-900);
-      border: 1px solid rgba(13, 71, 161, 0.18);
-    }
-    [data-theme="dark"] .lock-badge {
-      background: rgba(144, 202, 249, 0.12);
-      color: var(--ch-200);
-      border-color: rgba(144, 202, 249, 0.25);
-    }
-    .editable-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 3px 8px;
-      border-radius: 5px;
-      background: rgba(16, 185, 129, 0.12);
-      color: #059669;
-      border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-    [data-theme="dark"] .editable-badge {
-      background: rgba(16, 185, 129, 0.18);
-      color: #34d399;
-      border-color: rgba(16, 185, 129, 0.35);
-    }
-    .form-row {
+
+    /* Underlined tab bar */
+    .profile-tab-bar {
       display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin-bottom: 14px;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
     }
-    .form-row:last-child {
-      margin-bottom: 0;
-    }
-    .form-row label {
-      font-size: 12px;
+    .profile-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 4px 12px 4px;
+      font-size: 13.5px;
       font-weight: 600;
+      color: var(--text-3);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .profile-tab-btn:hover {
       color: var(--text-1);
     }
-    .form-row label.locked-label {
-      color: var(--text-2);
+    .profile-tab-btn.active {
+      color: #0D47A1;
+      border-bottom-color: #0D47A1;
     }
-    .field-hint {
-      font-size: 11px;
-      color: var(--text-3);
-      margin-top: 3px;
+    [data-theme="dark"] .profile-tab-btn.active {
+      color: #90CAF9;
+      border-bottom-color: #90CAF9;
+    }
+
+    /* 2-Column Responsive Form Grid */
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 20px;
+      margin-bottom: 18px;
+      width: 100%;
+    }
+    @media (max-width: 640px) {
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-field-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .form-field-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 6px;
+    }
+
+    /* Full-width inputs - prevents narrow collapse */
+    .profile-input {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      height: 42px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 13.5px;
+      color: var(--text-1);
+      font-family: inherit;
+      outline: none;
+      display: block;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .profile-input:focus {
+      border-color: #2196F3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+    }
+
+    .profile-input.field-locked {
+      background: var(--surface-hover) !important;
+      color: var(--text-2) !important;
+      cursor: not-allowed !important;
+    }
+
+    .profile-textarea {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text-1);
+      font-family: inherit;
+      outline: none;
+      display: block;
+      resize: vertical;
+      min-height: 78px;
+      line-height: 1.5;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .profile-textarea:focus {
+      border-color: #2196F3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+    }
+
+    /* Deep Royal Blue Primary Button */
+    .btn-profile-primary {
+      background: #0D47A1;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 13.5px;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(13, 71, 161, 0.25);
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-profile-primary:hover {
+      background: #0a3880;
+    }
+    .btn-profile-primary:active {
+      transform: translateY(1px);
     }
   </style>
 
@@ -121,38 +174,38 @@
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar Navigation (Exact Standard Faculty Sidebar — No My Profile item) -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar" aria-label="Faculty Navigation">
       <div class="brand">
         <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Faculty</span>
         <span class="sub-tag">SMS 1</span>
       </div>
-      
+
       <div class="navgroup">Main</div>
       <nav class="nav">
         <a href="dashboard.html">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
           Dashboard
         </a>
-        <a href="my-classes.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+        <a href="classes.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           My Classes
         </a>
         <a href="live-session.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           Live Session
         </a>
         <a href="attendance-logs.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           Attendance Logs
         </a>
-        <a href="qr-attendance.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        <a href="qr-scanner.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           QR Attendance
         </a>
         <a href="my-logs.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 10h6"/><path d="M9 18h4"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           My Attendance Log
         </a>
         <a href="attendance-calendar.html">
@@ -168,14 +221,14 @@
           Section Analytics
         </a>
       </nav>
-      
+
       <div class="sidebar-foot">
         SMS 1 · Bestlink College<br>
         Faculty Attendance Hub
       </div>
     </aside>
 
-    <!-- Main Content Column -->
+    <!-- Main Content Layout -->
     <div class="main-col">
       <!-- App Header Bar -->
       <header class="appbar">
@@ -193,197 +246,237 @@
         
         <!-- User Profile Dropdown Button -->
         <div class="profile" role="button" tabindex="0">
-          <div class="pf-avatar">RS</div>
+          <div class="pf-avatar" id="appbarAvatar">R</div>
           <div class="pf-info">
-            <div class="pf-name">Prof. Reynaldo Santos</div>
-            <div class="pf-role">Teacher · Computer Studies</div>
+            <div class="pf-name" id="appbarName">Prof. Ricardo Santos</div>
+            <div class="pf-role">Faculty Member</div>
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </div>
       </header>
 
-      <!-- Main Profile Content -->
+      <!-- Main Profile Content Area -->
       <main class="main">
         <!-- Page Header -->
-        <div class="pagehead">
+        <div style="margin-bottom: 22px;">
+          <h1 style="font-size: 22px; font-weight: 800; color: var(--text-1); margin: 0 0 4px 0; letter-spacing: -0.02em;">My Profile</h1>
+          <p style="font-size: 13px; color: var(--text-3); margin: 0;">Official faculty credentials, duty roster assignments, and editable personal contact details.</p>
+        </div>
+
+        <div class="profile-layout-container">
+          <!-- LEFT COLUMN: Faculty Overview Card -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Profile Identity Card -->
+            <div class="card" style="padding: 28px 20px 24px; text-align: center;">
+              <!-- Circular Avatar with duty verified green dot -->
+              <div style="position: relative; width: 84px; height: 84px; margin: 0 auto 16px auto;">
+                <div id="profileAvatar" style="width: 84px; height: 84px; border-radius: 50%; background: #0D47A1; color: #ffffff; font-size: 32px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(13, 71, 161, 0.25);">
+                  R
+                </div>
+                <div style="position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #10B981; border: 2.5px solid var(--surface);" title="Active · Duty Verified"></div>
+              </div>
+
+              <!-- Name & Role -->
+              <h2 id="profileFullName" style="font-size: 17px; font-weight: 800; color: var(--text-1); margin: 0 0 8px 0;">Prof. Ricardo Santos</h2>
+              
+              <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; background: rgba(33, 150, 243, 0.08); border: 1px solid rgba(33, 150, 243, 0.25); color: #0D47A1; font-size: 12px; font-weight: 700; margin-bottom: 24px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #2196F3;"></span>
+                <span id="profileRoleBadge">Faculty Member</span>
+              </div>
+
+              <!-- Metadata List (Preserves all original left card details) -->
+              <div style="border-top: 1px solid var(--border); padding-top: 18px; display: flex; flex-direction: column; gap: 14px; text-align: left; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span style="color: var(--text-3); font-weight: 500;">Email:</span>
+                  <span id="metaEmail" style="color: var(--text-1); font-weight: 600; text-align: right;">prof.santos@bestlink.edu.ph</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span style="color: var(--text-3); font-weight: 500;">Department:</span>
+                  <span id="metaDept" style="color: var(--text-1); font-weight: 600; text-align: right;">College of Computer Studies</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span style="color: var(--text-3); font-weight: 500;">Employee ID:</span>
+                  <span id="metaEmpNo" style="color: var(--text-1); font-weight: 600; font-family: monospace; text-align: right;">EMP-2018-042</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span style="color: var(--text-3); font-weight: 500;">Role &amp; Rank:</span>
+                  <span style="color: var(--text-1); font-weight: 600; text-align: right;">Faculty / Instructor</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span style="color: var(--text-3); font-weight: 500;">Gate RFID:</span>
+                  <span id="metaRfid" style="color: #10B981; font-weight: 700; font-family: monospace; text-align: right;">99887766</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <span style="color: var(--text-3); font-weight: 500;">Status:</span>
+                  <span class="pill pill-present" style="font-size: 11px; padding: 2px 10px; border-radius: 6px;">Active · Duty Verified</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Tabs & Panels -->
           <div>
-            <h1>Faculty Profile &amp; Account Settings</h1>
-            <p>Official faculty credentials, duty roster assignments, and editable personal contact details</p>
+            <!-- Horizontal Tab Bar -->
+            <div class="profile-tab-bar" role="tablist">
+              <button type="button" class="profile-tab-btn active" id="tabBtnPersonal" role="tab" aria-selected="true" aria-controls="panelPersonal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Personal &amp; Contact Details</span>
+              </button>
+              <button type="button" class="profile-tab-btn" id="tabBtnSecurity" role="tab" aria-selected="false" aria-controls="panelSecurity">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Security &amp; Password</span>
+              </button>
+            </div>
+
+            <!-- TAB 1: Personal & Contact Information (All original fields preserved) -->
+            <div id="panelPersonal" class="card" role="tabpanel" style="padding: 24px;">
+              <!-- Section Header -->
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(33, 150, 243, 0.1); color: #2196F3; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-1);">Faculty Credentials &amp; Availability</h3>
+                  <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-3);">Review official academic placement and maintain self-service contact details.</p>
+                </div>
+              </div>
+
+              <form id="teacherPersonalForm">
+                <!-- Row 1: Full Name & Employee ID (Locked) -->
+                <div class="form-grid-2">
+                  <div class="form-field-group">
+                    <label for="teacherFullNameInput">Full Name <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="teacherFullNameInput" class="profile-input field-locked" value="Prof. Ricardo Santos" readonly>
+                  </div>
+                  <div class="form-field-group">
+                    <label for="teacherEmpNoInput">Employee ID Number <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="teacherEmpNoInput" class="profile-input field-locked" value="EMP-2018-042" style="font-family: monospace;" readonly>
+                  </div>
+                </div>
+
+                <!-- Row 2: Official Email & Academic Department (Locked) -->
+                <div class="form-grid-2">
+                  <div class="form-field-group">
+                    <label for="teacherEmailInput">Official Faculty Email <span style="color: #ef4444;">*</span></label>
+                    <input type="email" id="teacherEmailInput" class="profile-input field-locked" value="prof.santos@bestlink.edu.ph" style="font-family: monospace;" readonly>
+                  </div>
+                  <div class="form-field-group">
+                    <label for="teacherDeptInput">Academic Department</label>
+                    <input type="text" id="teacherDeptInput" class="profile-input field-locked" value="College of Computer Studies" readonly>
+                  </div>
+                </div>
+
+                <!-- Row 3: Personal Mobile & Alternate Email -->
+                <div class="form-grid-2">
+                  <div class="form-field-group">
+                    <label for="teacherMobileInput">Personal Mobile Number <span style="color: #ef4444;">*</span></label>
+                    <input type="tel" id="teacherMobileInput" class="profile-input" value="+639178881234" placeholder="+63 917 888 1234" style="font-family: monospace;" required>
+                  </div>
+                  <div class="form-field-group">
+                    <label for="teacherAltEmailInput">Alternate / Personal Email</label>
+                    <input type="email" id="teacherAltEmailInput" class="profile-input" value="prof.reynaldo.santos@gmail.com" placeholder="personal.email@gmail.com" style="font-family: monospace;">
+                  </div>
+                </div>
+
+                <!-- Row 4: Desk Location & Consultation Hours -->
+                <div class="form-grid-2">
+                  <div class="form-field-group">
+                    <label for="teacherOfficeInput">Department Office / Desk Location</label>
+                    <input type="text" id="teacherOfficeInput" class="profile-input" value="Room 302, Academic Bldg Faculty Hub" placeholder="Faculty Room, Floor...">
+                  </div>
+                  <div class="form-field-group">
+                    <label for="teacherConsultHoursInput">Student Consultation Hours <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="teacherConsultHoursInput" class="profile-input" value="Monday &amp; Wednesday 2:00 PM – 4:00 PM" required>
+                  </div>
+                </div>
+
+                <!-- Row 5: Emergency Contact Person & Phone -->
+                <div class="form-grid-2">
+                  <div class="form-field-group">
+                    <label for="teacherEmergencyName">Emergency Contact Person</label>
+                    <input type="text" id="teacherEmergencyName" class="profile-input" value="Elena Santos" placeholder="Contact Full Name">
+                  </div>
+                  <div class="form-field-group">
+                    <label for="teacherEmergencyMobile">Emergency Contact Phone</label>
+                    <input type="tel" id="teacherEmergencyMobile" class="profile-input" value="+639197776655" placeholder="+63 919 777 6655" style="font-family: monospace;">
+                  </div>
+                </div>
+
+                <!-- Row 6: Assigned Sections & Teaching Load -->
+                <div style="margin-bottom: 18px; width: 100%;">
+                  <label style="display: block; font-size: 12.5px; font-weight: 600; color: var(--text-1); margin-bottom: 8px;">Assigned Sections &amp; Teaching Load</label>
+                  <div id="teacherSectionsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface-hover); border: 1px solid var(--border); border-radius: 8px; font-size: 13px;">
+                      <span style="font-weight: 700; color: var(--text-1);">BSIT 3-1</span>
+                      <span style="color: var(--text-2);">Systems Architecture</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface-hover); border: 1px solid var(--border); border-radius: 8px; font-size: 13px;">
+                      <span style="font-weight: 700; color: var(--text-1);">BSIT 3-2</span>
+                      <span style="color: var(--text-2);">Database Systems</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 7: Academic Specialization & Notes (Full width) -->
+                <div style="margin-bottom: 24px; width: 100%;">
+                  <label for="teacherBioInput" style="display: block; font-size: 12.5px; font-weight: 600; color: var(--text-1); margin-bottom: 6px;">Academic Specialization &amp; Notes</label>
+                  <textarea id="teacherBioInput" rows="3" class="profile-textarea">Specializing in Integrative Programming, Network Protocols, and Systems Architecture.</textarea>
+                </div>
+
+                <!-- Action Button: Right-aligned Deep Royal Blue Button -->
+                <div style="display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid var(--border);">
+                  <button type="submit" id="btnSaveTeacherChanges" class="btn-profile-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span>Save Faculty Changes</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- TAB 2: Security & Password -->
+            <div id="panelSecurity" class="card" role="tabpanel" style="padding: 24px; display: none;">
+              <!-- Section Header -->
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(33, 150, 243, 0.1); color: #2196F3; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-1);">Security &amp; Password</h3>
+                  <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-3);">Manage and update your faculty portal credentials and password.</p>
+                </div>
+              </div>
+
+              <form id="teacherSecurityForm">
+                <div style="margin-bottom: 18px; width: 100%;">
+                  <label for="teacherCurrentPassword" style="display: block; font-size: 12.5px; font-weight: 600; color: var(--text-1); margin-bottom: 6px;">Current Password <span style="color: #ef4444;">*</span></label>
+                  <input type="password" id="teacherCurrentPassword" class="profile-input" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-grid-2" style="margin-bottom: 20px;">
+                  <div class="form-field-group">
+                    <label for="teacherNewPassword">New Password <span style="color: #ef4444;">*</span></label>
+                    <input type="password" id="teacherNewPassword" class="profile-input" placeholder="At least 8 characters" minlength="8" required>
+                  </div>
+                  <div class="form-field-group">
+                    <label for="teacherConfirmPassword">Confirm New Password <span style="color: #ef4444;">*</span></label>
+                    <input type="password" id="teacherConfirmPassword" class="profile-input" placeholder="Re-enter new password" minlength="8" required>
+                  </div>
+                </div>
+
+                <div style="background: rgba(13, 71, 161, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 24px; font-size: 12px; color: var(--text-2); line-height: 1.5;">
+                  <strong style="color: var(--text-1);">Security Advisory:</strong> Use a minimum of 8 characters with a mix of uppercase letters, numbers, and symbols to ensure faculty account security.
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid var(--border);">
+                  <button type="submit" id="btnUpdateTeacherPassword" class="btn-profile-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Update Password</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-          <span class="pill pill-present text-xs" id="facultyStatusPill">Active Faculty · Duty Verified</span>
         </div>
-
-        <!-- Faculty Summary Banner -->
-        <div class="card" style="padding: 20px 24px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);">
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 58px; height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #ffffff; background: linear-gradient(135deg, var(--ch-900) 0%, var(--ch-500) 100%); box-shadow: 0 4px 14px rgba(13, 71, 161, 0.25);" id="bannerAvatar">
-              RS
-            </div>
-            <div>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-1);" id="bannerTeacherName">Prof. Reynaldo Santos</h2>
-                <span class="pill pill-present" style="font-size: 11px; font-weight: 700;">Faculty Active</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-2); margin-top: 4px; font-family: monospace;">
-                <span>Employee ID: <strong style="color: var(--text-1);" id="bannerEmpNo">EMP-2024-0089</strong></span>
-                <span>·</span>
-                <span>Department: <strong style="color: var(--text-1);" id="bannerDept">College of Computer Studies</strong></span>
-                <span>·</span>
-                <span>RFID: <strong style="color: #10B981;" id="bannerRfid">A4B82194</strong></span>
-              </div>
-            </div>
-          </div>
-          <div style="font-size: 11.5px; color: var(--text-3); text-align: right;">
-            <div>Academic HR &amp; Payroll Subsystem</div>
-            <div style="font-weight: 600; color: var(--text-2);">Automated Duty Tracking Synchronized</div>
-          </div>
-        </div>
-
-        <!-- Two-Column Form Grid -->
-        <form id="teacherProfileForm">
-          <div class="profile-grid">
-            <!-- LEFT COLUMN: Official Admin-Provided Details (READ ONLY / LOCKED) -->
-            <div class="card" style="padding: 22px; display: flex; flex-direction: column;">
-              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                  <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; color: var(--text-1);">Faculty Institutional Credentials</h3>
-                </div>
-                <span class="lock-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  Admin Provided
-                </span>
-              </div>
-
-              <div style="background: rgba(13, 71, 161, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; color: var(--text-2);">
-                <strong style="color: var(--text-1);">Institutional Notice:</strong> Faculty profile records, employee ID, and official BCP credentials are managed directly by Academic HR and the Office of the Registrar.
-              </div>
-
-              <!-- Locked Fields -->
-              <div class="form-group-grid" style="margin-bottom: 14px;">
-                <div class="form-row">
-                  <label class="locked-label">First Name</label>
-                  <input type="text" id="adminFirstName" value="Reynaldo" class="input-field field-locked" readonly>
-                </div>
-                <div class="form-row">
-                  <label class="locked-label">Last Name</label>
-                  <input type="text" id="adminLastName" value="Santos" class="input-field field-locked" readonly>
-                </div>
-              </div>
-
-              <div class="form-group-grid" style="margin-bottom: 14px;">
-                <div class="form-row">
-                  <label class="locked-label">Employee ID Number</label>
-                  <input type="text" id="adminEmpNo" value="EMP-2024-0089" class="input-field field-locked" style="font-family: monospace; font-weight: 700;" readonly>
-                </div>
-                <div class="form-row">
-                  <label class="locked-label">Role &amp; Rank</label>
-                  <input type="text" value="Faculty Member / Instructor" class="input-field field-locked" readonly>
-                </div>
-              </div>
-
-              <div class="form-row" style="margin-bottom: 14px;">
-                <label class="locked-label">Academic Department</label>
-                <input type="text" id="adminDept" value="College of Computer Studies — IT Department" class="input-field field-locked" readonly>
-              </div>
-
-              <div class="form-row" style="margin-bottom: 14px;">
-                <label class="locked-label">Official BCP Faculty Email</label>
-                <input type="email" id="adminEmail" value="r.santos@bcp.edu.ph" class="input-field field-locked" style="font-family: monospace;" readonly>
-              </div>
-
-              <div class="form-row">
-                <label class="locked-label">Faculty Ingress RFID Card UID</label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <input type="text" id="adminRfidUid" value="A4B82194" class="input-field field-locked" style="font-family: monospace; font-weight: 700; color: #10B981; flex: 1;" readonly>
-                  <span class="pill pill-present" style="font-size: 11px; white-space: nowrap;">Gate Verified</span>
-                </div>
-                <span class="field-hint">Paired with ESP32 Turnstile Readers for automated duty tracking</span>
-              </div>
-
-              <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--text-3); display: flex; align-items: center; justify-content: space-between;">
-                <span>Need updates to teaching rank or department?</span>
-                <a href="mailto:academic.hr@bcp.edu.ph" style="color: var(--accent); font-weight: 600; text-decoration: none;">Contact Academic HR</a>
-              </div>
-            </div>
-
-            <!-- RIGHT COLUMN: Editable Self-Service Details (Contact & Consultation) -->
-            <div class="card" style="padding: 22px; display: flex; flex-direction: column;">
-              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #10B981;">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                  </svg>
-                  <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; color: var(--text-1);">Self-Service Contact &amp; Availability</h3>
-                </div>
-                <span class="editable-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  Editable by You
-                </span>
-              </div>
-
-              <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; color: var(--text-2);">
-                <strong style="color: #059669;">Faculty Notice:</strong> Keep your consultation schedule and personal mobile number up to date so department heads and students can contact you during office hours.
-              </div>
-
-              <!-- Editable Fields -->
-              <div class="form-row" style="margin-bottom: 14px;">
-                <label for="teacherMobile">Personal Mobile Number <span style="color: #ef4444;">*</span></label>
-                <input type="tel" id="teacherMobile" placeholder="+63 917 888 1234" value="+639178881234" class="input-field" style="font-family: monospace;" required>
-              </div>
-
-              <div class="form-row" style="margin-bottom: 14px;">
-                <label for="teacherAltEmail">Alternate / Personal Email</label>
-                <input type="email" id="teacherAltEmail" placeholder="prof.reynaldo.santos@gmail.com" value="prof.reynaldo.santos@gmail.com" class="input-field" style="font-family: monospace;">
-              </div>
-
-              <div class="form-row" style="margin-bottom: 14px;">
-                <label for="consultationHours">Student Consultation Hours <span style="color: #ef4444;">*</span></label>
-                <input type="text" id="consultationHours" placeholder="e.g. Monday & Wednesday 2:00 PM – 4:00 PM" value="Monday & Wednesday 2:00 PM – 4:00 PM" class="input-field" required>
-              </div>
-
-              <div class="form-row" style="margin-bottom: 14px;">
-                <label for="officeLocation">Department Office / Desk Location</label>
-                <input type="text" id="officeLocation" placeholder="Faculty Room, 3rd Floor Academic Bldg" value="Room 302, Academic Bldg Faculty Hub" class="input-field">
-              </div>
-
-              <div class="form-group-grid" style="margin-bottom: 14px;">
-                <div class="form-row">
-                  <label for="emergencyName">Emergency Contact Person</label>
-                  <input type="text" id="emergencyName" placeholder="Full Name" value="Elena Santos" class="input-field">
-                </div>
-                <div class="form-row">
-                  <label for="emergencyMobile">Emergency Contact Phone</label>
-                  <input type="tel" id="emergencyMobile" placeholder="+63 919 777 6655" value="+639197776655" class="input-field" style="font-family: monospace;">
-                </div>
-              </div>
-
-              <div class="form-row" style="margin-bottom: 18px;">
-                <label for="teachingBio">Academic Specialization &amp; Notes</label>
-                <textarea id="teachingBio" rows="2" class="input-field" style="resize: vertical; font-family: inherit; font-size: 12px;">Specializing in Integrative Programming, Network Protocols, and Systems Architecture.</textarea>
-              </div>
-
-              <!-- Form Buttons -->
-              <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
-                <button type="button" id="btnResetProfile" class="pillbtn" style="background: transparent; font-size: 12.5px; padding: 8px 16px;">
-                  Discard
-                </button>
-                <button type="submit" id="btnSaveProfile" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 8px 20px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                    <polyline points="17 21 17 13 7 13 7 21"/>
-                    <polyline points="7 3 7 8 15 8"/>
-                  </svg>
-                  <span>Save Faculty Changes</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
       </main>
     </div>
   </div>
