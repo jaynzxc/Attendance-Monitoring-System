@@ -126,8 +126,14 @@
       color: #fb923c;
       border-color: rgba(249, 115, 22, 0.35);
     }
-    .filter-chip-btn {
-      padding: 6px 12px;
+    .calendar-day-cell.sunday-no-class {
+      background: rgba(239, 68, 68, 0.025);
+    }
+    [data-theme="dark"] .calendar-day-cell.sunday-no-class {
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .date-mode-toggle-btn {
+      padding: 7px 12px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 8px;
@@ -135,23 +141,108 @@
       background: var(--surface);
       color: var(--text-2);
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       transition: all 0.15s ease;
     }
-    .filter-chip-btn:hover {
+    .date-mode-toggle-btn:hover {
       background: var(--raised);
       color: var(--text-1);
     }
-    .filter-chip-btn.active {
-      background: var(--accent-soft);
-      color: var(--accent);
+    .date-mode-toggle-btn.active {
+      background: rgba(33, 150, 243, 0.12);
+      color: #0D47A1;
+      border-color: #2196F3;
+      font-weight: 700;
+    }
+    [data-theme="dark"] .date-mode-toggle-btn.active {
+      background: rgba(33, 150, 243, 0.2);
+      color: #90CAF9;
+      border-color: #90CAF9;
+    }
+
+    /* Sidebar Toggle & Expansion Styles */
+    .sidebar-toggle-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      cursor: pointer;
+      border-radius: 9px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle-btn:hover {
+      background: var(--raised);
+      color: var(--text-1);
       border-color: var(--border-strong);
+    }
+    .sidebar-toggle-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+    }
+    .sidebar {
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.2s ease,
+                  transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .layout.sidebar-collapsed .sidebar {
+      margin-left: -242px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .main-col {
+      transition: max-width 0.25s ease;
+    }
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 45;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .sidebar-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 250px;
+        height: 100vh;
+        z-index: 50;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+        transform: translateX(-100%);
+        margin-left: 0 !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
     }
   </style>
 </head>
 <body>
   <div class="layout">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
     <!-- Sidebar Navigation -->
-            <aside class="sidebar" aria-label="Main Navigation">
+    <aside class="sidebar" id="sidebar" aria-label="Main Navigation">
       <div class="brand">
         <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
         <span>AMS Admin</span>
@@ -227,6 +318,22 @@
     <!-- Main Content Layout -->
     <div class="main-col">
       <header class="appbar">
+        <div style="display:flex; align-items:center; gap:12px; margin-right:auto;">
+          <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle Sidebar Navigation" title="Toggle Sidebar (Expand/Collapse)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px; font-weight:700; color:var(--text-1);">Attendance Calendar</span>
+            <span id="wideViewBadge" class="hidden" style="font-size:10px; font-weight:600; padding:2px 8px; border-radius:12px; background:var(--accent-soft); color:var(--accent); border:1px solid var(--border-strong);">
+              Expanded View
+            </span>
+          </div>
+        </div>
+
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
           <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
           <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -264,7 +371,7 @@
           </div>
         </div>
 
-        <!-- Month Navigation Bar & Filter Chips -->
+        <!-- Month Navigation Bar -->
         <div class="card" style="padding:14px 18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <button id="btnPrevMonth" class="pillbtn" style="padding:6px 12px;" aria-label="Previous Month">
@@ -279,16 +386,6 @@
             <button id="btnToday" class="pillbtn" style="padding:6px 12px; margin-left:6px; font-size:12px;">
               Today
             </button>
-          </div>
-
-          <!-- Schedule Type Filters -->
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <button class="filter-chip-btn active" data-filter="all">All Events</button>
-            <button class="filter-chip-btn" data-filter="no_classes">No Classes</button>
-            <button class="filter-chip-btn" data-filter="holiday">Holidays</button>
-            <button class="filter-chip-btn" data-filter="school_event">School Events</button>
-            <button class="filter-chip-btn" data-filter="exam_week">Exam Weeks</button>
-            <button class="filter-chip-btn" data-filter="suspension">Suspensions</button>
           </div>
         </div>
 
@@ -309,7 +406,7 @@
         <div class="card" style="margin-top:16px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:12px;">
           <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
             <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
-              <span class="badge-no-class" style="width:10px; height:10px; border-radius:3px;"></span> No Classes / In-Service
+              <span class="badge-no-class" style="width:10px; height:10px; border-radius:3px;"></span> No Classes (Sundays / Non-Class Days)
             </span>
             <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
               <span class="badge-holiday" style="width:10px; height:10px; border-radius:3px;"></span> Legal Holiday
@@ -329,6 +426,47 @@
           </div>
         </div>
       </main>
+    </div>
+  </div>
+
+  <!-- View Date & Schedule Details Modal -->
+  <div id="dateDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 hidden backdrop-blur-sm">
+    <div class="card max-w-lg w-full p-6 shadow-2xl animate-fade-in" style="background:var(--surface); border-color:var(--border-strong); max-height:88vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+        <div>
+          <h3 id="dateDetailsTitle" style="margin:0; font-size:16px; font-weight:700; color:var(--text-1);">Date Details</h3>
+          <p id="dateDetailsSubtitle" style="margin:2px 0 0; font-size:12px; color:var(--text-2);">Academic Schedule &amp; Ingress Policy</p>
+        </div>
+        <button id="btnCloseDateDetails" style="background:transparent; border:none; color:var(--text-2); cursor:pointer;" aria-label="Close Details Modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Scrollable content area -->
+      <div id="dateDetailsBody" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; padding-right:2px;">
+        <!-- Day Attendance Status Banner -->
+        <div id="dateDetailsStatusBanner"></div>
+
+        <!-- Events / Schedules list -->
+        <div>
+          <div style="font-size:11.5px; font-weight:700; color:var(--text-2); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+            Scheduled Events &amp; Policy Details
+          </div>
+          <div id="dateDetailsEventsList" style="display:flex; flex-direction:column; gap:10px;">
+            <!-- Populated dynamically by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+        <button type="button" id="btnAddScheduleFromDetails" class="pillbtn" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Add Schedule for this Date
+        </button>
+        <button type="button" id="btnCloseDetailsBtn" class="btn-secondary" style="font-size:12px; padding:6px 16px;">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 
@@ -376,15 +514,42 @@
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <div>
-            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Start Date *</label>
+        <!-- Schedule Date Mode Toggle (Single Date vs Date Range) -->
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:6px;">Schedule Duration</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button type="button" id="btnDateModeSingle" class="date-mode-toggle-btn active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span>Single Date</span>
+            </button>
+            <button type="button" id="btnDateModeRange" class="date-mode-toggle-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+                <path d="M8 14h8"/>
+              </svg>
+              <span>Date Range (Multi-Day)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Date Inputs Container -->
+        <div id="datePickersContainer" style="display:grid; grid-template-columns:1fr; gap:12px;">
+          <div id="startDateGroup">
+            <label id="lblStartDate" style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">Date *</label>
             <input type="date" id="scheduleStartDate" class="input-field" required style="width:100%;">
           </div>
 
-          <div>
+          <div id="endDateGroup" style="display:none;">
             <label style="display:block; font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:4px;">End Date *</label>
-            <input type="date" id="scheduleEndDate" class="input-field" required style="width:100%;">
+            <input type="date" id="scheduleEndDate" class="input-field" style="width:100%;">
           </div>
         </div>
 

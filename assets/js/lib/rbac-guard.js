@@ -131,6 +131,9 @@ export function initLayoutBindings(user) {
 
   // Initialize interactive in-app notification center on appbar bell
   initNotifications(user);
+
+  // Initialize universal sidebar toggle across all modules and roles
+  initSidebarToggle();
 }
 
 /**
@@ -160,4 +163,105 @@ export function initThemeToggle() {
       window.dispatchEvent(new CustomEvent('ams-theme-changed', { detail: { theme: newTheme } }));
     };
   }
+}
+
+/**
+ * Initializes universal sidebar toggle button and persistence across all modules & roles
+ */
+export function initSidebarToggle() {
+  const layout = document.querySelector('.layout');
+  const sidebar = document.querySelector('.sidebar');
+  const appbar = document.querySelector('.appbar');
+  if (!layout || !sidebar || !appbar) return;
+
+  // 1. Ensure mobile backdrop exists
+  let backdrop = document.getElementById('sidebarBackdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id = 'sidebarBackdrop';
+    backdrop.className = 'sidebar-backdrop';
+    layout.prepend(backdrop);
+  }
+
+  // 2. Find or dynamically inject burger button into appbar on the left
+  let toggleBtn = document.getElementById('sidebarToggleBtn');
+  if (!toggleBtn) {
+    // Derive module name from page
+    const pageH1 = document.querySelector('.pagehead h1') || document.querySelector('h1');
+    let moduleTitle = '';
+    if (pageH1) {
+      moduleTitle = pageH1.textContent.trim();
+    } else {
+      const parts = document.title.split(/—|–|-|&mdash;/);
+      moduleTitle = parts[parts.length - 1].trim();
+    }
+
+    const leftContainer = document.createElement('div');
+    leftContainer.style.cssText = 'display:flex; align-items:center; gap:12px; margin-right:auto;';
+    leftContainer.innerHTML = `
+      <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle Sidebar Navigation" title="Toggle Sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:13px; font-weight:700; color:var(--text-1);">${moduleTitle}</span>
+      </div>
+    `;
+
+    appbar.prepend(leftContainer);
+    toggleBtn = leftContainer.querySelector('#sidebarToggleBtn');
+  }
+
+  if (!toggleBtn) return;
+
+  const updateUIState = (isCollapsed) => {
+    toggleBtn.title = isCollapsed ? 'Expand Sidebar (Show Navigation)' : 'Collapse Sidebar (Maximize View)';
+    toggleBtn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+    const wideBadge = document.getElementById('wideViewBadge');
+    if (wideBadge) {
+      if (isCollapsed) wideBadge.classList.remove('hidden');
+      else wideBadge.classList.add('hidden');
+    }
+  };
+
+  const toggleSidebar = () => {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      const isOpen = sidebar.classList.toggle('mobile-open');
+      backdrop.classList.toggle('active', isOpen);
+    } else {
+      const isCollapsed = layout.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('ams_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+      updateUIState(isCollapsed);
+      // Trigger resize for Chart.js, tables and grids
+      window.dispatchEvent(new Event('resize'));
+    }
+  };
+
+  // Restore saved collapse preference on desktop
+  const savedState = localStorage.getItem('ams_sidebar_collapsed');
+  if (window.innerWidth > 768 && savedState === 'true') {
+    layout.classList.add('sidebar-collapsed');
+    updateUIState(true);
+  }
+
+  toggleBtn.onclick = (e) => {
+    e.preventDefault();
+    toggleSidebar();
+  };
+
+  backdrop.onclick = () => {
+    sidebar.classList.remove('mobile-open');
+    backdrop.classList.remove('active');
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      sidebar.classList.remove('mobile-open');
+      backdrop.classList.remove('active');
+    }
+  });
 }
