@@ -426,6 +426,13 @@ function exportToCsv() {
 async function init() {
   await requireRole(['admin']);
 
+  // Parse query parameters for deep linking from Dashboard KPIs & quick links
+  const urlParams = new URLSearchParams(window.location.search);
+  const statusParam = urlParams.get('status');
+  const sectionParam = urlParams.get('section');
+  const methodParam = urlParams.get('method');
+  const dateParam = urlParams.get('date');
+
   // Populate sections dropdown
   const sections = await sectionsApi.getSections();
   const secSelect = document.getElementById('filterSection');
@@ -436,6 +443,29 @@ async function init() {
       opt.textContent = `${sec.name} (${sec.program_code})`;
       secSelect.appendChild(opt);
     });
+    if (sectionParam) {
+      secSelect.value = sectionParam;
+    }
+  }
+
+  // Pre-select filter values from URL query parameters if present
+  if (statusParam) {
+    const statusSelect = document.getElementById('filterStatus');
+    if (statusSelect) {
+      statusSelect.value = statusParam.toLowerCase();
+    }
+  }
+  if (methodParam) {
+    const methodSelect = document.getElementById('filterMethod');
+    if (methodSelect) {
+      methodSelect.value = methodParam.toLowerCase();
+    }
+  }
+  if (dateParam) {
+    const dateInput = document.getElementById('filterDate');
+    if (dateInput) {
+      dateInput.value = dateParam;
+    }
   }
 
   // Filter bindings

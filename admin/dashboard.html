@@ -206,29 +206,41 @@
 
         <!-- KPI Summary Cards -->
         <div class="kpis">
-          <div class="card kpi">
-            <div class="label">Present today</div>
+          <a href="attendance-logs.html?status=present" class="card kpi clickable-kpi" title="View Present Attendance Logs">
+            <div class="kpi-header">
+              <div class="label" style="margin-bottom:0;">Present today</div>
+              <svg class="kpi-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
+            </div>
             <div class="num" id="k1">0</div>
             <span class="chip chip-good"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>2.1%</span>
-          </div>
+          </a>
 
-          <div class="card kpi">
-            <div class="label">Attendance rate</div>
+          <a href="analytics.html" class="card kpi clickable-kpi" title="View Institutional Attendance Analytics">
+            <div class="kpi-header">
+              <div class="label" style="margin-bottom:0;">Attendance rate</div>
+              <svg class="kpi-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
+            </div>
             <div class="num" id="k2">0%</div>
             <span class="chip chip-good"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>0.8%</span>
-          </div>
+          </a>
 
-          <div class="card kpi">
-            <div class="label">Tardy / Late</div>
+          <a href="attendance-logs.html?status=late" class="card kpi clickable-kpi" title="View Late / Tardy Attendance Logs">
+            <div class="kpi-header">
+              <div class="label" style="margin-bottom:0;">Tardy / Late</div>
+              <svg class="kpi-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
+            </div>
             <div class="num" id="k3">0</div>
             <span class="chip chip-bad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m18 15-6-6-6 6"/></svg>4 vs yest.</span>
-          </div>
+          </a>
 
-          <div class="card kpi">
-            <div class="label">Unexcused Absences</div>
+          <a href="attendance-logs.html?status=absent" class="card kpi clickable-kpi" title="View Unexcused Absence Logs">
+            <div class="kpi-header">
+              <div class="label" style="margin-bottom:0;">Unexcused Absences</div>
+              <svg class="kpi-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
+            </div>
             <div class="num" id="k4">0</div>
             <span class="chip chip-good"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>12% vs avg</span>
-          </div>
+          </a>
         </div>
 
         <!-- Upper Grid: 5-Week Trend Line & Today's Attendance Radial Breakdown -->
@@ -284,38 +296,50 @@
               </div>
 
               <!-- Vertical Legend Table matching institutional reference -->
-              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:8px;">
+                <a href="attendance-logs.html?status=present" class="donut-legend-row" title="View Present Attendance Logs">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#10B981; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Present</span>
                   </div>
-                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-present">1,042</span>
-                </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-present">1,042</span>
+                    <svg class="row-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </div>
+                </a>
 
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <a href="attendance-logs.html?status=late" class="donut-legend-row" title="View Late / Tardy Attendance Logs">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#F59E0B; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Late / Tardy</span>
                   </div>
-                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-late">37</span>
-                </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-late">37</span>
+                    <svg class="row-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </div>
+                </a>
 
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <a href="attendance-logs.html?status=absent" class="donut-legend-row" title="View Unexcused Absence Logs">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#EF4444; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Absent</span>
                   </div>
-                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-absent">28</span>
-                </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-absent">28</span>
+                    <svg class="row-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </div>
+                </a>
 
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <a href="excuse-slips.html" class="donut-legend-row" title="View Digital Excuse Slips Workbench">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#3B82F6; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Excused</span>
                   </div>
-                  <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-excused">16</span>
-                </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="donut-excused">16</span>
+                    <svg class="row-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </div>
+                </a>
               </div>
             </div>
 
