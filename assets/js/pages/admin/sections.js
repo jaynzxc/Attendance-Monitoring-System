@@ -154,10 +154,24 @@ function getStudentYearInfo(student) {
     }
   }
 
-  // 2. From student number prefix (e.g. 2026 -> 1st Year, 2025 -> 2nd Year, 2024 -> 3rd Year, 2023 -> 4th Year)
-  const numMatch = String(student.student_number || '').match(/^(\d{4})/);
-  if (numMatch) {
-    const entryYear = parseInt(numMatch[1], 10);
+  // 2. From BCP student number (e.g. s230110001 or 230110001 -> Batch 23/2023, 2024 -> Batch 2024)
+  const cleanNum = String(student.student_number || '').trim().replace(/^s/i, '');
+  const bcpMatch = cleanNum.match(/^(\d{2})(\d{3})(\d{4})$/);
+  if (bcpMatch) {
+    const entryYear2Digits = parseInt(bcpMatch[1], 10);
+    const fullEntryYear = entryYear2Digits < 50 ? 2000 + entryYear2Digits : 1900 + entryYear2Digits;
+    const yearLevel = Math.max(1, Math.min(4, 2026 - fullEntryYear + 1));
+    return {
+      yearLevel,
+      yearLevelName: `${yearLevel}${yearLevel === 1 ? 'st' : yearLevel === 2 ? 'nd' : yearLevel === 3 ? 'rd' : 'th'} Year`,
+      source: `Batch 20${entryYear2Digits}`
+    };
+  }
+
+  // 3. Fallback for legacy 4-digit year prefix (e.g. 2024-00101)
+  const legacyMatch = cleanNum.match(/^(\d{4})/);
+  if (legacyMatch) {
+    const entryYear = parseInt(legacyMatch[1], 10);
     const yearLevel = Math.max(1, Math.min(4, 2026 - entryYear + 1));
     return {
       yearLevel,
@@ -311,7 +325,7 @@ async function viewSectionRoster(secId) {
               </div>
               <div>
                 <label style="display:block; font-size:11.5px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Or Paste Student Numbers (comma or newline separated)</label>
-                <textarea id="csvPasteTextarea" class="input-field" rows="3" placeholder="e.g.&#10;s230110001&#10;s230110002&#10;s230110003" style="width:100%; font-size:12px; font-family:monospace; resize:none;"></textarea>
+                <textarea id="csvPasteTextarea" class="input-field" rows="3" placeholder="e.g.&#10;230110001&#10;s230110002&#10;230110003" style="width:100%; font-size:12px; font-family:monospace; resize:none;"></textarea>
               </div>
             </div>
 
@@ -665,16 +679,32 @@ async function viewSectionRoster(secId) {
       const eligible = getEligibleStudents();
 
       const matchedStudents = [];
-      const unmatchedTokens = [];
+      const validUnregisteredTokens = [];
+      const unrecognizedTokens = [];
+
+      // The leading "s" in BCP student numbers only marks the account as a student,
+      // so "s230110001" and "230110001" must resolve to the same record.
+      const normalizeStudentNo = (value) => value.toLowerCase().replace(/^s(?=\d+$)/, '');
+
+      // Check if a token matches the BCP Student Number format:
+      // Optional leading "s" followed by 5-digit prefix + 4-digit numeric sequence (e.g., 23011XXXX or s23011XXXX)
+      const isBcpFormat = (str) => /^s?\d{5}\d{4}$/i.test(str) || /^s?\d{2}\d{7}$/i.test(str);
 
       lines.forEach(token => {
         const cleanToken = token.replace(/["']/g, '').trim().toLowerCase();
         if (!cleanToken) return;
 
+        // Ignore standard table header rows from CSV exports
+        if (cleanToken === 'student_id' || cleanToken === 'student_number' || cleanToken === 'id' || cleanToken === 'email' || cleanToken === 'student number') {
+          return;
+        }
+
+        const tokenNo = normalizeStudentNo(cleanToken);
+
         const found = eligible.find(st => {
-          const num = (st.student_number || '').toLowerCase();
+          const num = normalizeStudentNo(st.student_number || '');
           const email = (st.email || '').toLowerCase();
-          return num === cleanToken || email === cleanToken;
+          return (num !== '' && num === tokenNo) || email === cleanToken;
         });
 
         if (found) {
@@ -682,9 +712,27 @@ async function viewSectionRoster(secId) {
             matchedStudents.push(found);
           }
         } else {
-          // Exclude header rows like "student_id", "student_number"
-          if (!cleanToken.includes('student') && !cleanToken.includes('id') && !cleanToken.includes('number')) {
-            unmatchedTokens.push(token);
+          // Check if it's already enrolled in this section
+          const alreadyEnrolled = enrolledStudents.some(st => {
+            const num = normalizeStudentNo(st.student_number || '');
+            const email = (st.email || '').toLowerCase();
+            return (num !== '' && num === tokenNo) || email === cleanToken;
+          });
+
+          if (alreadyEnrolled) {
+            // Already enrolled in this section, skip silently or note
+            return;
+          }
+
+          // Check if token follows valid BCP student number structure (e.g. 23011XXXX)
+          if (isBcpFormat(cleanToken)) {
+            if (!validUnregisteredTokens.includes(token)) {
+              validUnregisteredTokens.push(token);
+            }
+          } else {
+            if (!unrecognizedTokens.includes(token)) {
+              unrecognizedTokens.push(token);
+            }
           }
         }
       });
@@ -692,27 +740,58 @@ async function viewSectionRoster(secId) {
       matchedCsvStudentIds = matchedStudents.map(s => s.id);
 
       if (csvMatchStatus) {
-        csvMatchStatus.innerHTML = `
-          <span style="color:var(--present);">✓ ${matchedStudents.length} Matched</span>
-          ${unmatchedTokens.length > 0 ? `<span style="color:var(--late); margin-left:8px;">(${unmatchedTokens.length} unrecognized)</span>` : ''}
-        `;
+        let statusHtml = `<span style="color:var(--present); font-weight:600;">${matchedStudents.length} Matched</span>`;
+        if (validUnregisteredTokens.length > 0) {
+          statusHtml += `<span style="color:var(--late); margin-left:8px; font-weight:600;">(${validUnregisteredTokens.length} not in directory)</span>`;
+        }
+        if (unrecognizedTokens.length > 0) {
+          statusHtml += `<span style="color:var(--absent); margin-left:8px;">(${unrecognizedTokens.length} invalid format)</span>`;
+        }
+        csvMatchStatus.innerHTML = statusHtml;
       }
 
       if (csvPreviewContainer) {
         csvPreviewContainer.style.display = 'block';
-        csvPreviewContainer.innerHTML = `
-          <div style="font-weight:700; margin-bottom:6px; color:var(--text-1);">Matched Students Ready for Enrollment:</div>
-          ${matchedStudents.length === 0 ? `
-            <div style="color:var(--text-3); font-style:italic;">No valid student IDs found matching directory. Check format (e.g. s230110001).</div>
-          ` : `
-            <ul style="margin:0; padding-left:16px; color:var(--text-1);">
+
+        let html = '';
+        if (matchedStudents.length > 0) {
+          html += `
+            <div style="font-weight:700; margin-bottom:6px; color:var(--text-1);">Matched Students Ready for Enrollment (${matchedStudents.length}):</div>
+            <ul style="margin:0 0 10px 0; padding-left:16px; color:var(--text-1);">
               ${matchedStudents.map(s => `<li><strong>${s.student_number}</strong> — ${s.first_name} ${s.last_name} (${getStudentYearInfo(s).yearLevelName})</li>`).join('')}
             </ul>
-          `}
-          ${unmatchedTokens.length > 0 ? `
-            <div style="margin-top:8px; font-size:11px; color:var(--late);">Unrecognized tokens: ${unmatchedTokens.slice(0, 5).join(', ')}${unmatchedTokens.length > 5 ? '...' : ''}</div>
-          ` : ''}
-        `;
+          `;
+        } else {
+          html += `
+            <div style="color:var(--text-3); font-style:italic; margin-bottom:8px;">
+              No registered students matched from the directory.
+            </div>
+          `;
+        }
+
+        if (validUnregisteredTokens.length > 0) {
+          html += `
+            <div style="padding:8px 10px; background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.25); border-radius:6px; margin-bottom:8px; font-size:11.5px;">
+              <div style="font-weight:700; color:var(--late); margin-bottom:4px;">Valid BCP Student Numbers Not Yet Registered (${validUnregisteredTokens.length}):</div>
+              <div style="color:var(--text-2); font-family:monospace; word-break:break-all;">
+                ${validUnregisteredTokens.join(', ')}
+              </div>
+              <div style="margin-top:4px; color:var(--text-3); font-size:11px;">
+                Note: Register these students first in the Student Directory before adding them to a section.
+              </div>
+            </div>
+          `;
+        }
+
+        if (unrecognizedTokens.length > 0) {
+          html += `
+            <div style="padding:6px 10px; background:rgba(239, 68, 68, 0.06); border:1px solid rgba(239, 68, 68, 0.2); border-radius:6px; font-size:11px; color:var(--absent);">
+              <strong>Invalid / Unrecognized Tokens (${unrecognizedTokens.length}):</strong> ${unrecognizedTokens.slice(0, 8).join(', ')}${unrecognizedTokens.length > 8 ? '...' : ''}
+            </div>
+          `;
+        }
+
+        csvPreviewContainer.innerHTML = html;
       }
 
       if (submitCsvBtn) {
