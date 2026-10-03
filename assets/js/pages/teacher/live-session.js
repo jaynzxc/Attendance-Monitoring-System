@@ -1630,12 +1630,34 @@ async function handleStartStudentQrSession() {
 
   const sessionType = 'time_in';
 
+  // Best-effort geolocation to anchor 15-meter classroom geofence
+  let teacherLat = 14.7011;
+  let teacherLng = 121.0409; // Default Bestlink College campus centroid
+
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 4000,
+          maximumAge: 60000
+        });
+      });
+      teacherLat = pos.coords.latitude;
+      teacherLng = pos.coords.longitude;
+    } catch (e) {
+      console.warn('[AMS Teacher Live Session] Using campus centroid coordinates for QR geofence:', e);
+    }
+  }
+
   try {
     const session = await attendanceApi.startSession({
       sectionId: currentSec.id,
       scanMethod: 'qr',
       durationMinutes: 30,
-      sessionType: 'time_in'
+      sessionType: 'time_in',
+      teacherLat,
+      teacherLng
     });
 
     activeSession = { ...session, session_type: 'time_in', scan_method: 'qr', section_id: currentSec.id };

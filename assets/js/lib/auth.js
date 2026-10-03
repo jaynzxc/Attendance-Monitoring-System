@@ -19,16 +19,22 @@ export async function login(identifier, password) {
   try {
     let emailToAuth = (identifier || '').trim().toLowerCase();
 
-    // If identifier is not an email address, lookup email by student_number or employee_number
+    // If identifier is not an email address, lookup email by role or ID numbers
     if (!emailToAuth.includes('@')) {
-      const { data: matchedUser } = await sb
-        .from('users')
-        .select('email')
-        .or(`student_number.ilike.${emailToAuth},employee_number.ilike.${emailToAuth}`)
-        .maybeSingle();
-
-      if (matchedUser?.email) {
-        emailToAuth = matchedUser.email;
+      try {
+        const { data: resolvedEmail } = await sb.rpc('fn_resolve_login_email', {
+          p_identifier: emailToAuth
+        });
+        if (resolvedEmail) {
+          emailToAuth = resolvedEmail;
+        } else if (['admin', 'administrator', 'registrar'].includes(emailToAuth)) {
+          emailToAuth = 'jaynzxc.devs@gmail.com';
+        }
+      } catch (rpcErr) {
+        console.warn('[auth.js] fn_resolve_login_email failed, fallback to direct query:', rpcErr);
+        if (['admin', 'administrator', 'registrar'].includes(emailToAuth)) {
+          emailToAuth = 'jaynzxc.devs@gmail.com';
+        }
       }
     }
 
@@ -41,20 +47,42 @@ export async function login(identifier, password) {
       return { user: null, role: null, error: authError.message };
     }
 
-    // Resolve institutional role from public.users table
-    const { data: userProfile, error: profileError } = await sb
+    // Resolve institutional role from public.users table (including activation status)
+    let userProfile = null;
+    let { data: profileWithActivation, error: profileError } = await sb
       .from('users')
-      .select('id, role, first_name, last_name, email, status, student_number, employee_number')
+      .select('id, role, first_name, last_name, email, status, student_number, employee_number, is_activated')
       .eq('id', authData.user.id)
       .single();
 
-    if (profileError || !userProfile) {
+    if (profileError && profileError.message?.includes('is_activated')) {
+      const { data: basicProfile } = await sb
+        .from('users')
+        .select('id, role, first_name, last_name, email, status, student_number, employee_number')
+        .eq('id', authData.user.id)
+        .single();
+      userProfile = basicProfile;
+    } else {
+      userProfile = profileWithActivation;
+    }
+
+    if (!userProfile) {
       // If profile not yet synced, fallback to user metadata
       const fallbackRole = authData.user.user_metadata?.role || 'student';
       return {
         user: authData.user,
         role: fallbackRole,
         error: null
+      };
+    }
+
+    // Enforce Account Activation Guard
+    if (userProfile.is_activated === false) {
+      await sb.auth.signOut();
+      return {
+        user: null,
+        role: null,
+        error: 'Your account has not been activated yet. Please check your email for the activation link.'
       };
     }
 

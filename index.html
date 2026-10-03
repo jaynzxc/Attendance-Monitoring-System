@@ -374,6 +374,129 @@
       margin: 0;
     }
 
+    /* 2FA OTP Elements */
+    .otp-subtitle {
+      font-size: 13px;
+      color: var(--text-2);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .otp-target-highlight {
+      font-weight: 700;
+      color: var(--ch-900);
+      word-break: break-all;
+    }
+    [data-theme="dark"] .otp-target-highlight {
+      color: var(--ch-200);
+    }
+    .otp-inputs-grid {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .otp-digit {
+      width: 44px;
+      height: 52px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--ch-900);
+      transition: all 0.15s ease;
+      outline: none;
+    }
+    .otp-digit:focus {
+      border-color: var(--accent);
+      background: var(--surface-hover);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      transform: translateY(-2px);
+    }
+    [data-theme="dark"] .otp-digit {
+      background: var(--raised);
+      border-color: var(--border);
+      color: var(--text-1);
+    }
+    [data-theme="dark"] .otp-digit:focus {
+      background: #0E2242;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .otp-timer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--text-2);
+      margin-bottom: 18px;
+    }
+    .otp-countdown {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--ch-900);
+    }
+    [data-theme="dark"] .otp-countdown {
+      color: var(--ch-200);
+    }
+    .otp-resend-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      transition: opacity 0.15s;
+    }
+    .otp-resend-btn:disabled {
+      color: var(--text-3);
+      cursor: not-allowed;
+      text-decoration: none;
+      opacity: 0.6;
+    }
+    .back-btn-row {
+      text-align: center;
+      margin-top: 14px;
+      margin-bottom: 16px;
+    }
+    .back-to-login-btn {
+      background: none;
+      border: none;
+      color: var(--text-2);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.15s;
+    }
+    .back-to-login-btn:hover {
+      color: var(--accent);
+    }
+    .info-banner {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 9px;
+      background: var(--ch-100);
+      border: 1px solid var(--border-strong);
+      color: var(--ch-900);
+      font-size: 12.5px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    [data-theme="dark"] .info-banner {
+      background: rgba(33, 150, 243, 0.15);
+      border-color: var(--accent);
+      color: var(--ch-200);
+    }
+
     /* Card Footer Copyright */
     .auth-card-footer {
       text-align: center;
@@ -400,7 +523,13 @@
       <div class="brand-header">
         <img src="assets/images/logo.png" alt="Bestlink College of the Philippines" class="brand-logo-img" width="52" height="52">
         <div class="system-title-tag">ATTENDANCE MONITORING SYSTEM</div>
-        <h1 class="signin-heading">Sign In</h1>
+        <h1 class="signin-heading" id="authHeading">Sign In</h1>
+      </div>
+
+      <!-- Info / Success Alert Banner -->
+      <div id="infoBanner" class="info-banner" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span id="infoMessage">Verification code dispatched.</span>
       </div>
 
       <!-- Error Alert Banner -->
@@ -409,7 +538,7 @@
         <span id="errorMessage">Invalid username or password.</span>
       </div>
 
-      <!-- Authentication Form -->
+      <!-- Step 1: Credentials Authentication Form -->
       <form id="loginForm" autocomplete="on">
         <!-- Username / Email / ID Input -->
         <div class="auth-input-group">
@@ -468,8 +597,45 @@
         </button>
       </form>
 
+      <!-- Step 2: Two-Factor Authentication (2FA OTP) Form -->
+      <form id="otpForm" style="display: none;" autocomplete="off">
+        <div class="otp-subtitle">
+          Please enter the 6-digit verification code sent to your email:<br>
+          <span id="otpTargetEmail" class="otp-target-highlight">user@bestlink.edu.ph</span>
+        </div>
+
+        <!-- 6-Digit OTP Inputs Grid -->
+        <div class="otp-inputs-grid" id="otpInputsGrid">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" data-index="0" aria-label="Digit 1">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" data-index="1" aria-label="Digit 2">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" data-index="2" aria-label="Digit 3">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" data-index="3" aria-label="Digit 4">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" data-index="4" aria-label="Digit 5">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-digit" data-index="5" aria-label="Digit 6">
+        </div>
+
+        <!-- Expiration Timer & Resend Option -->
+        <div class="otp-timer-row">
+          <span>Expires in: <strong id="otpCountdown" class="otp-countdown">05:00</strong></span>
+          <button type="button" id="resendOtpBtn" class="otp-resend-btn" disabled>Resend Code</button>
+        </div>
+
+        <!-- Verify OTP Button -->
+        <button type="submit" id="otpSubmitBtn" class="auth-submit-btn">
+          <span>Verify & Sign In</span>
+        </button>
+
+        <!-- Back to Credentials Link -->
+        <div class="back-btn-row">
+          <button type="button" id="backToLoginBtn" class="back-to-login-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back to Sign In
+          </button>
+        </div>
+      </form>
+
       <!-- Institutional Notice Box -->
-      <div class="notice-box">
+      <div class="notice-box" id="noticeBox">
         <div class="notice-badge">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
@@ -492,18 +658,110 @@
   <script type="module">
     import { login, getRoleDashboardPath } from './assets/js/lib/auth.js';
     import { initThemeToggle } from './assets/js/lib/rbac-guard.js';
+    import { auth2faApi } from './assets/js/api/auth2faApi.js';
 
     // 1. Initialize dark/light mode toggle
     initThemeToggle();
 
-    const form = document.getElementById('loginForm');
+    // DOM Elements
+    const authHeading = document.getElementById('authHeading');
+    const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('emailInput');
     const passwordInput = document.getElementById('passwordInput');
     const passwordToggleBtn = document.getElementById('passwordToggleBtn');
     const eyeIcon = document.getElementById('eyeIcon');
+    const submitBtn = document.getElementById('submitBtn');
+    const noticeBox = document.getElementById('noticeBox');
+
+    const otpForm = document.getElementById('otpForm');
+    const otpTargetEmail = document.getElementById('otpTargetEmail');
+    const otpInputs = document.querySelectorAll('.otp-digit');
+    const otpCountdown = document.getElementById('otpCountdown');
+    const resendOtpBtn = document.getElementById('resendOtpBtn');
+    const otpSubmitBtn = document.getElementById('otpSubmitBtn');
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+
     const errorBanner = document.getElementById('errorBanner');
     const errorMessage = document.getElementById('errorMessage');
-    const submitBtn = document.getElementById('submitBtn');
+    const infoBanner = document.getElementById('infoBanner');
+    const infoMessage = document.getElementById('infoMessage');
+
+    // Check for reason in URL (e.g. session inactivity timeout)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reason') === 'timeout') {
+      infoMessage.textContent = 'Your session has expired due to inactivity. Please sign in again.';
+      infoBanner.style.display = 'flex';
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // 2FA State
+    let pendingAuth = null;
+    let countdownInterval = null;
+    let resendInterval = null;
+
+    // Helper: Mask email address for privacy (e.g. j***z@bestlink.edu.ph)
+    function maskEmail(email) {
+      if (!email || !email.includes('@')) return email || 'your email';
+      const [user, domain] = email.split('@');
+      if (user.length <= 2) {
+        return `${user[0]}*@${domain}`;
+      }
+      return `${user[0]}${'*'.repeat(Math.min(user.length - 2, 5))}${user.slice(-1)}@${domain}`;
+    }
+
+    // Helper: 5-Minute OTP Expiration Countdown
+    function startCountdown(durationSeconds = 300) {
+      clearInterval(countdownInterval);
+      let remaining = durationSeconds;
+
+      function updateDisplay() {
+        const mins = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const secs = String(remaining % 60).padStart(2, '0');
+        otpCountdown.textContent = `${mins}:${secs}`;
+
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          errorMessage.textContent = 'Verification code has expired. Please click "Resend Code".';
+          errorBanner.style.display = 'flex';
+          otpSubmitBtn.disabled = true;
+          otpSubmitBtn.style.opacity = '0.6';
+        }
+      }
+
+      otpSubmitBtn.disabled = false;
+      otpSubmitBtn.style.opacity = '1';
+      updateDisplay();
+
+      countdownInterval = setInterval(() => {
+        remaining -= 1;
+        updateDisplay();
+      }, 1000);
+    }
+
+    // Helper: 2-Minute Resend Cooldown (120 seconds)
+    function startResendCooldown(cooldownSeconds = 120) {
+      clearInterval(resendInterval);
+      let cooldown = cooldownSeconds;
+      resendOtpBtn.disabled = true;
+
+      function updateResendText() {
+        if (cooldown > 0) {
+          const mins = Math.floor(cooldown / 60);
+          const secs = String(cooldown % 60).padStart(2, '0');
+          resendOtpBtn.textContent = `Resend Code (${mins}:${secs})`;
+        } else {
+          clearInterval(resendInterval);
+          resendOtpBtn.disabled = false;
+          resendOtpBtn.textContent = 'Resend Code';
+        }
+      }
+
+      updateResendText();
+      resendInterval = setInterval(() => {
+        cooldown -= 1;
+        updateResendText();
+      }, 1000);
+    }
 
     // 2. Password Visibility Toggle Handler
     let isPasswordVisible = false;
@@ -529,10 +787,12 @@
       }
     });
 
-    // 3. Form Submission & Credential-Driven Authentication
-    form.addEventListener('submit', async (e) => {
+    // 3. Step 1: Credentials Form Submission
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorBanner.style.display = 'none';
+      infoBanner.style.display = 'none';
+
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.75';
       submitBtn.innerHTML = `
@@ -546,79 +806,224 @@
       const rawInput = emailInput.value.trim();
       const password = passwordInput.value;
 
-      // Normalize username/ID input: resolve ID numbers (t... for teacher, s... for student) or aliases
-      let email = rawInput;
-      let matchedTeacherId = null;
-      let matchedStudentId = null;
-
-      if (!rawInput.includes('@')) {
-        const lower = rawInput.toLowerCase();
-        if (lower === 'admin' || lower === 'administrator' || lower === 'registrar') {
-          email = 'admin@bestlink.edu.ph';
-        } else if (lower.startsWith('t') && /^t\d{8,10}$/i.test(lower)) {
-          // Teacher ID format: e.g. t230110001
-          matchedTeacherId = lower;
-          email = 'prof.santos@bestlink.edu.ph';
-        } else if (lower.startsWith('s') && /^s\d{8,10}$/i.test(lower)) {
-          // Student Number format: e.g. s230110001
-          matchedStudentId = lower;
-          email = 'juan.delacruz@gmail.com';
-        } else if (lower.startsWith('prof') || lower.startsWith('teach') || lower === 'santos') {
-          email = 'prof.santos@bestlink.edu.ph';
-        } else if (lower.startsWith('stud') || lower === 'juan') {
-          email = 'juan.delacruz@gmail.com';
-        } else {
-          email = `${lower}@bestlink.edu.ph`;
-        }
-      }
-
       try {
         const result = await login(rawInput, password);
 
         if (result.error) {
-          // Graceful local development resolution based on entered email / ID
-          const lower = rawInput.toLowerCase();
-          const isDevAdmin = lower.includes('admin') || lower.includes('registrar');
-          const isDevTeacher = lower.startsWith('t') || lower.includes('prof') || lower.includes('teach') || lower.includes('faculty') || lower.includes('santos');
-          const isDevStudent = lower.startsWith('s') || lower.includes('student') || lower.includes('juan') || lower.includes('delacruz');
-
-          if (isDevAdmin || isDevTeacher || isDevStudent) {
-            const detectedRole = isDevAdmin ? 'admin' : (isDevTeacher ? 'teacher' : 'student');
-            const demoUserId = detectedRole === 'admin' 
-              ? 'a0000000-0000-0000-0000-000000000001' 
-              : (detectedRole === 'teacher' ? 'b0000000-0000-0000-0000-000000000001' : 'c0000000-0000-0000-0000-000000000001');
-
-            sessionStorage.setItem('ams_cached_role', detectedRole);
-            sessionStorage.setItem('ams_cached_user', JSON.stringify({
-              id: demoUserId,
-              email: email,
-              role: detectedRole,
-              employee_number: detectedRole === 'teacher' ? (matchedTeacherId || 't230110001') : (detectedRole === 'admin' ? 'ADM-2024-001' : null),
-              student_number: detectedRole === 'student' ? (matchedStudentId || 's230110001') : (detectedRole === 'teacher' ? (matchedTeacherId || 't230110001') : null),
-              first_name: detectedRole === 'admin' ? 'Administrator' : (detectedRole === 'teacher' ? 'Ricardo' : 'Juan'),
-              last_name: detectedRole === 'admin' ? '' : (detectedRole === 'teacher' ? 'Santos' : 'Dela Cruz')
-            }));
-
-            window.location.href = getRoleDashboardPath(detectedRole);
-            return;
-          }
-
           errorMessage.textContent = result.error;
           errorBanner.style.display = 'flex';
-        } else {
-          sessionStorage.setItem('ams_cached_role', result.role);
-          sessionStorage.setItem('ams_cached_user', JSON.stringify(result.user));
-          window.location.href = getRoleDashboardPath(result.role);
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.innerHTML = `<span>Sign in</span>`;
+          return;
         }
+
+        // Credentials valid: Hold session and proceed to 2FA Step
+        pendingAuth = {
+          user: result.user,
+          role: result.role,
+        };
+
+        // Switch UI to 2FA Form
+        loginForm.style.display = 'none';
+        noticeBox.style.display = 'none';
+        otpForm.style.display = 'block';
+        authHeading.textContent = '2-Step Verification';
+        otpTargetEmail.textContent = maskEmail(result.user.email);
+
+        // Dispatch 2FA OTP via Brevo
+        await sendOtp();
+
       } catch (err) {
         console.error('[AMS Auth Error]:', err);
-        errorMessage.textContent = 'An unexpected error occurred. Please try again.';
+        errorMessage.textContent = 'An unexpected authentication error occurred.';
         errorBanner.style.display = 'flex';
-      } finally {
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
         submitBtn.innerHTML = `<span>Sign in</span>`;
       }
+    });
+
+    // Helper: Dispatch OTP Code
+    async function sendOtp() {
+      if (!pendingAuth?.user) return;
+      errorBanner.style.display = 'none';
+      infoBanner.style.display = 'none';
+
+      // Clear input boxes
+      otpInputs.forEach(input => { input.value = ''; });
+      otpInputs[0]?.focus();
+
+      try {
+        const res = await auth2faApi.requestOtp();
+
+        if (!res.success) {
+          throw new Error(res.error || 'OTP dispatch failed');
+        }
+
+        infoMessage.textContent = 'A 6-digit verification code has been dispatched to your email.';
+        infoBanner.style.display = 'flex';
+
+        startCountdown(300); // 5 minutes OTP validity
+        startResendCooldown(120); // 2 minutes email resend cooldown
+      } catch (err) {
+        console.error('[AMS 2FA Dispatch Error]:', err);
+        errorMessage.textContent = 'Failed to dispatch verification code. Please click Resend Code.';
+        errorBanner.style.display = 'flex';
+        resendOtpBtn.disabled = false;
+        resendOtpBtn.textContent = 'Resend Code';
+      }
+    }
+
+    // 4. OTP Inputs Keyboard Navigation & Paste Handling
+    otpInputs.forEach((input, index) => {
+      // Auto-advance on single digit
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = val ? val[0] : '';
+
+        if (e.target.value && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+
+        // Auto-submit if all 6 digits are filled
+        const allFilled = Array.from(otpInputs).every(inp => inp.value.length === 1);
+        if (allFilled) {
+          otpSubmitBtn.click();
+        }
+      });
+
+      // Backspace navigation
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          if (!input.value && index > 0) {
+            otpInputs[index - 1].focus();
+            otpInputs[index - 1].value = '';
+          }
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+          otpInputs[index - 1].focus();
+        } else if (e.key === 'ArrowRight' && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+      });
+
+      // Paste handling (e.g. copying 6 digits from email)
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').trim();
+        const digits = pasted.replace(/[^0-9]/g, '').slice(0, 6);
+
+        if (digits) {
+          digits.split('').forEach((digit, i) => {
+            if (otpInputs[i]) {
+              otpInputs[i].value = digit;
+            }
+          });
+
+          const focusIdx = Math.min(digits.length, otpInputs.length - 1);
+          otpInputs[focusIdx].focus();
+
+          if (digits.length === 6) {
+            otpSubmitBtn.click();
+          }
+        }
+      });
+    });
+
+    // 5. Resend OTP Button Handler
+    resendOtpBtn.addEventListener('click', async () => {
+      resendOtpBtn.disabled = true;
+      resendOtpBtn.textContent = 'Sending...';
+      await sendOtp();
+    });
+
+    // 6. Step 2: OTP Form Submission & Verification
+    otpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBanner.style.display = 'none';
+
+      const enteredCode = Array.from(otpInputs).map(inp => inp.value.trim()).join('');
+
+      if (enteredCode.length !== 6) {
+        errorMessage.textContent = 'Please enter all 6 digits of the verification code.';
+        errorBanner.style.display = 'flex';
+        return;
+      }
+
+      otpSubmitBtn.disabled = true;
+      otpSubmitBtn.style.opacity = '0.75';
+      otpSubmitBtn.innerHTML = `
+        <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+        </svg>
+        <span>Verifying Code...</span>
+      `;
+
+      try {
+        const verifyResult = await auth2faApi.verifyOtp(pendingAuth.user.id, enteredCode);
+
+        if (!verifyResult.success) {
+          errorMessage.textContent = verifyResult.error || 'Incorrect verification code.';
+          errorBanner.style.display = 'flex';
+          
+          // Shake / highlight inputs
+          otpInputs.forEach(i => {
+            i.style.borderColor = 'var(--absent)';
+            setTimeout(() => { i.style.borderColor = ''; }, 1800);
+          });
+          otpInputs[0]?.focus();
+
+          otpSubmitBtn.disabled = false;
+          otpSubmitBtn.style.opacity = '1';
+          otpSubmitBtn.innerHTML = `<span>Verify & Sign In</span>`;
+          return;
+        }
+
+        // 2FA Verified! Save authenticated session to browser
+        clearInterval(countdownInterval);
+        clearInterval(resendInterval);
+
+        sessionStorage.setItem('ams_cached_role', pendingAuth.role);
+        sessionStorage.setItem('ams_cached_user', JSON.stringify(pendingAuth.user));
+
+        otpSubmitBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Access Granted! Redirecting...</span>
+        `;
+
+        setTimeout(() => {
+          window.location.href = getRoleDashboardPath(pendingAuth.role);
+        }, 400);
+
+      } catch (err) {
+        console.error('[AMS 2FA Verification Error]:', err);
+        errorMessage.textContent = 'An error occurred while verifying the code. Please try again.';
+        errorBanner.style.display = 'flex';
+        otpSubmitBtn.disabled = false;
+        otpSubmitBtn.style.opacity = '1';
+        otpSubmitBtn.innerHTML = `<span>Verify & Sign In</span>`;
+      }
+    });
+
+    // 7. Back to Login Handler
+    backToLoginBtn.addEventListener('click', () => {
+      clearInterval(countdownInterval);
+      clearInterval(resendInterval);
+      pendingAuth = null;
+
+      otpForm.style.display = 'none';
+      loginForm.style.display = 'block';
+      noticeBox.style.display = 'flex';
+      authHeading.textContent = 'Sign In';
+
+      errorBanner.style.display = 'none';
+      infoBanner.style.display = 'none';
+
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.innerHTML = `<span>Sign in</span>`;
+      passwordInput.value = '';
     });
   </script>
 </body>

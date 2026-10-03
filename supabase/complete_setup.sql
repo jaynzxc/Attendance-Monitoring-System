@@ -110,7 +110,7 @@ create table if not exists public.attendance_sessions (
   status text not null default 'active' check (status in ('active', 'closed')),
   teacher_lat float8,
   teacher_lng float8,
-  geo_radius_meters int not null default 50,
+  geo_radius_meters int not null default 15,
   qr_token_rotation_sec int not null default 30,
   qr_last_rotated_at timestamptz,
   created_at timestamptz not null default now(),
@@ -764,7 +764,7 @@ declare
   v_actor_role text;
   v_present_window_min int := 20;
   v_session_duration_min int := 30;
-  v_geo_radius_meters int := 50;
+  v_geo_radius_meters int := 15;
   v_qr_rotation_sec int := 30;
   v_existing_id uuid;
   v_session_id uuid;
@@ -842,9 +842,9 @@ begin
   from public.system_settings where setting_key = 'attendance_session_duration_min';
   v_session_duration_min := coalesce(v_session_duration_min, 30);
 
-  select coalesce(nullif(setting_value, '')::int, 50) into v_geo_radius_meters
+  select coalesce(nullif(setting_value, '')::int, 15) into v_geo_radius_meters
   from public.system_settings where setting_key = 'qr_geo_radius_meters';
-  v_geo_radius_meters := coalesce(v_geo_radius_meters, 50);
+  v_geo_radius_meters := coalesce(v_geo_radius_meters, 15);
 
   select coalesce(nullif(setting_value, '')::int, 30) into v_qr_rotation_sec
   from public.system_settings where setting_key = 'qr_token_rotation_sec';
@@ -1496,7 +1496,7 @@ insert into public.system_settings (setting_key, setting_value, description) val
   ('attendance_present_window_min', '20', 'Threshold minutes from session start to mark attendance as Present (vs Late)'),
   ('attendance_session_duration_min', '30', 'Total duration in minutes an attendance session remains open'),
   ('anti_passback_cooldown_sec', '300', 'Anti-passback cooldown window in seconds (5 minutes) to prevent duplicate card taps'),
-  ('qr_geo_radius_meters', '50', 'Maximum allowable student-to-teacher geolocation distance in meters for QR scans'),
+  ('qr_geo_radius_meters', '15', 'Maximum allowable student-to-teacher geolocation distance in meters for QR scans (15m perimeter)'),
   ('qr_token_rotation_sec', '30', 'Dynamic ephemeral QR token rotation interval in seconds')
 on conflict (setting_key) do update set
   description = excluded.description;

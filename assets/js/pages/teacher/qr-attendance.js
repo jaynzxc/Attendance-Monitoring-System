@@ -560,73 +560,7 @@ function stopCamera() {
   if (btnStop) btnStop.disabled = true;
 }
 
-/**
- * Simulates scanning whatever QR pass is currently live on the Admin Terminal
- */
-function handleSimulateActiveScan() {
-  const activeStored = localStorage.getItem('ams_last_active_session');
-  if (activeStored) {
-    try {
-      const sess = JSON.parse(activeStored);
-      if (sess && sess.status === 'active' && new Date(sess.session_end) > new Date()) {
-        const payload = JSON.stringify({
-          ams_auth: 'bcp_ams_admin_station',
-          session_id: sess.id,
-          session_type: sess.session_type || 'time_in',
-          token: sess.session_token || sess.id
-        });
-        processQrToken(payload);
-        return;
-      }
-    } catch (e) {}
-  }
 
-  // If no live admin session is open, notify the user or auto-fallback to expected session
-  const hasTimeIn = document.getElementById('timeInValue')?.textContent !== '--:-- --';
-  const autoType = hasTimeIn ? 'time_out' : 'time_in';
-  const autoPayload = JSON.stringify({
-    ams_auth: 'bcp_ams_admin_station',
-    session_id: 'sess-sim-' + Date.now(),
-    session_type: autoType,
-    token: `bcp-qr-${autoType}-${Date.now().toString(36)}`
-  });
-
-  toast.show(`Simulating Admin Station ${autoType === 'time_in' ? 'Time-In' : 'Time-Out'} Pass...`, 'info');
-  processQrToken(autoPayload);
-}
-
-/**
- * Simulates scanning an explicit Time-In QR pass from the Admin
- */
-function handleSimulateTimeIn() {
-  const payload = JSON.stringify({
-    ams_auth: 'bcp_ams_admin_station',
-    session_id: 'sess-timein-' + Date.now(),
-    session_type: 'time_in',
-    token: `bcp-qr-in-${Date.now().toString(36)}`
-  });
-  processQrToken(payload);
-}
-
-/**
- * Simulates scanning an explicit Time-Out QR pass from the Admin
- */
-function handleSimulateTimeOut() {
-  const payload = JSON.stringify({
-    ams_auth: 'bcp_ams_admin_station',
-    session_id: 'sess-timeout-' + Date.now(),
-    session_type: 'time_out',
-    token: `bcp-qr-out-${Date.now().toString(36)}`
-  });
-  processQrToken(payload);
-}
-
-/**
- * Simulates scanning an invalid or unauthorized QR code
- */
-function handleSimulateInvalid() {
-  processQrToken('https://invalid-qr-code.example.com/not-admin-pass');
-}
 
 /**
  * Resets today's demonstration attendance state
@@ -693,10 +627,6 @@ async function init() {
   // Button Listeners
   document.getElementById('btnStartCamera')?.addEventListener('click', startCamera);
   document.getElementById('btnStopCamera')?.addEventListener('click', stopCamera);
-  document.getElementById('btnSimulateScan')?.addEventListener('click', handleSimulateActiveScan);
-  document.getElementById('btnSimulateTimeIn')?.addEventListener('click', handleSimulateTimeIn);
-  document.getElementById('btnSimulateTimeOut')?.addEventListener('click', handleSimulateTimeOut);
-  document.getElementById('btnSimulateInvalid')?.addEventListener('click', handleSimulateInvalid);
   document.getElementById('btnResetDemoAttendance')?.addEventListener('click', handleResetDemoAttendance);
 
   // Clean up media streams on page unload

@@ -1688,7 +1688,7 @@ async function handleStartQrSession() {
 
     showToast({
       title: 'Student QR Pass Active',
-      message: 'Dynamic QR attendance active with 50-meter anti-buddy-punch geofence.',
+      message: 'Dynamic QR attendance active with 15-meter anti-buddy-punch geofence.',
       type: 'success'
     });
   } catch (err) {

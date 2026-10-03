@@ -183,7 +183,7 @@
             <span id="gpsDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
             <span id="gpsText" class="font-medium" style="color: var(--text-2);">Requesting GPS Geolocation...</span>
           </div>
-          <span id="gpsBadge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wide" style="background: var(--raised); color: var(--text-2);">50m Geofence</span>
+          <span id="gpsBadge" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wide" style="background: var(--raised); color: var(--text-2);">15m Geofence</span>
         </div>
 
         <div class="scanner-box">
@@ -200,7 +200,7 @@
 
         <!-- GPS Denied Fallback Banner -->
         <div id="gpsFallbackBanner" class="p-3.5 rounded-xl mt-3 text-xs leading-relaxed hidden" style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid var(--absent); color: var(--text-1);">
-          <strong>GPS Verification Required:</strong> Location access is required to ensure physical presence within 50 meters of the classroom and prevent buddy punching. If GPS is unavailable, <strong>please tap your physical RFID card</strong> on the scanner or ask your teacher for manual roll call.
+          <strong>GPS Verification Required:</strong> Location access is required to ensure physical presence within 15 meters of the classroom and prevent buddy punching. If GPS is unavailable, <strong>please tap your physical RFID card</strong> on the scanner or ask your teacher for manual roll call.
         </div>
       </section>
 
@@ -428,7 +428,7 @@
 
       // Check GPS Requirement
       if (!userGps) {
-        showFeedback('error', 'GPS Location Required', 'Please enable device location to verify you are within 50m of the classroom.');
+        showFeedback('error', 'GPS Location Required', 'Please enable device location to verify you are within 15m of the classroom.');
         playBeep(240, 'sawtooth', 0.4);
         isProcessingScan = false;
         return;
@@ -481,8 +481,8 @@
           const errCode = result.code || result.error;
           const errMsg = result.message || 'Scan validation failed.';
 
-          if (res.status === 403 && (errCode === 'geolocation_mismatch' || errMsg.includes('50 meters') || errMsg.includes('outside the geofence'))) {
-            showFeedback('error', 'Geofence Mismatch (403)', 'You are outside the 50-meter classroom radius. Anti-buddy-punch enforced.');
+          if (res.status === 403 && (errCode === 'geolocation_mismatch' || errMsg.includes('15 meters') || errMsg.includes('50 meters') || errMsg.includes('outside the geofence') || errMsg.includes('away from the classroom'))) {
+            showFeedback('error', 'Geofence Mismatch (403)', 'You are outside the 15-meter classroom radius. Anti-buddy-punch enforced.');
             playBeep(240, 'sawtooth', 0.4);
           } else if (res.status === 403 && errCode === 'unenrolled_tap') {
             showFeedback('error', 'Not Enrolled (403)', 'You are not enrolled in this section. Please report to the registrar.');

@@ -7,8 +7,9 @@ import { getCurrentUser, logout } from './auth.js';
 import { openSignOutModal } from '../components/signOutModal.js';
 import { initNotifications, addNotification } from '../components/notifications.js';
 import { initProfileDropdown } from '../components/profileDropdown.js';
+import { initSessionTimeout } from './sessionTimeout.js';
 
-export { openSignOutModal, initNotifications, addNotification, initProfileDropdown };
+export { openSignOutModal, initNotifications, addNotification, initProfileDropdown, initSessionTimeout };
 
 /**
  * Enforces role restriction for portal views
@@ -78,6 +79,9 @@ export async function requireRole(allowedRoles) {
  * @param {object} user 
  */
 export function initLayoutBindings(user) {
+  // Auto-initialize idle session inactivity timeout monitor
+  initSessionTimeout();
+
   // Populate profile names & roles if elements exist
   const nameEl = document.querySelector('.pf-name');
   const roleEl = document.querySelector('.pf-role');

@@ -609,6 +609,26 @@ function openCreateUserModal() {
         </div>
       </div>
 
+      <!-- Account Password Field -->
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-1); margin:0;">Account Password <span style="color:#ef4444;">*</span></label>
+          <button type="button" id="btnAutoGeneratePwd" class="btn-secondary" style="font-size:11px; padding:2px 7px; display:inline-flex; align-items:center; gap:4px;" title="Generate default password (#Last2+8080)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M21 21v-5h-5"/></svg>
+            Auto-Generate Default
+          </button>
+        </div>
+        <div style="position:relative; display:flex; align-items:center;">
+          <input type="password" id="newPassword" class="input-field" style="width:100%; font-family:monospace; padding-right:38px;" placeholder="e.g. #Do8080">
+          <button type="button" id="btnToggleNewPwd" style="position:absolute; right:8px; background:none; border:none; color:var(--text-3); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center;" title="Show / hide password">
+            <svg id="newPwdEyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p style="font-size:11px; color:var(--text-3); margin-top:4px; margin-bottom:0;">
+          Institutional default: <code>#</code> + first 2 letters of Last Name + <code>8080</code> (e.g. <code>#Re8080</code>)
+        </p>
+      </div>
+
       <!-- Assigned Section (Student Only) -->
       <div id="sectionSelectGroup">
         <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Assigned Section</label>
@@ -707,9 +727,21 @@ function openCreateUserModal() {
           const parentPhone = document.getElementById('newParentPhone')?.value.trim();
           const parentEmail = document.getElementById('newParentEmail')?.value.trim();
 
+          const password = document.getElementById('newPassword')?.value.trim();
+
           if (!first_name || !last_name || !email) {
             toast.show('Please provide First Name, Last Name, and Email.', 'warning');
             return;
+          }
+
+          if (!password || password.length < 6) {
+            toast.show('Please provide a password with at least 6 characters (or click Auto-Generate).', 'warning');
+            return;
+          }
+
+          let cleanPhone = (parentPhone || '').replace(/[\s-]/g, '');
+          if (cleanPhone.startsWith('09')) {
+            cleanPhone = '+63' + cleanPhone.substring(1);
           }
 
           try {
@@ -718,40 +750,19 @@ function openCreateUserModal() {
               last_name,
               email,
               role,
-              student_number: role === 'student' ? student_number : student_number,
+              student_number: role === 'student' ? student_number : null,
               employee_number: role === 'teacher' ? student_number : null,
               section_id: role === 'student' ? section_id : null,
-              status: 'active'
+              password,
+              card_uid: card_uid || null,
+              parent_name: role === 'student' ? (parentName || null) : null,
+              parent_rel: role === 'student' ? (parentRel || null) : null,
+              parent_phone: role === 'student' ? (cleanPhone || null) : null,
+              parent_email: role === 'student' ? (parentEmail || null) : null,
+              status: 'inactive'
             });
 
-            if (card_uid && newUser?.id) {
-              await usersApi.assignRfidCard(newUser.id, card_uid);
-            }
-
-            // Save parent contact details if user is student and contact details provided
-            if (role === 'student' && newUser?.id && (parentPhone || parentEmail || parentName)) {
-              let cleanPhone = (parentPhone || '').replace(/[\s-]/g, '');
-              if (cleanPhone.startsWith('09')) {
-                cleanPhone = '+63' + cleanPhone.substring(1);
-              }
-
-              let activeChannel = 'sms';
-              if (cleanPhone && parentEmail) {
-                activeChannel = 'both';
-              } else if (parentEmail && !cleanPhone) {
-                activeChannel = 'gmail';
-              }
-
-              await usersApi.updateParentContact(newUser.id, {
-                fullName: parentName || 'Parent / Guardian',
-                relationship: parentRel,
-                mobileNumber: cleanPhone,
-                alertChannel: activeChannel,
-                email: parentEmail
-              });
-            }
-
-            toast.show(`User ${first_name} ${last_name} created successfully.`, 'success');
+            toast.show(`User ${first_name} ${last_name} created. Activation email sent to ${email}!`, 'success');
             Modal.close('createUserModal');
             loadUsers();
           } catch (err) {
@@ -843,6 +854,62 @@ function openCreateUserModal() {
       const generatedUid = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
       input.value = generatedUid;
       toast.show(`Generated RFID UID: ${generatedUid}`, 'info');
+    }
+  });
+
+  // Password Auto-Generation & Visibility Toggle
+  function computeDefaultPassword(lastName, firstName) {
+    let name = (lastName || '').trim();
+    if (!name || name.length < 2) name = (firstName || '').trim();
+    name = name.replace(/[^a-zA-Z]/g, '');
+    if (name.length < 2) return '#Aa8080';
+    return '#' + name[0].toUpperCase() + name[1].toLowerCase() + '8080';
+  }
+
+  const inputFirstName = document.getElementById('newFirstName');
+  const inputLastName = document.getElementById('newLastName');
+  const inputPassword = document.getElementById('newPassword');
+  const btnAutoGeneratePwd = document.getElementById('btnAutoGeneratePwd');
+  const btnToggleNewPwd = document.getElementById('btnToggleNewPwd');
+  const newPwdEyeIcon = document.getElementById('newPwdEyeIcon');
+
+  btnAutoGeneratePwd?.addEventListener('click', () => {
+    if (!inputPassword) return;
+    const generated = computeDefaultPassword(inputLastName?.value, inputFirstName?.value);
+    inputPassword.value = generated;
+    toast.show(`Generated Password: ${generated}`, 'info');
+  });
+
+  let isNewPwdVisible = false;
+  btnToggleNewPwd?.addEventListener('click', () => {
+    if (!inputPassword) return;
+    isNewPwdVisible = !isNewPwdVisible;
+    inputPassword.type = isNewPwdVisible ? 'text' : 'password';
+    if (newPwdEyeIcon) {
+      if (isNewPwdVisible) {
+        newPwdEyeIcon.innerHTML = `
+          <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+          <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+          <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+          <line x1="2" y1="2" x2="22" y2="22"/>
+        `;
+      } else {
+        newPwdEyeIcon.innerHTML = `
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+          <circle cx="12" cy="12" r="3"/>
+        `;
+      }
+    }
+  });
+
+  let userEditedPassword = false;
+  inputPassword?.addEventListener('input', () => {
+    userEditedPassword = Boolean(inputPassword.value.trim());
+  });
+
+  inputLastName?.addEventListener('input', (e) => {
+    if (!userEditedPassword && inputPassword) {
+      inputPassword.value = computeDefaultPassword(e.target.value, inputFirstName?.value);
     }
   });
 }

@@ -204,7 +204,7 @@ CREATE TABLE public.attendance_sessions (
                                       CHECK (status IN ('active', 'closed')),
   teacher_lat           float8,
   teacher_lng           float8,
-  geo_radius_meters     int         NOT NULL DEFAULT 50,
+  geo_radius_meters     int         NOT NULL DEFAULT 15,
   qr_token_rotation_sec int         NOT NULL DEFAULT 30,
   qr_last_rotated_at    timestamptz,
   created_at            timestamptz NOT NULL DEFAULT now()
@@ -243,7 +243,7 @@ ALTER TABLE public.attendance_logs
 | attendance_present_window_min | 20 | Minutes for Present threshold |
 | attendance_session_duration_min | 30 | Total session window |
 | anti_passback_cooldown_sec | 300 | 5-minute anti-passback |
-| qr_geo_radius_meters | 50 | Max student-to-teacher distance (meters) |
+| qr_geo_radius_meters | 15 | Max student-to-teacher distance (meters) |
 | qr_token_rotation_sec | 30 | QR token rotation interval |
 
 ### 7.4 New Stored Procedure: fn_manual_attendance_override
@@ -400,7 +400,7 @@ For each enrolled student/assigned teacher per section with a session today:
 - [x] Buddy punch void = Absent + Parent SMS + Prefect webhook.
 - [x] GPS failure = hard reject for QR (no pending review queue).
 - [x] Anti-passback: 5-minute cooldown on all RFID taps.
-- [x] QR anti-replay: rotating 30s token + 50m geofence.
+- [x] QR anti-replay: rotating 30s token + 15m geofence.
 - [x] All manual corrections logged to audit_log with actor + reason.
 - [x] Teachers cannot self-correct; Admin corrects teacher sessions; Teacher corrects student sessions.
 - [x] RLS enforced at DB level for all session and log access.

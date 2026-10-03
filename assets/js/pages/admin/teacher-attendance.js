@@ -550,7 +550,7 @@ function initSessionModals() {
 
       const confirmBtn = document.getElementById('confirmStartRfidBtn');
       if (confirmBtn) {
-        confirmBtn.textContent = `Start 30-Min ${type === 'time_in' ? 'Time-In' : 'Time-Out'} Session`;
+        confirmBtn.textContent = `Start ${type === 'time_in' ? 'Time-In' : 'Time-Out'} Session`;
       }
     });
   });
@@ -588,7 +588,7 @@ function initSessionModals() {
 
       const confirmBtn = document.getElementById('confirmStartQrBtn');
       if (confirmBtn) {
-        confirmBtn.textContent = `Start 30-Min ${type === 'time_in' ? 'Time-In' : 'Time-Out'} QR Pass`;
+        confirmBtn.textContent = `Start ${type === 'time_in' ? 'Time-In' : 'Time-Out'} QR Pass`;
       }
     });
   });
@@ -679,10 +679,6 @@ function initSessionModals() {
     handleSimulatedEsp32Tap();
   });
 
-  // Simulate Faculty QR scan button (for live testing & demonstration)
-  document.getElementById('btnSimulateQrScan')?.addEventListener('click', () => {
-    handleSimulatedQrScan();
-  });
 
   // Listen for live QR scans submitted from teacher portal on other tabs/devices
   window.addEventListener('storage', (e) => {
@@ -1053,61 +1049,6 @@ function handleSimulatedEsp32Tap() {
 
   simulatedFacultyIndex++;
   recordTeacherCardTap(candidate, 'E2' + Math.floor(100000 + Math.random() * 900000));
-}
-
-/**
- * Simulates a Faculty QR Pass scan for demonstration
- */
-function handleSimulatedQrScan() {
-  const tappedIds = new Set(sessionTappedTeachers.map(t => t.teacher.id));
-
-  let candidate = allFacultyUsers.find(u => !tappedIds.has(u.id));
-
-  if (!candidate) {
-    const demoFacultyRoster = [
-      { first_name: 'Ricardo', last_name: 'Santos', code: 'FAC-001' },
-      { first_name: 'Maria', last_name: 'Corazon', code: 'FAC-002' },
-      { first_name: 'Antonio', last_name: 'Luna', code: 'FAC-003' },
-      { first_name: 'Gabriela', last_name: 'Silang', code: 'FAC-004' },
-      { first_name: 'Emilio', last_name: 'Aguinaldo', code: 'FAC-005' },
-      { first_name: 'Jose', last_name: 'Rizal', code: 'FAC-006' },
-      { first_name: 'Andres', last_name: 'Bonifacio', code: 'FAC-007' },
-      { first_name: 'Apolinario', last_name: 'Mabini', code: 'FAC-008' },
-      { first_name: 'Melchora', last_name: 'Aquino', code: 'FAC-009' },
-      { first_name: 'Juan', last_name: 'Luna', code: 'FAC-010' },
-      { first_name: 'Marcelo', last_name: 'del Pilar', code: 'FAC-011' },
-      { first_name: 'Teresa', last_name: 'Magbanua', code: 'FAC-012' }
-    ];
-
-    for (const demo of demoFacultyRoster) {
-      const demoId = `sim-fac-${demo.first_name.toLowerCase()}-${demo.last_name.toLowerCase()}`;
-      if (!tappedIds.has(demoId)) {
-        candidate = {
-          id: demoId,
-          first_name: demo.first_name,
-          last_name: demo.last_name,
-          employee_number: `2024-${demo.code}`,
-          email: `${demo.first_name[0].toLowerCase()}.${demo.last_name.toLowerCase()}@bcp.edu.ph`
-        };
-        break;
-      }
-    }
-
-    if (!candidate) {
-      const idx = sessionTappedTeachers.length + 1;
-      const numStr = idx.toString().padStart(3, '0');
-      candidate = {
-        id: `sim-fac-extra-${Date.now()}-${idx}`,
-        first_name: 'Professor',
-        last_name: `Faculty ${idx}`,
-        employee_number: `2024-FAC-${numStr}`,
-        email: `prof.${numStr}@bcp.edu.ph`
-      };
-    }
-  }
-
-  simulatedFacultyIndex++;
-  recordTeacherCardTap(candidate, 'QR-' + Math.floor(100000 + Math.random() * 900000));
 }
 
 /**

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Activate Account — Attendance Monitoring System | Bestlink College of the Philippines</title>
+  
+  <!-- Anti-FOUC Theme Restoration -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/tailwind.css">
+  
+  <style>
+    :root {
+      --ch-900: #0D47A1;
+      --ch-500: #2196F3;
+      --ch-200: #90CAF9;
+      --ch-100: #E3F2FD;
+      --surface: #FFFFFF;
+      --surface-hover: #F8FAFD;
+      --raised: #E3F2FD;
+      --border: #DCE8F5;
+      --border-strong: #90CAF9;
+      --text-1: #0D47A1;
+      --text-2: #4A657E;
+      --text-3: #829DB5;
+      --accent: #2196F3;
+      --present: #10B981;
+      --absent: #EF4444;
+    }
+    [data-theme="dark"] {
+      --surface: #0C1D38;
+      --surface-hover: #102649;
+      --raised: #132A4F;
+      --border: #1A3866;
+      --border-strong: #2196F3;
+      --text-1: #E3F2FD;
+      --text-2: #90CAF9;
+      --text-3: #6282A8;
+      --accent: #2196F3;
+      --present: #34D399;
+      --absent: #F87171;
+    }
+
+    .auth-canvas {
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      background-color: #0D47A1;
+      background-image: 
+        linear-gradient(135deg, rgba(13, 71, 161, 0.82) 0%, rgba(33, 150, 243, 0.72) 100%),
+        url('./assets/images/login-bg.png');
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 12px 40px rgba(13, 71, 161, 0.28);
+      padding: 36px 32px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .brand-logo-img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      margin: 0 auto 12px;
+    }
+
+    .system-title-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .action-heading {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-1);
+      margin: 0 0 12px;
+    }
+
+    .action-desc {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--text-2);
+      margin-bottom: 24px;
+    }
+
+    .creds-container {
+      background: var(--raised);
+      border: 1.5px dashed var(--border-strong);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .cred-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(33, 150, 243, 0.15);
+      font-size: 13px;
+    }
+    .cred-row:last-child {
+      border-bottom: none;
+    }
+    .cred-key {
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .cred-val {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .btn-primary-action {
+      width: 100%;
+      height: 44px;
+      background: linear-gradient(135deg, var(--ch-500) 0%, var(--ch-900) 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 9px;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(13, 71, 161, 0.32);
+      transition: transform 0.14s, opacity 0.14s;
+    }
+    .btn-primary-action:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .status-badge-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--present);
+    }
+    .badge-error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--absent);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-canvas">
+    <div class="auth-card">
+      <img src="assets/images/logo.png" alt="BCP Logo" class="brand-logo-img">
+      <div class="system-title-tag">ATTENDANCE MONITORING SYSTEM</div>
+
+      <!-- State 1: Loading Verification -->
+      <div id="loadingState">
+        <h1 class="action-heading">Activating Account...</h1>
+        <p class="action-desc">Please wait while we verify your activation token with the security server.</p>
+        <div style="display:flex; justify-content:center; padding:20px 0;">
+          <svg class="animate-spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- State 2: Success State -->
+      <div id="successState" style="display: none;">
+        <div class="status-badge-icon badge-success">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h1 class="action-heading">Account Activated!</h1>
+        <p class="action-desc">
+          Hello <strong id="userFullName" style="color:var(--text-1);">Student</strong>! Your AMS account is now fully active. We have also emailed these credentials to your Gmail inbox.
+        </p>
+
+        <!-- Credentials Summary Box -->
+        <div class="creds-container">
+          <div class="cred-row">
+            <span class="cred-key">Login Identifier:</span>
+            <span class="cred-val" id="dispIdentifier">—</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-key">Registered Email:</span>
+            <span class="cred-val" id="dispEmail">—</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-key">Temporary Password:</span>
+            <span class="cred-val" id="dispPassword">—</span>
+          </div>
+          <div class="cred-row">
+            <span class="cred-key">Role:</span>
+            <span class="cred-val" id="dispRole" style="text-transform: capitalize;">—</span>
+          </div>
+        </div>
+
+        <a href="index.html" class="btn-primary-action">
+          Proceed to Sign In
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- State 3: Error State -->
+      <div id="errorState" style="display: none;">
+        <div class="status-badge-icon badge-error">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <h1 class="action-heading">Activation Failed</h1>
+        <p class="action-desc" id="errorMessageText">The activation link is invalid, expired, or has already been used.</p>
+
+        <a href="index.html" class="btn-primary-action">
+          Return to Sign In
+        </a>
+      </div>
+
+      <div style="font-size:11px; color:var(--text-3); margin-top:28px;">
+        © 2026 Bestlink College of the Philippines. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getSupabase } from './assets/js/lib/supabaseClient.js';
+
+    const loadingState = document.getElementById('loadingState');
+    const successState = document.getElementById('successState');
+    const errorState = document.getElementById('errorState');
+    const errorMessageText = document.getElementById('errorMessageText');
+
+    const userFullName = document.getElementById('userFullName');
+    const dispIdentifier = document.getElementById('dispIdentifier');
+    const dispEmail = document.getElementById('dispEmail');
+    const dispPassword = document.getElementById('dispPassword');
+    const dispRole = document.getElementById('dispRole');
+
+    async function processActivation() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      if (!token) {
+        showError('No activation token was provided in the link.');
+        return;
+      }
+
+      const sb = getSupabase();
+      if (!sb) {
+        showError('Database connection unavailable.');
+        return;
+      }
+
+      try {
+        const { data: rpcData, error: rpcErr } = await sb.rpc('fn_activate_user_account', {
+          p_token: token.trim(),
+          p_origin: window.location.origin
+        });
+
+        if (rpcErr) {
+          showError('Failed to activate account: ' + (rpcErr.message || 'Server error.'));
+          return;
+        }
+
+        if (!rpcData || !rpcData.success) {
+          showError(rpcData?.error || 'Invalid or expired activation link.');
+          return;
+        }
+
+        handleActivationSuccess(rpcData.user);
+      } catch (err) {
+        console.error('[Activation Error]:', err);
+        showError('An unexpected server error occurred during account activation.');
+      }
+    }
+
+    function handleActivationSuccess(user) {
+      loadingState.style.display = 'none';
+      successState.style.display = 'block';
+
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+      const identifier = user.student_number || user.employee_number || user.email;
+      const initialPwd = user.initial_password || user.initial_password_temp || 'Provided by Administrator';
+
+      userFullName.textContent = fullName;
+      dispIdentifier.textContent = identifier;
+      dispEmail.textContent = user.email;
+      dispPassword.textContent = initialPwd;
+      dispRole.textContent = user.role;
+    }
+
+    function showError(msg) {
+      loadingState.style.display = 'none';
+      errorState.style.display = 'block';
+      errorMessageText.textContent = msg;
+    }
+
+    // Execute on page load
+    processActivation();
+  </script>
+</body>
+</html>

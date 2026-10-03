@@ -561,12 +561,13 @@ export const attendanceApi = {
 
       // For each section, compute absence rate over the last 7 days
       const results = [];
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
       for (const sec of sections) {
         const { data: sums } = await sb
-          .from('attendance_summary')
+          .from('attendance_logs')
           .select('status')
           .eq('section_id', sec.id)
-          .gte('summary_date', new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
+          .gte('scanned_at', `${sevenDaysAgo}T00:00:00`);
 
         if (sums && sums.length > 0) {
           const total = sums.length;
@@ -1222,7 +1223,7 @@ export const attendanceApi = {
       status: 'active',
       teacher_lat: teacherLat,
       teacher_lng: teacherLng,
-      geo_radius_meters: 50,
+      geo_radius_meters: 15,
       sections: sectionId ? { id: sectionId, name: '31001', grade_level: '3rd Year' } : null,
       scan_devices: deviceId ? { id: deviceId, device_code: 'GATE-01-ESP32', location: 'Main Gate Turnstile A' } : null
     };

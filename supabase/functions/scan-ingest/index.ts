@@ -388,7 +388,7 @@ serve(async (req: Request) => {
           student_lng
         );
 
-        const maxAllowedRadius = activeSession.geo_radius_meters || 50;
+        const maxAllowedRadius = activeSession.geo_radius_meters || 15;
         if (geoDistanceMeters > maxAllowedRadius) {
           await supabase.from("audit_log").insert([
             {

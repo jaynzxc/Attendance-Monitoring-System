@@ -452,7 +452,7 @@
         <div class="flex items-center justify-end gap-3 pt-2">
           <button type="button" id="cancelRfidModalBtn" class="pillbtn text-xs">Cancel</button>
           <button type="button" id="confirmStartRfidBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 18px; border-radius:8px;">
-            Start 30-Min Time-In Session
+            Start Time-In Session
           </button>
         </div>
       </div>
@@ -578,7 +578,7 @@
         <div class="flex items-center justify-end gap-3 pt-2">
           <button type="button" id="cancelQrModalBtn" class="pillbtn text-xs">Cancel</button>
           <button type="button" id="confirmStartQrBtn" class="btn-primary text-xs font-semibold" style="background:var(--ch-900); color:#fff; padding:8px 18px; border-radius:8px;">
-            Start 30-Min Time-In QR Pass
+            Start Time-In QR Pass
           </button>
         </div>
       </div>
@@ -624,30 +624,21 @@
             </div>
           </div>
 
-          <!-- RIGHT SIDE: Live Faculty QR Ingress Feed & Simulated Faculty Scan Test -->
-          <div class="qr-right-pane" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <!-- RIGHT SIDE: Live Faculty QR Ingress Feed -->
+          <div class="qr-right-pane" style="display:flex; flex-direction:column;">
             <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
               <div class="flex items-center justify-between px-0.5" style="height:20px; line-height:20px; margin-bottom:10px;">
                 <span class="text-xs font-semibold text-[var(--text-1)]" id="qrFeedLabel">Live Faculty QR Ingress Feed</span>
                 <span id="modalQrTapCount" class="font-mono text-emerald-500 font-bold tabular-nums text-xs">0 Scanned</span>
               </div>
 
-              <!-- Scrollable Ingress Feed (calibrated to align simulate button with auto-rotates) -->
-              <div id="modalQrTapFeed" class="space-y-1.5 p-2 rounded-lg border" style="background:var(--surface); border-color:var(--border); height:231px; max-height:231px; overflow-y:auto; box-sizing:border-box;">
-                <div id="modalQrEmptyFeed" class="py-12 text-center text-xs" style="color:var(--text-3);">
+              <!-- Scrollable Ingress Feed -->
+              <div id="modalQrTapFeed" class="space-y-1.5 p-2 rounded-lg border" style="background:var(--surface); border-color:var(--border); height:285px; max-height:285px; overflow-y:auto; box-sizing:border-box;">
+                <div id="modalQrEmptyFeed" class="py-16 text-center text-xs" style="color:var(--text-3);">
                   Waiting for faculty QR scan on the terminal...
                 </div>
               </div>
             </div>
-
-            <!-- Quick QR Demo / Simulate Scan Trigger (Aligned horizontally with Auto-Rotates) -->
-            <button type="button" id="btnSimulateQrScan" class="btn-sim-thin" style="height:28px; min-height:28px; max-height:28px; box-sizing:border-box;">
-              <svg style="width:12px; height:12px; flex-shrink:0; color:#2196f3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              <span>Simulate Faculty QR Scan (Test / Demonstration)</span>
-            </button>
-
-            <!-- Spacer matching Token line height to prevent touching the bottom divider -->
-            <div style="height:16px; line-height:16px;" aria-hidden="true"></div>
           </div>
 
         </div>

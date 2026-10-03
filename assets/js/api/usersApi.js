@@ -5,6 +5,7 @@
  */
 
 import { getSupabase } from '../lib/supabaseClient.js';
+import { emailNotificationsApi } from './emailNotificationsApi.js';
 
 let mockUsers = [
   {
@@ -12,7 +13,7 @@ let mockUsers = [
     role: 'admin',
     first_name: 'Administrator',
     last_name: 'Registrar',
-    email: 'admin@bestlink.edu.ph',
+    email: 'jaynzxc.devs@gmail.com',
     employee_number: 'EMP-2020-001',
     status: 'active'
   },
@@ -23,7 +24,7 @@ let mockUsers = [
     last_name: 'Santos',
     email: 'prof.santos@bestlink.edu.ph',
     employee_number: 't230110001',
-    student_number: 't230110001',
+    student_number: null,
     status: 'active'
   },
   {
@@ -33,7 +34,7 @@ let mockUsers = [
     last_name: 'Reyes',
     email: 'prof.reyes@bestlink.edu.ph',
     employee_number: 't230110002',
-    student_number: 't230110002',
+    student_number: null,
     status: 'active'
   },
   {
@@ -117,7 +118,7 @@ export const usersApi = {
   /**
    * Fetches paginated users with optional role, section, and search filtering
    */
-  async getUsers({ role = null, sectionId = null, search = '', status = 'active', page = 0, pageSize = 20 } = {}) {
+  async getUsers({ role = null, sectionId = null, search = '', status = null, page = 0, pageSize = 20 } = {}) {
     const sb = getSupabase();
     const filterMock = () => {
       let filtered = [...mockUsers];
@@ -228,10 +229,12 @@ export const usersApi = {
   },
 
   /**
-   * Creates a new user record
+   * Creates a new user record in Supabase Auth and public.users
    */
   async createUser(userData) {
     const sb = getSupabase();
+    const { password, section_id, ...profileData } = userData;
+
     if (!sb) {
       const newMock = {
         id: 'mock-user-' + Date.now(),
@@ -239,21 +242,81 @@ export const usersApi = {
         status: 'active',
         rfid_credentials: [],
         parent_contacts: [],
-        student_sections: [],
-        ...userData
+        student_sections: section_id ? [{ section_id, sections: { id: section_id, name: 'Assigned' } }] : [],
+        ...profileData
       };
       mockUsers.unshift(newMock);
       return newMock;
     }
 
-    const { data, error } = await sb
-      .from('users')
-      .insert([userData])
-      .select()
-      .single();
+    try {
+      // Generate secure activation token
+      const activationToken = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'act-' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 
-    if (error) throw error;
-    return data;
+      const basePayload = {
+        p_first_name: profileData.first_name || '',
+        p_last_name: profileData.last_name || '',
+        p_email: profileData.email,
+        p_role: profileData.role || 'student',
+        p_student_number: profileData.student_number || null,
+        p_employee_number: profileData.employee_number || null,
+        p_password: password || '#Aa8080',
+        p_activation_token: activationToken,
+        p_section_id: section_id || null
+      };
+
+      let rpcRes = null;
+      let rpcErr = null;
+
+      // Try 14-parameter version first
+      const fullCall = await sb.rpc('fn_admin_create_user', {
+        ...basePayload,
+        p_card_uid: profileData.card_uid || null,
+        p_parent_name: profileData.parent_name || null,
+        p_parent_rel: profileData.parent_rel || null,
+        p_parent_phone: profileData.parent_phone || null,
+        p_parent_email: profileData.parent_email || null
+      });
+
+      if (fullCall.error && (fullCall.error.code === 'PGRST202' || fullCall.error.message?.includes('Could not find') || fullCall.error.message?.includes('matches were found'))) {
+        console.warn('[usersApi] 14-param RPC signature not found, invoking 9-param RPC in DB:', fullCall.error.message);
+        const fallbackCall = await sb.rpc('fn_admin_create_user', basePayload);
+        rpcRes = fallbackCall.data;
+        rpcErr = fallbackCall.error;
+      } else {
+        rpcRes = fullCall.data;
+        rpcErr = fullCall.error;
+      }
+
+      if (rpcErr) {
+        console.error('[usersApi] fn_admin_create_user error:', rpcErr);
+        if (rpcErr.message?.includes('function') || rpcErr.message?.includes('does not exist')) {
+          throw new Error('Database migration pending. Please run 20261003000003_add_user_activation.sql in the Supabase SQL Editor.');
+        }
+        throw new Error(rpcErr.message || 'Failed to create user via server RPC.');
+      }
+
+      if (!rpcRes?.success) {
+        throw new Error(rpcRes?.error || 'Failed to create user account.');
+      }
+
+      const newUser = rpcRes.user;
+
+      // Dispatch Email 1: Account Activation Email (rendered and sent server-side)
+      try {
+        await emailNotificationsApi.sendActivationEmail({ userId: newUser.id });
+        console.log(`[usersApi] Activation email dispatched to ${profileData.email}`);
+      } catch (emailErr) {
+        console.warn('[usersApi] Activation email dispatch warning:', emailErr);
+      }
+
+      return newUser;
+    } catch (err) {
+      console.error('[usersApi] createUser exception:', err);
+      throw err;
+    }
   },
 
   /**
