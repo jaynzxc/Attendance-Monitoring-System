@@ -34,6 +34,15 @@
     .compose-textarea { width:100%; background:var(--raised); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:13px; color:var(--text-1); font-family:inherit; resize:vertical; min-height:90px; outline:none; box-sizing:border-box; }
     .compose-textarea:focus { border-color:var(--border-strong); }
     .char-count { font-size:11px; color:var(--text-3); text-align:right; margin-top:4px; font-variant-numeric:tabular-nums; }
+    #alertHistory {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #alertHistory::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
   </style>
 </head>
 <body>
