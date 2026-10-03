@@ -219,7 +219,7 @@ function setupFormListeners() {
     const studentMobile = document.getElementById('studentMobile')?.value.trim();
     const guardianName = document.getElementById('guardianName')?.value.trim();
     const guardianRelation = document.getElementById('guardianRelation')?.value;
-    const alertChannel = document.getElementById('alertChannelSelect')?.value || 'sms';
+    const selectedChannel = document.getElementById('alertChannelSelect')?.value;
     const guardianMobile = document.getElementById('guardianMobile')?.value.trim();
     const guardianEmail = document.getElementById('guardianEmail')?.value.trim();
     const homeAddress = document.getElementById('homeAddress')?.value.trim();
@@ -256,11 +256,13 @@ function setupFormListeners() {
       return;
     }
 
-    let alertChannel = 'sms';
-    if (guardianMobile && guardianEmail) {
-      alertChannel = 'both';
-    } else if (guardianEmail && !guardianMobile) {
-      alertChannel = 'gmail';
+    let alertChannel = selectedChannel || 'sms';
+    if (!selectedChannel) {
+      if (guardianMobile && guardianEmail) {
+        alertChannel = 'both';
+      } else if (guardianEmail && !guardianMobile) {
+        alertChannel = 'gmail';
+      }
     }
 
     const payload = {

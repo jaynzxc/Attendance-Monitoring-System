@@ -292,13 +292,13 @@
             <div class="flex flex-wrap items-center gap-3">
               <!-- Attendance Date -->
               <div class="flex flex-col gap-1">
-                <label for="filterTeacherDate" class="text-xs font-semibold" style="color:var(--text-2);">Date</label>
+                <label for="filterTeacherDate" class="sr-only">Date</label>
                 <input type="date" id="filterTeacherDate" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1);">
               </div>
 
               <!-- Status Filter -->
               <div class="flex flex-col gap-1">
-                <label for="filterTeacherStatus" class="text-xs font-semibold" style="color:var(--text-2);">Status</label>
+                <label for="filterTeacherStatus" class="sr-only">Status</label>
                 <select id="filterTeacherStatus" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1); min-width: 140px;">
                   <option value="">All Statuses</option>
                   <option value="present">Present (Time-In)</option>
@@ -309,7 +309,7 @@
 
               <!-- Scan Method Filter -->
               <div class="flex flex-col gap-1">
-                <label for="filterTeacherMethod" class="text-xs font-semibold" style="color:var(--text-2);">Scan Method</label>
+                <label for="filterTeacherMethod" class="sr-only">Scan Method</label>
                 <select id="filterTeacherMethod" class="px-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1); min-width: 130px;">
                   <option value="">All Methods</option>
                   <option value="rfid">RFID Card</option>
@@ -321,7 +321,7 @@
 
             <!-- Search Teacher -->
             <div class="flex flex-col gap-1 w-full md:w-64">
-              <label for="searchTeacherInput" class="text-xs font-semibold" style="color:var(--text-2);">Search Faculty</label>
+              <label for="searchTeacherInput" class="sr-only">Search Faculty</label>
               <div class="relative">
                 <input type="text" id="searchTeacherInput" placeholder="Name or Employee ID..." class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none" style="background:var(--surface); border-color:var(--border); color:var(--text-1);">
                 <svg class="w-4 h-4 absolute left-3 top-2.5" style="color:var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
