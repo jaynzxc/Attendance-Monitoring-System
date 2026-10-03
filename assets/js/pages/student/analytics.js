@@ -15,6 +15,95 @@ let currentStudent = null;
 let currentStats = null;
 let subjectAttendanceChartInstance = null;
 
+const ICON_EXPAND = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+const ICON_SHRINK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+
+/**
+ * Opens the certificate in a modal at full admin size, with a native Fullscreen toggle.
+ * The certificate is cloned from the on-page thumbnail so name/section/ID stay in sync.
+ */
+function openCertificateViewer() {
+  document.getElementById('certViewerOverlay')?.remove();
+  const source = document.getElementById('studentCertificate');
+  if (!source) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'certViewerOverlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Certificate of Perfect Attendance');
+  overlay.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(7,19,36,0.75); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px;';
+
+  const panel = document.createElement('div');
+  panel.style.cssText = 'background:var(--surface); border:1px solid var(--border); border-radius:14px; width:100%; max-width:900px; max-height:100%; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 40px -10px rgba(13,71,161,0.3);';
+
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 16px; border-bottom:1px solid var(--border);';
+  const title = document.createElement('h2');
+  title.textContent = 'Certificate of Perfect Attendance';
+  title.style.cssText = 'margin:0; font-size:14px; font-weight:700; color:var(--text-1);';
+
+  const btnStyle = 'display:inline-flex; align-items:center; gap:6px; padding:6px 10px; font-size:12px; font-weight:600; border-radius:8px; border:1px solid var(--border); background:var(--raised); color:var(--text-1); cursor:pointer;';
+  const fsBtn = document.createElement('button');
+  fsBtn.type = 'button';
+  fsBtn.style.cssText = btnStyle;
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.style.cssText = btnStyle;
+  closeBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex; gap:8px;';
+  actions.append(fsBtn, closeBtn);
+  header.append(title, actions);
+
+  const body = document.createElement('div');
+  body.style.cssText = 'flex:1; overflow:auto; padding:24px; display:flex; align-items:center; justify-content:center; background:var(--surface-hover);';
+
+  const cert = source.cloneNode(true);
+  cert.removeAttribute('id');
+  cert.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+  cert.style.width = '100%';
+  cert.style.zoom = '1.6';
+  cert.style.maxWidth = '500px';
+  body.appendChild(cert);
+
+  panel.append(header, body);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+
+  const syncFsButton = () => {
+    const active = document.fullscreenElement === panel;
+    fsBtn.innerHTML = `${active ? ICON_SHRINK : ICON_EXPAND}<span>${active ? 'Exit Fullscreen' : 'Fullscreen'}</span>`;
+    panel.style.maxWidth = active ? 'none' : '900px';
+    panel.style.borderRadius = active ? '0' : '14px';
+  };
+  syncFsButton();
+
+  fsBtn.addEventListener('click', () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (panel.requestFullscreen) {
+      panel.requestFullscreen().catch(() => showToast('Fullscreen is not supported in this browser.', 'warning'));
+    }
+  });
+  document.addEventListener('fullscreenchange', syncFsButton);
+
+  const close = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    document.removeEventListener('fullscreenchange', syncFsButton);
+    document.removeEventListener('keydown', onKey);
+    overlay.remove();
+  };
+  const onKey = (e) => { if (e.key === 'Escape' && !document.fullscreenElement) close(); };
+
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', onKey);
+  fsBtn.focus();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce Student Role Guard
   await requireRole(['student']);
@@ -37,6 +126,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (certSec) {
     certSec.textContent = currentStudent.section_name || '31001';
   }
+  const certNum = document.getElementById('certStudentNumber');
+  if (certNum) {
+    certNum.textContent = currentStudent.student_number || 's230110001';
+  }
+  document.getElementById('btnOpenCertificate')?.addEventListener('click', openCertificateViewer);
+  document.getElementById('btnViewCertificate')?.addEventListener('click', openCertificateViewer);
 
   // 4. Initialize Certificate Modal & Actions
   initCertificateModal();
