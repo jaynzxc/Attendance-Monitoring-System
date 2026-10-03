@@ -142,13 +142,14 @@ function renderUsersTable(users) {
   });
 
   document.querySelectorAll('.btn-deactivate').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+    btn.addEventListener('click', (e) => {
       const userId = e.currentTarget.getAttribute('data-id');
-      const userName = e.currentTarget.getAttribute('data-name');
-      if (confirm(`Are you sure you want to soft-deactivate ${userName}? They will no longer be permitted gate ingress.`)) {
-        await usersApi.deactivateUser(userId);
-        toast.show(`${userName} deactivated successfully.`, 'info');
-        loadUsers();
+      const user = currentUsersList.find(u => u.id === userId);
+      if (user) {
+        openDeactivateUserModal(user);
+      } else {
+        const userName = e.currentTarget.getAttribute('data-name') || 'User';
+        openDeactivateUserModal({ id: userId, first_name: userName, last_name: '' });
       }
     });
   });
@@ -180,6 +181,107 @@ function updatePaginationUI() {
       currentPage = newPage;
       loadUsers();
     }
+  });
+}
+
+/**
+ * Opens confirmation modal to soft-deactivate a user
+ */
+function openDeactivateUserModal(user) {
+  if (!user) return;
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+  const role = user.role || 'student';
+  const roleCapitalized = role.charAt(0).toUpperCase() + role.slice(1);
+  const isStudent = role === 'student';
+  const idNumber = isStudent ? (user.student_number || '—') : (user.employee_number || '—');
+  const sectionName = user.sections?.name || user.student_sections?.[0]?.sections?.name || 'Unassigned';
+  const rfidCard = user.rfid_credentials?.find(c => c.is_active)?.card_uid || user.rfid_cards?.find(c => c.is_active)?.card_uid || null;
+
+  const content = `
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Institutional Warning Banner -->
+      <div style="display:flex; align-items:flex-start; gap:14px; background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.25); border-radius:10px; padding:14px;">
+        <div style="width:38px; height:38px; border-radius:8px; background:rgba(239, 68, 68, 0.15); color:var(--absent); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <h4 style="margin:0 0 4px 0; font-size:14px; font-weight:700; color:var(--absent);">Deactivate User Account?</h4>
+          <p style="margin:0; font-size:12.5px; color:var(--text-2); line-height:1.45;">
+            Are you sure you want to deactivate <strong>${fullName}</strong>? Once deactivated, their physical RFID card and QR credentials will be immediately blocked at all gate scanners.
+          </p>
+        </div>
+      </div>
+
+      <!-- User Profile Summary Box -->
+      <div style="background:var(--raised); border:1px solid var(--border); border-radius:10px; padding:14px; display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:12px;">
+        <div>
+          <span style="color:var(--text-3); display:block; font-size:11px; margin-bottom:2px;">User Account:</span>
+          <strong style="color:var(--text-1); font-size:13px;">${fullName}</strong>
+          <div style="font-size:11.5px; color:var(--text-3);">${user.email || '—'}</div>
+        </div>
+        <div>
+          <span style="color:var(--text-3); display:block; font-size:11px; margin-bottom:2px;">Role & ID:</span>
+          <strong style="color:var(--text-1);">${roleCapitalized}</strong>
+          <div style="font-family:monospace; font-size:11.5px; color:var(--text-2);">${idNumber}</div>
+        </div>
+        <div>
+          <span style="color:var(--text-3); display:block; font-size:11px; margin-bottom:2px;">Assigned Section:</span>
+          <strong style="color:var(--text-1);">${sectionName}</strong>
+        </div>
+        <div>
+          <span style="color:var(--text-3); display:block; font-size:11px; margin-bottom:2px;">RFID Card UID:</span>
+          <span style="font-family:monospace; font-weight:700; font-size:11.5px; color:${rfidCard ? 'var(--ch-500)' : 'var(--text-3)'};">
+            ${rfidCard || 'None Registered'}
+          </span>
+        </div>
+      </div>
+
+      <!-- Institutional Integrity Guarantee -->
+      <div style="font-size:11.5px; color:var(--text-3); line-height:1.45; border-left:3px solid var(--border-strong); padding-left:10px;">
+        <strong style="color:var(--text-2);">Non-destructive soft deactivation:</strong> All historical attendance logs, records, and excuses are strictly preserved in compliance with capstone audit specifications. This account can be reactivated at any time.
+      </div>
+    </div>
+  `;
+
+  Modal.open({
+    id: 'deactivateUserModal',
+    title: 'Confirm Deactivation',
+    content,
+    maxWidth: '480px',
+    actions: [
+      {
+        label: 'Cancel',
+        class: 'btn-secondary',
+        onClick: () => Modal.close('deactivateUserModal')
+      },
+      {
+        label: 'Deactivate Account',
+        class: 'btn-danger-solid',
+        onClick: async (e) => {
+          const btn = e.currentTarget;
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Deactivating...';
+          }
+          try {
+            await usersApi.deactivateUser(user.id);
+            toast.show(`${fullName} deactivated successfully.`, 'info');
+            Modal.close('deactivateUserModal');
+            loadUsers();
+          } catch (err) {
+            toast.show('Failed to deactivate user: ' + (err.message || 'Error'), 'error');
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Deactivate Account';
+            }
+          }
+        }
+      }
+    ]
   });
 }
 

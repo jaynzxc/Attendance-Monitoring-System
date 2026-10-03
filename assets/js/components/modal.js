@@ -104,6 +104,9 @@ export class Modal {
         font-weight: 600;
         cursor: pointer;
       `;
+      if (btnConfig.style) {
+        btn.style.cssText += ';' + btnConfig.style;
+      }
       btn.addEventListener('click', (e) => {
         if (typeof btnConfig.onClick === 'function') {
           btnConfig.onClick(e, overlay);

@@ -129,6 +129,31 @@
   background: rgba(239, 68, 68, 0.2);
 }
 
+.btn-danger-solid {
+  background: var(--absent, #ef4444);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-danger-solid:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-danger-solid:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 /* Table Card Layout */
 .table-card {
   background: var(--surface);
