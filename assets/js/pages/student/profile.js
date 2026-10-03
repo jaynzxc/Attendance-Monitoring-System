@@ -98,7 +98,7 @@ async function loadStudentProfileData() {
     const studentNo = profile.student_number || 's230110001';
     const sectionName = profile.student_sections?.[0]?.sections?.name || profile.section_name || '31001';
     const activeRfid = profile.rfid_cards?.find(c => c.is_active)?.card_uid || 'E2806894';
-    const email = profile.email || 'juan.delacruz@student.bestlink.edu.ph';
+    const email = profile.email || 'juan.delacruz@gmail.com';
     const initials = (profile.first_name || 'J')[0].toUpperCase();
     const qrCodeVal = profile.qr_codes?.find(q => q.is_active)?.code_value || 'bcp_qr_sec_tok_delacruz_01';
 
@@ -146,14 +146,18 @@ async function loadStudentProfileData() {
     const studentMobile = document.getElementById('studentMobile');
     const guardianName = document.getElementById('guardianName');
     const guardianRelation = document.getElementById('guardianRelation');
+    const alertChannelSelect = document.getElementById('alertChannelSelect');
     const guardianMobile = document.getElementById('guardianMobile');
+    const guardianEmail = document.getElementById('guardianEmail');
     const homeAddress = document.getElementById('homeAddress');
     const medicalNotes = document.getElementById('medicalNotes');
 
     if (studentMobile) studentMobile.value = savedCustom.studentMobile || '+639171234567';
     if (guardianName) guardianName.value = savedCustom.guardianName || guardian.full_name || 'Teresa Dela Cruz';
     if (guardianRelation) guardianRelation.value = savedCustom.guardianRelation || guardian.relationship || 'Mother';
+    if (alertChannelSelect) alertChannelSelect.value = savedCustom.alertChannel || guardian.alert_channel || 'sms';
     if (guardianMobile) guardianMobile.value = savedCustom.guardianMobile || guardian.mobile_number || '+639171234567';
+    if (guardianEmail) guardianEmail.value = savedCustom.guardianEmail || guardian.email || 'teresa.delacruz@gmail.com';
     if (homeAddress) homeAddress.value = savedCustom.homeAddress || 'Brgy. San Bartolome, Novaliches, Quezon City';
     if (medicalNotes) medicalNotes.value = savedCustom.medicalNotes || 'None reported';
 
@@ -173,7 +177,9 @@ function captureInitialFormData() {
     studentMobile: document.getElementById('studentMobile')?.value || '',
     guardianName: document.getElementById('guardianName')?.value || '',
     guardianRelation: document.getElementById('guardianRelation')?.value || '',
+    alertChannel: document.getElementById('alertChannelSelect')?.value || 'sms',
     guardianMobile: document.getElementById('guardianMobile')?.value || '',
+    guardianEmail: document.getElementById('guardianEmail')?.value || '',
     homeAddress: document.getElementById('homeAddress')?.value || '',
     medicalNotes: document.getElementById('medicalNotes')?.value || ''
   };
@@ -213,7 +219,9 @@ function setupFormListeners() {
     const studentMobile = document.getElementById('studentMobile')?.value.trim();
     const guardianName = document.getElementById('guardianName')?.value.trim();
     const guardianRelation = document.getElementById('guardianRelation')?.value;
+    const alertChannel = document.getElementById('alertChannelSelect')?.value || 'sms';
     const guardianMobile = document.getElementById('guardianMobile')?.value.trim();
+    const guardianEmail = document.getElementById('guardianEmail')?.value.trim();
     const homeAddress = document.getElementById('homeAddress')?.value.trim();
     const medicalNotes = document.getElementById('medicalNotes')?.value.trim();
 
@@ -230,17 +238,38 @@ function setupFormListeners() {
       return;
     }
 
-    if (!guardianMobile || !isValidPhone(guardianMobile)) {
+    if (!guardianMobile && !guardianEmail) {
+      showToast({ title: 'Contact Required', message: 'Please provide at least a Guardian Mobile number or Guardian Gmail address.', type: 'warning' });
+      document.getElementById('guardianMobile')?.focus();
+      return;
+    }
+
+    if (guardianMobile && !isValidPhone(guardianMobile)) {
       showToast({ title: 'Invalid Guardian Mobile', message: 'Please enter a valid Philippine mobile number for your guardian (e.g. +63 918 765 4321).', type: 'warning' });
       document.getElementById('guardianMobile')?.focus();
       return;
+    }
+
+    if (guardianEmail && !guardianEmail.includes('@')) {
+      showToast({ title: 'Invalid Guardian Email', message: 'Please enter a valid Gmail / Email address for parent notifications.', type: 'warning' });
+      document.getElementById('guardianEmail')?.focus();
+      return;
+    }
+
+    let alertChannel = 'sms';
+    if (guardianMobile && guardianEmail) {
+      alertChannel = 'both';
+    } else if (guardianEmail && !guardianMobile) {
+      alertChannel = 'gmail';
     }
 
     const payload = {
       studentMobile: normalizePhone(studentMobile),
       guardianName,
       guardianRelation,
-      guardianMobile: normalizePhone(guardianMobile),
+      alertChannel,
+      guardianMobile: guardianMobile ? normalizePhone(guardianMobile) : '',
+      guardianEmail: guardianEmail || '',
       homeAddress,
       medicalNotes,
       updatedAt: new Date().toISOString()
@@ -269,25 +298,45 @@ function setupFormListeners() {
             .eq('student_id', currentStudent.id)
             .maybeSingle();
 
+          const dbPayload = {
+            full_name: guardianName,
+            relationship: guardianRelation,
+            mobile_number: guardianMobile ? normalizePhone(guardianMobile) : '',
+            alert_channel: alertChannel,
+            email: guardianEmail || null
+          };
+
           if (existingContact?.id) {
-            await sb
+            const { error: updErr } = await sb
               .from('parent_contacts')
-              .update({
+              .update(dbPayload)
+              .eq('id', existingContact.id);
+
+            if (updErr) {
+              await sb.from('parent_contacts').update({
                 full_name: guardianName,
                 relationship: guardianRelation,
-                mobile_number: normalizePhone(guardianMobile)
-              })
-              .eq('id', existingContact.id);
+                mobile_number: guardianMobile ? normalizePhone(guardianMobile) : ''
+              }).eq('id', existingContact.id);
+            }
           } else {
-            await sb
+            const { error: insErr } = await sb
               .from('parent_contacts')
               .insert([{
                 student_id: currentStudent.id,
-                full_name: guardianName,
-                relationship: guardianRelation,
-                mobile_number: normalizePhone(guardianMobile),
+                ...dbPayload,
                 is_primary: true
               }]);
+
+            if (insErr) {
+              await sb.from('parent_contacts').insert([{
+                student_id: currentStudent.id,
+                full_name: guardianName,
+                relationship: guardianRelation,
+                mobile_number: guardianMobile ? normalizePhone(guardianMobile) : '',
+                is_primary: true
+              }]);
+            }
           }
         } catch (dbErr) {
           console.warn('[AMS Profile] Non-fatal DB update error, stored in local cache:', dbErr);

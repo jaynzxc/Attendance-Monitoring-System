@@ -75,7 +75,7 @@ function renderRiskTable(data) {
         <td style="font-weight:700; font-variant-numeric:tabular-nums;">${st.rate}%</td>
         <td><span class="badge" ${priorityBadge}>${st.priority} Priority</span></td>
         <td style="text-align:right;">
-          <button class="btn-secondary btn-notify" data-name="${st.name}" style="padding:4px 10px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px;">
+          <button class="btn-secondary btn-notify" data-name="${st.name}" data-num="${st.num}" style="padding:4px 10px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
             Alert
           </button>
@@ -87,11 +87,19 @@ function renderRiskTable(data) {
   // Bind individual alert buttons
   document.querySelectorAll('.btn-notify').forEach(btn => {
     btn.addEventListener('click', () => {
+      const num = btn.getAttribute('data-num');
       const name = btn.getAttribute('data-name');
       const select = document.getElementById('composeRecipient');
       if (select) {
+        let foundIndex = -1;
         for (let i = 0; i < select.options.length; i++) {
-          if (select.options[i].text === name) { select.selectedIndex = i; break; }
+          if (select.options[i].value === num || select.options[i].text.startsWith(name)) {
+            foundIndex = i;
+            break;
+          }
+        }
+        if (foundIndex !== -1) {
+          select.selectedIndex = foundIndex;
         }
       }
       document.getElementById('composeMessage')?.focus();
@@ -153,7 +161,34 @@ window.retryAlert = function(name) {
 };
 
 /**
- * Sends the composed SMS alert
+ * Updates channel indicator badge when user toggles SMS vs Gmail
+ */
+function bindChannelSelector() {
+  document.querySelectorAll('input[name="alertChannel"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const channel = e.target.value;
+      const badge = document.getElementById('channelIndicatorBadge');
+      const charCountEl = document.getElementById('charCount');
+      const textarea = document.getElementById('composeMessage');
+      if (badge) {
+        if (channel === 'gmail') {
+          badge.textContent = 'Gmail Channel';
+          badge.style.background = 'rgba(239, 68, 68, 0.12)';
+          badge.style.color = '#EF4444';
+          if (textarea) textarea.placeholder = 'Type email subject and notification body for parent Gmail...';
+        } else {
+          badge.textContent = 'SMS Channel';
+          badge.style.background = 'rgba(33, 150, 243, 0.12)';
+          badge.style.color = '#2196F3';
+          if (textarea) textarea.placeholder = 'Type your message to the parent/guardian...';
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Sends the composed alert via selected channel (SMS or Gmail)
  */
 function bindSendButton() {
   const btn = document.getElementById('btnSendSingle');
@@ -162,16 +197,23 @@ function bindSendButton() {
   btn.addEventListener('click', () => {
     const recipient = document.getElementById('composeRecipient')?.value;
     const message   = document.getElementById('composeMessage')?.value?.trim();
+    const channel   = document.querySelector('input[name="alertChannel"]:checked')?.value || 'sms';
+    const channelLabel = channel === 'gmail' ? 'Gmail' : 'SMS';
 
     if (!recipient) { toast.show('Please select a recipient student.', 'error'); return; }
     if (!message)   { toast.show('Message cannot be empty.', 'error'); return; }
 
     const recipientName = document.getElementById('composeRecipient')?.selectedOptions?.[0]?.text?.split(' — ')[0] || 'Student';
-    toast.show(`SMS alert queued for ${recipientName}'s parent/guardian.`, 'success');
+    toast.show(`${channelLabel} alert queued for ${recipientName}'s parent/guardian.`, 'success');
 
     // Add to local history preview
     const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    SEED_HISTORY.unshift({ name: recipientName, msg: message.substring(0, 60) + (message.length > 60 ? '...' : ''), time: now, status: 'pending' });
+    SEED_HISTORY.unshift({ 
+      name: recipientName, 
+      msg: `[${channelLabel}] ` + message.substring(0, 50) + (message.length > 50 ? '...' : ''), 
+      time: now, 
+      status: 'pending' 
+    });
     renderAlertHistory(SEED_HISTORY);
 
     document.getElementById('composeMessage').value = '';
@@ -180,14 +222,16 @@ function bindSendButton() {
 }
 
 /**
- * Binds the bulk SMS button
+ * Binds the bulk alert button
  */
 function bindBulkButton() {
   const btn = document.getElementById('btnSendBulk');
   if (!btn) return;
   btn.addEventListener('click', () => {
     if (atRiskData.length === 0) { toast.show('No at-risk students to alert.', 'info'); return; }
-    toast.show(`Bulk SMS queued for ${atRiskData.length} parent contacts.`, 'success');
+    const channel = document.querySelector('input[name="alertChannel"]:checked')?.value || 'sms';
+    const channelLabel = channel === 'gmail' ? 'Gmail' : 'SMS';
+    toast.show(`Bulk ${channelLabel} alerts queued for ${atRiskData.length} parent contacts.`, 'success');
   });
 }
 
@@ -235,6 +279,7 @@ async function init() {
   renderRiskTable(atRiskData);
   populateRecipientDropdown(atRiskData);
   renderAlertHistory(SEED_HISTORY);
+  bindChannelSelector();
   bindSendButton();
   bindBulkButton();
   bindFilter();

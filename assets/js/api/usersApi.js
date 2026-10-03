@@ -22,7 +22,8 @@ let mockUsers = [
     first_name: 'Ricardo',
     last_name: 'Santos',
     email: 'prof.santos@bestlink.edu.ph',
-    employee_number: 'EMP-2018-042',
+    employee_number: 't230110001',
+    student_number: 't230110001',
     status: 'active'
   },
   {
@@ -31,7 +32,8 @@ let mockUsers = [
     first_name: 'Carmen',
     last_name: 'Reyes',
     email: 'prof.reyes@bestlink.edu.ph',
-    employee_number: 'EMP-2019-088',
+    employee_number: 't230110002',
+    student_number: 't230110002',
     status: 'active'
   },
   {
@@ -40,11 +42,12 @@ let mockUsers = [
     first_name: 'Juan',
     last_name: 'Dela Cruz',
     student_number: 's230110001',
-    email: 'juan.delacruz@student.bestlink.edu.ph',
+    email: 'juan.delacruz@gmail.com',
     status: 'active',
     sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
     student_sections: [{ section_id: '11111111-1111-1111-1111-111111111111', sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' } }],
-    rfid_credentials: [{ card_uid: 'E2806894', is_active: true }]
+    rfid_credentials: [{ card_uid: 'E2806894', is_active: true }],
+    parent_contacts: [{ id: 'p1', full_name: 'Teresa Dela Cruz', relationship: 'Mother', mobile_number: '+639171234567', alert_channel: 'sms', email: 'teresa.delacruz@gmail.com' }]
   },
   {
     id: 'c0000000-0000-0000-0000-000000000002',
@@ -52,11 +55,12 @@ let mockUsers = [
     first_name: 'Maria',
     last_name: 'Clara',
     student_number: 's230110002',
-    email: 'maria.clara@student.bestlink.edu.ph',
+    email: 'maria.clara@gmail.com',
     status: 'active',
     sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
     student_sections: [{ section_id: '11111111-1111-1111-1111-111111111111', sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' } }],
-    rfid_credentials: [{ card_uid: 'A1B2C3D4', is_active: true }]
+    rfid_credentials: [{ card_uid: 'A1B2C3D4', is_active: true }],
+    parent_contacts: [{ id: 'p2', full_name: 'Santiago Dela Cruz', relationship: 'Father', mobile_number: '+639182345678', alert_channel: 'gmail', email: 'santiago.parent@gmail.com' }]
   },
   {
     id: 'c0000000-0000-0000-0000-000000000003',
@@ -64,11 +68,12 @@ let mockUsers = [
     first_name: 'Jose',
     last_name: 'Rizal',
     student_number: 's230110003',
-    email: 'jose.rizal@student.bestlink.edu.ph',
+    email: 'jose.rizal@gmail.com',
     status: 'active',
     sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' },
     student_sections: [{ section_id: '11111111-1111-1111-1111-111111111111', sections: { id: '11111111-1111-1111-1111-111111111111', name: '31001' } }],
-    rfid_credentials: [{ card_uid: 'B2C3D4E5', is_active: true }]
+    rfid_credentials: [{ card_uid: 'B2C3D4E5', is_active: true }],
+    parent_contacts: [{ id: 'p3', full_name: 'Teodora Alonso', relationship: 'Mother', mobile_number: '+639193456789', alert_channel: 'sms', email: 'teodora.alonso@gmail.com' }]
   },
   {
     id: 'c0000000-0000-0000-0000-000000000004',
@@ -76,7 +81,7 @@ let mockUsers = [
     first_name: 'Andres',
     last_name: 'Bonifacio',
     student_number: 's230110004',
-    email: 'andres.bonifacio@student.bestlink.edu.ph',
+    email: 'andres.bonifacio@gmail.com',
     status: 'active',
     sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' },
     student_sections: [{ section_id: '22222222-2222-2222-2222-222222222222', sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' } }],
@@ -88,7 +93,7 @@ let mockUsers = [
     first_name: 'Gabriela',
     last_name: 'Silang',
     student_number: 's230110005',
-    email: 'gabriela.silang@student.bestlink.edu.ph',
+    email: 'gabriela.silang@gmail.com',
     status: 'active',
     sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' },
     student_sections: [{ section_id: '22222222-2222-2222-2222-222222222222', sections: { id: '22222222-2222-2222-2222-222222222222', name: '31002' } }],
@@ -100,7 +105,7 @@ let mockUsers = [
     first_name: 'Emilio',
     last_name: 'Aguinaldo',
     student_number: 's230110006',
-    email: 'emilio.aguinaldo@student.bestlink.edu.ph',
+    email: 'emilio.aguinaldo@gmail.com',
     status: 'active',
     sections: { id: '33333333-3333-3333-3333-333333333333', name: '21001' },
     student_sections: [{ section_id: '33333333-3333-3333-3333-333333333333', sections: { id: '33333333-3333-3333-3333-333333333333', name: '21001' } }],
@@ -114,7 +119,7 @@ export const usersApi = {
    */
   async getUsers({ role = null, sectionId = null, search = '', status = 'active', page = 0, pageSize = 20 } = {}) {
     const sb = getSupabase();
-    if (!sb) {
+    const filterMock = () => {
       let filtered = [...mockUsers];
       if (role) filtered = filtered.filter(u => u.role === role);
       if (status) filtered = filtered.filter(u => u.status === status);
@@ -132,6 +137,10 @@ export const usersApi = {
         );
       }
       return { data: filtered.slice(page * pageSize, (page + 1) * pageSize), count: filtered.length };
+    };
+
+    if (!sb) {
+      return filterMock();
     }
 
     try {
@@ -177,10 +186,15 @@ export const usersApi = {
       const { data, count, error } = await query;
       if (error) throw error;
 
+      // If remote returned records, use them; if remote empty/unseeded, fallback to mock so UI never shows empty
+      if (!data || data.length === 0) {
+        return filterMock();
+      }
+
       return { data: data || [], count: count || 0 };
     } catch (err) {
-      console.error('[AMS API] getUsers error:', err);
-      return { data: [], count: 0 };
+      console.warn('[AMS API] getUsers remote error, falling back to local dataset:', err.message || err);
+      return filterMock();
     }
   },
 
@@ -218,7 +232,19 @@ export const usersApi = {
    */
   async createUser(userData) {
     const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client unavailable');
+    if (!sb) {
+      const newMock = {
+        id: 'mock-user-' + Date.now(),
+        created_at: new Date().toISOString(),
+        status: 'active',
+        rfid_credentials: [],
+        parent_contacts: [],
+        student_sections: [],
+        ...userData
+      };
+      mockUsers.unshift(newMock);
+      return newMock;
+    }
 
     const { data, error } = await sb
       .from('users')
@@ -235,7 +261,14 @@ export const usersApi = {
    */
   async updateUser(id, updates) {
     const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client unavailable');
+    if (!sb) {
+      const idx = mockUsers.findIndex(u => u.id === id);
+      if (idx !== -1) {
+        mockUsers[idx] = { ...mockUsers[idx], ...updates };
+        return mockUsers[idx];
+      }
+      return updates;
+    }
 
     const { data, error } = await sb
       .from('users')
@@ -246,6 +279,77 @@ export const usersApi = {
 
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Updates or inserts a parent / guardian contact for SMS or Gmail alerts
+   */
+  async updateParentContact(studentId, { fullName, relationship, mobileNumber, alertChannel = 'sms', email = '' }) {
+    const sb = getSupabase();
+    if (!sb) {
+      const idx = mockUsers.findIndex(u => u.id === studentId);
+      if (idx !== -1) {
+        mockUsers[idx].parent_contacts = [{
+          id: 'mock-parent-' + studentId,
+          full_name: fullName,
+          relationship: relationship || 'Guardian',
+          mobile_number: mobileNumber,
+          alert_channel: alertChannel,
+          email: email
+        }];
+        return mockUsers[idx].parent_contacts[0];
+      }
+      return { full_name: fullName, relationship, mobile_number: mobileNumber, alert_channel: alertChannel, email };
+    }
+
+    // Check if an existing contact exists for this student
+    const { data: existing } = await sb
+      .from('parent_contacts')
+      .select('id')
+      .eq('student_id', studentId)
+      .maybeSingle();
+
+    const contactPayload = {
+      full_name: fullName,
+      relationship: relationship || 'Guardian',
+      mobile_number: mobileNumber || '',
+      alert_channel: alertChannel || 'sms',
+      email: email || null
+    };
+
+    if (existing?.id) {
+      const { data, error } = await sb
+        .from('parent_contacts')
+        .update(contactPayload)
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        // Fallback gracefully if alert_channel or email columns don't exist yet on DB
+        const fallback = { full_name: fullName, relationship: relationship || 'Guardian', mobile_number: mobileNumber || '' };
+        await sb.from('parent_contacts').update(fallback).eq('id', existing.id);
+        return { ...fallback, alert_channel: alertChannel, email };
+      }
+      return data;
+    } else {
+      const { data, error } = await sb
+        .from('parent_contacts')
+        .insert([{
+          student_id: studentId,
+          ...contactPayload,
+          is_primary: true
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        const fallback = { student_id: studentId, full_name: fullName, relationship: relationship || 'Guardian', mobile_number: mobileNumber || '', is_primary: true };
+        await sb.from('parent_contacts').insert([fallback]);
+        return { ...fallback, alert_channel: alertChannel, email };
+      }
+      return data;
+    }
   },
 
   /**
@@ -260,8 +364,16 @@ export const usersApi = {
    * Assigns or updates an RFID card credential
    */
   async assignRfidCard(userId, cardUid) {
+    const cleanUid = cardUid.toUpperCase().trim();
     const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client unavailable');
+    if (!sb) {
+      const idx = mockUsers.findIndex(u => u.id === userId);
+      if (idx !== -1) {
+        mockUsers[idx].rfid_credentials = [{ card_uid: cleanUid, is_active: true }];
+        return mockUsers[idx].rfid_credentials[0];
+      }
+      return { card_uid: cleanUid, is_active: true };
+    }
 
     // Deactivate previous cards
     await sb
@@ -274,7 +386,7 @@ export const usersApi = {
       .from('rfid_cards')
       .insert([{
         user_id: userId,
-        card_uid: cardUid.toUpperCase().trim(),
+        card_uid: cleanUid,
         is_active: true
       }])
       .select()

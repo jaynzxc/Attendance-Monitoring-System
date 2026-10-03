@@ -5,20 +5,35 @@
 import { getSupabase } from './supabaseClient.js';
 
 /**
- * Authenticates a user with email and password via Supabase Auth
- * @param {string} email 
+ * Authenticates a user with email, student number, or teacher ID and password
+ * @param {string} identifier (email, student_number e.g. s230110001, or teacher_id e.g. t230110001)
  * @param {string} password 
  * @returns {Promise<{user: object, role: string, error: string|null}>}
  */
-export async function login(email, password) {
+export async function login(identifier, password) {
   const sb = getSupabase();
   if (!sb) {
     return { user: null, role: null, error: 'Database connection unavailable.' };
   }
 
   try {
+    let emailToAuth = (identifier || '').trim().toLowerCase();
+
+    // If identifier is not an email address, lookup email by student_number or employee_number
+    if (!emailToAuth.includes('@')) {
+      const { data: matchedUser } = await sb
+        .from('users')
+        .select('email')
+        .or(`student_number.ilike.${emailToAuth},employee_number.ilike.${emailToAuth}`)
+        .maybeSingle();
+
+      if (matchedUser?.email) {
+        emailToAuth = matchedUser.email;
+      }
+    }
+
     const { data: authData, error: authError } = await sb.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+      email: emailToAuth,
       password
     });
 

@@ -63,26 +63,16 @@ async function loadAssignedSections() {
 }
 
 function initFilters() {
-  const tabButtons = document.querySelectorAll('.tab-btn');
+  const statusSelect = document.getElementById('filterStatusSelect');
   const sectionSelect = document.getElementById('filterSectionSelect');
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabButtons.forEach(b => {
-        b.style.background = 'var(--surface)';
-        b.style.borderColor = 'var(--border)';
-        b.style.color = 'var(--text-2)';
-      });
-
-      btn.style.background = 'var(--raised)';
-      btn.style.borderColor = 'var(--border-strong)';
-      btn.style.color = 'var(--accent)';
-
-      activeStatusTab = btn.getAttribute('data-status');
+  if (statusSelect) {
+    statusSelect.addEventListener('change', (e) => {
+      activeStatusTab = e.target.value;
       currentPage = 0;
       renderSlipsTable();
     });
-  });
+  }
 
   if (sectionSelect) {
     sectionSelect.addEventListener('change', (e) => {

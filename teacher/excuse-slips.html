@@ -136,20 +136,15 @@
         <!-- Filter Controls -->
         <div class="card p-4 mb-6">
           <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-            <!-- Status Tabs -->
-            <div class="flex items-center gap-2 border-b md:border-b-0 pb-2 md:pb-0" style="border-color: var(--border);">
-              <button type="button" class="tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border" data-status="all" style="background: var(--raised); border-color: var(--border-strong); color: var(--accent);">
-                All Slips
-              </button>
-              <button type="button" class="tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border" data-status="pending" style="background: var(--surface); border-color: var(--border); color: var(--text-2);">
-                Pending
-              </button>
-              <button type="button" class="tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border" data-status="approved" style="background: var(--surface); border-color: var(--border); color: var(--text-2);">
-                Approved
-              </button>
-              <button type="button" class="tab-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border" data-status="rejected" style="background: var(--surface); border-color: var(--border); color: var(--text-2);">
-                Rejected
-              </button>
+            <!-- Status Filter Dropdown -->
+            <div class="flex items-center gap-3">
+              <label for="filterStatusSelect" class="text-xs font-semibold shrink-0" style="color: var(--text-2);">Status:</label>
+              <select id="filterStatusSelect" class="px-3 py-1.5 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
             </div>
 
             <!-- Section Filter Dropdown -->

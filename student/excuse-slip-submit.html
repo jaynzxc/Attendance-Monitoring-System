@@ -213,7 +213,16 @@
               <h2 class="text-base font-semibold">My Submitted Excuse Slips</h2>
               <p class="text-xs" style="color: var(--text-2);">Track approval status and teacher feedback</p>
             </div>
-            <span class="text-xs font-mono" style="color: var(--text-3);" id="slipsHistoryBadge">0 Requests</span>
+            <div class="flex items-center gap-2">
+              <label for="filterStudentSlipStatus" class="text-xs font-semibold shrink-0" style="color: var(--text-2);">Status:</label>
+              <select id="filterStudentSlipStatus" class="px-2.5 py-1 text-xs rounded-lg border focus:outline-none" style="background: var(--surface); border-color: var(--border); color: var(--text-1);">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <span class="text-xs font-mono ml-2" style="color: var(--text-3);" id="slipsHistoryBadge">0 Requests</span>
+            </div>
           </div>
 
           <div class="overflow-x-auto">

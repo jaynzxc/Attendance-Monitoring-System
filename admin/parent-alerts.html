@@ -241,7 +241,25 @@
           <div style="display:flex; flex-direction:column; gap:14px;">
 
             <div class="compose-panel">
-              <h3 style="margin:0 0 14px; font-size:13.5px; font-weight:700; color:var(--text-1);">Compose SMS Alert</h3>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="margin:0; font-size:13.5px; font-weight:700; color:var(--text-1);">Dispatch Parent Alert</h3>
+                <span id="channelIndicatorBadge" class="badge" style="background:rgba(33, 150, 243, 0.12); color:#2196F3; font-size:10px; font-weight:700; padding:2px 8px;">SMS</span>
+              </div>
+
+              <!-- Alert Channel Selection (SMS vs Gmail) -->
+              <div style="margin-bottom:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px;">
+                <label class="compose-label" style="margin-bottom:6px;">Alert Delivery Channel</label>
+                <div style="display:flex; gap:16px; font-size:12px;">
+                  <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:500; color:var(--text-1);">
+                    <input type="radio" name="alertChannel" value="sms" checked style="cursor:pointer;" id="channelSmsRadio">
+                    <span>SMS Mobile Alert</span>
+                  </label>
+                  <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-weight:500; color:var(--text-1);">
+                    <input type="radio" name="alertChannel" value="gmail" style="cursor:pointer;" id="channelGmailRadio">
+                    <span>Gmail Alert</span>
+                  </label>
+                </div>
+              </div>
 
               <div style="margin-bottom:12px;">
                 <label class="compose-label" for="composeRecipient">Recipient</label>

@@ -14,6 +14,7 @@ import { renderNumberedPagination } from '../../components/pagination.js';
 let currentStudent = null;
 let studentSectionId = '11111111-1111-1111-1111-111111111111'; // Default Section 31001
 let allSlips = [];
+let activeFilterStatus = 'all';
 let currentPage = 0;
 const pageSize = 15;
 
@@ -41,6 +42,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 6. Load Past Submitted Slips History
   await loadSubmittedSlips();
+
+  const filterSelect = document.getElementById('filterStudentSlipStatus');
+  if (filterSelect) {
+    filterSelect.addEventListener('change', (e) => {
+      activeFilterStatus = e.target.value;
+      currentPage = 0;
+      renderSlipsHistoryTable();
+    });
+  }
 });
 
 async function resolveStudentSection(studentId) {
@@ -191,12 +201,17 @@ function renderSlipsHistoryTable() {
   const tbody = document.getElementById('studentSlipsHistoryBody');
   if (!tbody) return;
 
+  const filteredSlips = allSlips.filter(s => {
+    if (activeFilterStatus === 'all') return true;
+    return (s.status || 'pending').toLowerCase() === activeFilterStatus.toLowerCase();
+  });
+
   renderNumberedPagination({
     containerId: 'slipsPageNumbersContainer',
     prevBtnId: 'slipsPrevBtn',
     nextBtnId: 'slipsNextBtn',
     infoTextId: 'slipsPageInfoText',
-    totalRecords: allSlips.length,
+    totalRecords: filteredSlips.length,
     pageSize,
     currentPage,
     onPageChange: (newPage) => {
@@ -205,18 +220,18 @@ function renderSlipsHistoryTable() {
     }
   });
 
-  if (!allSlips || allSlips.length === 0) {
+  if (!filteredSlips || filteredSlips.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="py-10 text-center text-xs" style="color: var(--text-3);">
-          You have not submitted any excuse slips yet.
+          No excuse slips found matching this status.
         </td>
       </tr>
     `;
     return;
   }
 
-  const pagedSlips = allSlips.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  const pagedSlips = filteredSlips.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
   tbody.innerHTML = pagedSlips.map(slip => {
       const filedDate = new Date(slip.submitted_at || Date.now()).toLocaleDateString('en-US', {
@@ -273,14 +288,4 @@ function renderSlipsHistoryTable() {
         }
       });
     });
-  } catch (err) {
-    console.error('[AMS Student Excuse] Error loading slips:', err);
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" class="py-10 text-center text-xs text-red-500">
-          Failed to load submitted excuse slips.
-        </td>
-      </tr>
-    `;
-  }
 }

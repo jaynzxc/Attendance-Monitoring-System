@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     id: 'b0000000-0000-0000-0000-000000000001',
     first_name: 'Ricardo',
     last_name: 'Santos',
-    employee_number: 'EMP-2018-042',
+    employee_number: 't230110001',
     email: 'prof.santos@bestlink.edu.ph',
     role: 'teacher'
   };
@@ -89,7 +89,7 @@ async function loadTeacherProfileData() {
 
     // Populate Left Card
     const fullName = `Prof. ${profile.first_name || 'Ricardo'} ${profile.last_name || 'Santos'}`.trim();
-    const empNo = profile.employee_number || 'EMP-2018-042';
+    const empNo = profile.employee_number || profile.student_number || 't230110001';
     const dept = profile.department_name || 'College of Computer Studies';
     const activeRfid = profile.rfid_cards?.find(c => c.is_active)?.card_uid || '99887766';
     const email = profile.email || 'prof.santos@bestlink.edu.ph';

@@ -411,9 +411,9 @@
 
       <!-- Authentication Form -->
       <form id="loginForm" autocomplete="on">
-        <!-- Username / Email Input -->
+        <!-- Username / Email / ID Input -->
         <div class="auth-input-group">
-          <label for="emailInput">Username or Institutional Email</label>
+          <label for="emailInput">Username</label>
           <div class="auth-input-wrapper">
             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
@@ -423,7 +423,7 @@
               type="text" 
               id="emailInput" 
               class="auth-input" 
-              placeholder="Enter your username" 
+              placeholder="Enter your Username" 
               required 
               autocomplete="username"
               autofocus
@@ -546,30 +546,41 @@
       const rawInput = emailInput.value.trim();
       const password = passwordInput.value;
 
-      // Normalize username input: if user inputs a simple handle without domain, resolve to institutional email
+      // Normalize username/ID input: resolve ID numbers (t... for teacher, s... for student) or aliases
       let email = rawInput;
+      let matchedTeacherId = null;
+      let matchedStudentId = null;
+
       if (!rawInput.includes('@')) {
         const lower = rawInput.toLowerCase();
         if (lower === 'admin' || lower === 'administrator' || lower === 'registrar') {
           email = 'admin@bestlink.edu.ph';
+        } else if (lower.startsWith('t') && /^t\d{8,10}$/i.test(lower)) {
+          // Teacher ID format: e.g. t230110001
+          matchedTeacherId = lower;
+          email = 'prof.santos@bestlink.edu.ph';
+        } else if (lower.startsWith('s') && /^s\d{8,10}$/i.test(lower)) {
+          // Student Number format: e.g. s230110001
+          matchedStudentId = lower;
+          email = 'juan.delacruz@gmail.com';
         } else if (lower.startsWith('prof') || lower.startsWith('teach') || lower === 'santos') {
           email = 'prof.santos@bestlink.edu.ph';
         } else if (lower.startsWith('stud') || lower === 'juan') {
-          email = 'juan.delacruz@student.bestlink.edu.ph';
+          email = 'juan.delacruz@gmail.com';
         } else {
           email = `${lower}@bestlink.edu.ph`;
         }
       }
 
       try {
-        const result = await login(email, password);
+        const result = await login(rawInput, password);
 
         if (result.error) {
-          // Graceful local development resolution based on entered email
-          const lower = email.toLowerCase();
+          // Graceful local development resolution based on entered email / ID
+          const lower = rawInput.toLowerCase();
           const isDevAdmin = lower.includes('admin') || lower.includes('registrar');
-          const isDevTeacher = lower.includes('prof') || lower.includes('teach') || lower.includes('faculty') || lower.includes('santos');
-          const isDevStudent = lower.includes('student') || lower.includes('juan') || lower.includes('delacruz');
+          const isDevTeacher = lower.startsWith('t') || lower.includes('prof') || lower.includes('teach') || lower.includes('faculty') || lower.includes('santos');
+          const isDevStudent = lower.startsWith('s') || lower.includes('student') || lower.includes('juan') || lower.includes('delacruz');
 
           if (isDevAdmin || isDevTeacher || isDevStudent) {
             const detectedRole = isDevAdmin ? 'admin' : (isDevTeacher ? 'teacher' : 'student');
@@ -582,8 +593,8 @@
               id: demoUserId,
               email: email,
               role: detectedRole,
-              employee_number: detectedRole === 'teacher' ? 'EMP-2018-042' : (detectedRole === 'admin' ? 'ADM-2024-001' : null),
-              student_number: detectedRole === 'student' ? 's230110001' : null,
+              employee_number: detectedRole === 'teacher' ? (matchedTeacherId || 't230110001') : (detectedRole === 'admin' ? 'ADM-2024-001' : null),
+              student_number: detectedRole === 'student' ? (matchedStudentId || 's230110001') : (detectedRole === 'teacher' ? (matchedTeacherId || 't230110001') : null),
               first_name: detectedRole === 'admin' ? 'Administrator' : (detectedRole === 'teacher' ? 'Ricardo' : 'Juan'),
               last_name: detectedRole === 'admin' ? '' : (detectedRole === 'teacher' ? 'Santos' : 'Dela Cruz')
             }));

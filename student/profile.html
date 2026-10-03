@@ -293,7 +293,7 @@
               <div style="border-top: 1px solid var(--border); padding-top: 18px; display: flex; flex-direction: column; gap: 13px; text-align: left; font-size: 12.5px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                   <span style="color: var(--text-3);">Email:</span>
-                  <span id="metaEmail" style="color: var(--text-1); font-weight: 600; font-family: monospace;" class="truncate">juan.delacruz@student.bestlink.edu.ph</span>
+                  <span id="metaEmail" style="color: var(--text-1); font-weight: 600; font-family: monospace;" class="truncate">juan.delacruz@gmail.com</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                   <span style="color: var(--text-3);">Student ID:</span>
@@ -379,8 +379,8 @@
                 <!-- ROW 3: Official BCP Student Email & Gate RFID (Locked) -->
                 <div class="form-grid-2">
                   <div class="form-field-group">
-                    <label>Official BCP Student Email</label>
-                    <input type="email" id="adminEmail" class="profile-input field-locked" value="juan.delacruz@student.bestlink.edu.ph" style="font-family: monospace;" readonly>
+                    <label>Student Email (Gmail)</label>
+                    <input type="email" id="adminEmail" class="profile-input field-locked" value="juan.delacruz@gmail.com" style="font-family: monospace;" readonly>
                   </div>
                   <div class="form-field-group">
                     <label>Campus Turnstile RFID Card UID</label>
@@ -403,7 +403,7 @@
                   </div>
                 </div>
 
-                <!-- ROW 5: Relationship & Guardian Mobile (Editable) -->
+                <!-- ROW 5: Relationship -->
                 <div class="form-grid-2">
                   <div class="form-field-group">
                     <label for="guardianRelation">Relationship</label>
@@ -415,9 +415,15 @@
                     </select>
                   </div>
                   <div class="form-field-group">
-                    <label for="guardianMobile">Guardian Mobile (For SMS Alerts) <span style="color: #ef4444;">*</span></label>
-                    <input type="tel" id="guardianMobile" class="profile-input" value="+639187654321" placeholder="+63 918 765 4321" style="font-family: monospace;" required>
+                    <label for="guardianMobile">Guardian Mobile Number (SMS) <span style="color: #ef4444;">*</span></label>
+                    <input type="tel" id="guardianMobile" class="profile-input" value="+639187654321" placeholder="+63 918 765 4321" style="font-family: monospace;">
                   </div>
+                </div>
+
+                <!-- ROW 5b: Guardian Gmail Address -->
+                <div class="form-field-group" style="margin-bottom: 16px;">
+                  <label for="guardianEmail">Guardian Gmail Address (Email Alert)</label>
+                  <input type="email" id="guardianEmail" class="profile-input" value="maria.delacruz.parent@gmail.com" placeholder="e.g. parent@gmail.com">
                 </div>
 
                 <!-- ROW 6: Digital QR Fallback & Permanent Residential Address -->
