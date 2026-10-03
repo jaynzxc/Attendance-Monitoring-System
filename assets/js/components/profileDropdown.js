@@ -15,13 +15,14 @@ let dropdownEl = null;
 let currentProfileBtn = null;
 let currentUser = null;
 let isDropdownOpen = false;
+let listenersAttached = false;
 
 /**
  * Initializes the profile dropdown menu on the appbar profile button
  * @param {Object} user - The authenticated user profile
  */
 export function initProfileDropdown(user) {
-  currentUser = user;
+  if (user) currentUser = user;
   const profileBtn = document.querySelector('.appbar .profile');
   if (!profileBtn) return;
 
@@ -46,11 +47,14 @@ export function initProfileDropdown(user) {
     }
   };
 
-  // Global listeners for outside click and window events
-  document.addEventListener('click', handleOutsideClick);
-  window.addEventListener('resize', handleReposition);
-  window.addEventListener('scroll', handleReposition, true);
-  window.addEventListener('keydown', handleGlobalKeydown);
+  // Global listeners for outside click and window events (attach only once)
+  if (!listenersAttached) {
+    document.addEventListener('click', handleOutsideClick);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
+    window.addEventListener('keydown', handleGlobalKeydown);
+    listenersAttached = true;
+  }
 }
 
 /**
@@ -78,6 +82,21 @@ export function openProfileDropdown() {
     dropdownEl.id = 'amsProfileDropdown';
     dropdownEl.setAttribute('role', 'menu');
     dropdownEl.setAttribute('aria-label', 'Profile options');
+    dropdownEl.style.cssText = `
+      position: fixed;
+      width: 184px;
+      z-index: 99990;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      box-shadow: 0 10px 26px -4px rgba(13, 71, 161, 0.16), 0 3px 8px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      user-select: none;
+      display: none;
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+      transition: opacity 0.14s ease-out, transform 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
 
     dropdownEl.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -90,17 +109,17 @@ export function openProfileDropdown() {
   positionDropdown(dropdownEl, currentProfileBtn);
 
   dropdownEl.style.display = 'block';
-  requestAnimationFrame(() => {
-    dropdownEl.style.opacity = '1';
-    dropdownEl.style.transform = 'translateY(0) scale(1)';
-  });
+  // Force reflow for reliable transition
+  void dropdownEl.offsetHeight;
+  dropdownEl.style.opacity = '1';
+  dropdownEl.style.transform = 'translateY(0) scale(1)';
 
   currentProfileBtn.setAttribute('aria-expanded', 'true');
   isDropdownOpen = true;
 
-  // Focus the first menu item for keyboard accessibility
+  // Focus first menu item without triggering page scroll
   setTimeout(() => {
-    dropdownEl.querySelector('.profile-menu-item')?.focus();
+    dropdownEl.querySelector('.profile-menu-item')?.focus({ preventScroll: true });
   }, 40);
 }
 
@@ -114,7 +133,7 @@ export function closeProfileDropdown() {
   dropdownEl.style.transform = 'translateY(-4px) scale(0.98)';
 
   setTimeout(() => {
-    if (dropdownEl) dropdownEl.style.display = 'none';
+    if (dropdownEl && !isDropdownOpen) dropdownEl.style.display = 'none';
   }, 140);
 
   if (currentProfileBtn) currentProfileBtn.setAttribute('aria-expanded', 'false');
@@ -125,6 +144,7 @@ export function closeProfileDropdown() {
  * Positions the dropdown smoothly right-aligned under the profile button
  */
 function positionDropdown(dropdown, trigger) {
+  if (!dropdown || !trigger) return;
   const rect = trigger.getBoundingClientRect();
   const dropdownWidth = 184;
   let left = rect.right - dropdownWidth;
@@ -132,22 +152,8 @@ function positionDropdown(dropdown, trigger) {
 
   const top = rect.bottom + 6;
 
-  dropdown.style.cssText = `
-    position: fixed;
-    top: ${top}px;
-    left: ${left}px;
-    width: ${dropdownWidth}px;
-    z-index: 99990;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 11px;
-    box-shadow: 0 10px 26px -4px rgba(13, 71, 161, 0.16), 0 3px 8px rgba(0, 0, 0, 0.05);
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-    transition: opacity 0.14s ease-out, transform 0.14s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
-    user-select: none;
-  `;
+  dropdown.style.top = `${top}px`;
+  dropdown.style.left = `${left}px`;
 }
 
 /**
@@ -260,7 +266,9 @@ function renderDropdownContent(container) {
     }
   });
 
-  container.querySelector('#amsMenuLogout')?.addEventListener('click', () => {
+  container.querySelector('#amsMenuLogout')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     closeProfileDropdown();
     openSignOutModal(currentUser);
   });

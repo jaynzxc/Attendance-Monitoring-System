@@ -25,6 +25,18 @@ export async function requireRole(allowedRoles) {
     return;
   }
 
+  // Pre-bind layout bindings immediately with cached user profile
+  // so appbar, profile dropdown, and buttons are instantly clickable on initial render
+  const cachedUserStr = sessionStorage.getItem('ams_cached_user');
+  if (cachedUserStr) {
+    try {
+      const cachedProfile = JSON.parse(cachedUserStr);
+      if (cachedProfile) {
+        initLayoutBindings(cachedProfile);
+      }
+    } catch (_) {}
+  }
+
   // 2. Authoritative check via Supabase Auth
   const sb = getSupabase();
   if (!sb) {
@@ -71,6 +83,10 @@ export async function requireRole(allowedRoles) {
     initLayoutBindings(profile);
   } catch (err) {
     console.error('[AMS RBAC] Guard verification error:', err);
+    const fallbackUserStr = sessionStorage.getItem('ams_cached_user');
+    if (fallbackUserStr) {
+      try { initLayoutBindings(JSON.parse(fallbackUserStr)); } catch (_) {}
+    }
   }
 }
 

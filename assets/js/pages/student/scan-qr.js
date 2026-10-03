@@ -18,6 +18,7 @@ import { requireRole } from '../../lib/rbac-guard.js';
 import { getCurrentUser } from '../../lib/auth.js';
 import { getSupabase } from '../../lib/supabaseClient.js';
 import { showToast } from '../../components/toast.js';
+import { initProfileDropdown } from '../../components/profileDropdown.js';
 
 let currentStudent = null;
 let videoStream = null;
@@ -26,6 +27,7 @@ let lastScanToken = null;
 let lastScanTime = 0;
 let isProcessingScan = false;
 let todayLogs = [];
+let userGps = { latitude: null, longitude: null, accuracy: null, status: "prompt" };
 
 const COOLDOWN_MS = 3500; // 3.5s double-scan throttle
 
@@ -239,20 +241,44 @@ async function processAttendanceScan(options = {}) {
     type: isLate ? 'warning' : 'success'
   });
 
-  // 4. Persist to Supabase if available
+  // 4. Persist to Supabase via RPC fn_submit_student_qr_scan
   const sb = getSupabase();
-  if (sb && currentStudent) {
+  if (sb && currentStudent && currentStudent.id) {
     try {
-      await sb.from('attendance_logs').insert({
-        student_id: currentStudent.id,
-        section_id: currentStudent.section_id || '11111111-1111-1111-1111-111111111111',
-        event_type: 'time_in',
-        status: status,
-        scan_method: 'qr',
-        scanned_at: nowIso
+      const { data, error } = await sb.rpc('fn_submit_student_qr_scan', {
+        p_session_token: options.sessionToken || null,
+        p_student_lat: options.lat || null,
+        p_student_lng: options.lng || null
       });
+
+      if (error) {
+        console.warn('[AMS QR Scan] RPC fallback:', error.message);
+        await sb.from('attendance_logs').insert({
+          student_id: currentStudent.id,
+          section_id: currentStudent.section_id || null,
+          event_type: 'time_in',
+          status: status,
+          scan_method: 'qr',
+          scanned_at: nowIso
+        });
+      } else if (data) {
+        if (!data.success) {
+          if (data.cooldown) {
+            playAudioFeedback('error');
+            flashResult(false, 'ALREADY LOGGED', 'Anti-passback cooldown active (5 mins)');
+            showToast({
+              title: 'Cooldown Active',
+              message: data.error || 'Duplicate scan within 5 minutes.',
+              type: 'warning'
+            });
+            return;
+          }
+        } else if (data.status) {
+          status = data.status;
+        }
+      }
     } catch (err) {
-      console.warn('[AMS QR Scan] Supabase insert note:', err);
+      console.error('[AMS QR Scan] Persistence error:', err);
     }
   }
 
@@ -311,6 +337,7 @@ async function handleDecodedQrToken(tokenString) {
 
     await processAttendanceScan({
       forcedStatus,
+      sessionToken: raw,
       method: 'QR Pass'
     });
   } finally {
@@ -321,8 +348,60 @@ async function handleDecodedQrToken(tokenString) {
 }
 
 /**
- * Starts the live camera stream & jsQR scanning loop
+ * Tracks real-time device Geolocation for 15-meter classroom geofence
  */
+function initGeolocation() {
+  const gpsDot = document.getElementById('gpsDot');
+  const gpsText = document.getElementById('gpsText');
+  const gpsBadge = document.getElementById('gpsBadge');
+
+  if (!navigator.geolocation) {
+    if (gpsDot) { gpsDot.style.background = '#EF4444'; gpsDot.classList.remove('animate-pulse'); }
+    if (gpsText) { gpsText.textContent = 'Geolocation not supported by device'; gpsText.style.color = '#EF4444'; }
+    return;
+  }
+
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      userGps.latitude = pos.coords.latitude;
+      userGps.longitude = pos.coords.longitude;
+      userGps.accuracy = Math.round(pos.coords.accuracy);
+      userGps.status = 'ready';
+
+      if (gpsDot) {
+        gpsDot.style.background = '#10B981';
+        gpsDot.classList.remove('animate-pulse');
+      }
+      if (gpsText) {
+        gpsText.textContent = `GPS Geofence Ready (±${userGps.accuracy}m)`;
+        gpsText.style.color = 'var(--text-1)';
+      }
+      if (gpsBadge) {
+        gpsBadge.style.background = 'rgba(16, 185, 129, 0.12)';
+        gpsBadge.style.color = '#10B981';
+      }
+    },
+    (err) => {
+      console.warn('[AMS Student GPS] Geolocation notice:', err);
+      userGps.status = 'denied';
+
+      if (gpsDot) {
+        gpsDot.style.background = '#EF4444';
+        gpsDot.classList.remove('animate-pulse');
+      }
+      if (gpsText) {
+        gpsText.textContent = 'Location blocked. Please allow GPS for 15m geofence.';
+        gpsText.style.color = '#EF4444';
+      }
+      if (gpsBadge) {
+        gpsBadge.style.background = 'rgba(239, 68, 68, 0.12)';
+        gpsBadge.style.color = '#EF4444';
+      }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+}
+
 async function startCamera() {
   const video = document.getElementById('cameraVideo');
   const canvas = document.getElementById('scanCanvas');
@@ -420,41 +499,9 @@ function stopCamera() {
   if (btnStop) btnStop.disabled = true;
 }
 
-/**
- * Resets today's test state
- */
-function resetDemoAttendance() {
-  sessionStorage.removeItem('ams_student_today_checkin');
-  todayLogs = [];
-
-  const banner = document.getElementById('statusBannerCheckIn');
-  const valueEl = document.getElementById('checkInValue');
-  const statusEl = document.getElementById('checkInStatus');
-  const iconBox = document.getElementById('checkInIconBox');
-  const log = document.getElementById('scanLog');
-  const countBadge = document.getElementById('scanCountBadge');
-
-  if (banner) banner.className = 'status-banner default';
-  if (valueEl) valueEl.textContent = '--:-- --';
-  if (statusEl) statusEl.textContent = 'Not scanned yet';
-  if (iconBox) {
-    iconBox.style.background = 'var(--raised)';
-    iconBox.style.color = 'var(--text-3)';
-  }
-  if (countBadge) countBadge.textContent = '0 Scans';
-  if (log) {
-    log.innerHTML = `
-      <div id="emptyLogPrompt" style="padding:28px 18px; text-align:center; color:var(--text-3); font-size:12px;">
-        No scans registered yet today.
-      </div>
-    `;
-  }
-
-  showToast({ title: 'Test State Reset', message: 'Today’s check-in has been cleared for testing.', type: 'info' });
-}
 
 /**
- * Initializes authenticated student profile & cached state
+ * Initializes authenticated student profile & live attendance
  */
 async function initStudentProfile() {
   currentStudent = await getCurrentUser() || {
@@ -481,18 +528,95 @@ async function initStudentProfile() {
     dateBadge.textContent = new Date().toLocaleDateString('en-US', opts);
   }
 
-  // Restore cached session if existing
-  const cached = sessionStorage.getItem('ams_student_today_checkin');
-  if (cached) {
+  // Ensure appbar profile dropdown is bound to current student
+  initProfileDropdown(currentStudent);
+
+  // Load today's live attendance from Supabase
+  const sb = getSupabase();
+  if (sb && currentStudent && currentStudent.id) {
     try {
-      const data = JSON.parse(cached);
-      if (data && data.status && data.time) {
-        updateStatusBanner(data.status, data.time);
-        appendScanLog(data.status, data.time, 'Restored');
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { data: dbLogs, error } = await sb
+        .from('attendance_logs')
+        .select('id, scanned_at, status, scan_method, event_type')
+        .eq('student_id', currentStudent.id)
+        .gte('scanned_at', todayStart.toISOString())
+        .order('scanned_at', { ascending: false });
+
+      if (!error && dbLogs && dbLogs.length > 0) {
+        const latest = dbLogs[0];
+        const latestTime = fmtTime(new Date(latest.scanned_at));
+        updateStatusBanner(latest.status, latestTime);
+
+        // Populate log list
+        const log = document.getElementById('scanLog');
+        if (log) log.innerHTML = '';
+        todayLogs = [];
+
+        dbLogs.forEach(entry => {
+          const t = fmtTime(new Date(entry.scanned_at));
+          appendScanLog(
+            entry.status,
+            t,
+            entry.scan_method ? entry.scan_method.toUpperCase() : 'QR'
+          );
+        });
       }
     } catch (e) {
-      console.debug('[AMS QR Scan] Cache parse note:', e);
+      console.debug('[AMS QR Scan] Database fetch note:', e);
     }
+  }
+
+  // Fallback to cached session if available and no logs fetched
+  if (todayLogs.length === 0) {
+    const cached = sessionStorage.getItem('ams_student_today_checkin');
+    if (cached) {
+      try {
+        const data = JSON.parse(cached);
+        if (data && data.status && data.time) {
+          updateStatusBanner(data.status, data.time);
+          appendScanLog(data.status, data.time, 'Cached');
+        }
+      } catch (e) {}
+    }
+  }
+}
+
+/**
+ * Subscribes to Supabase Realtime for instant attendance log updates
+ */
+function setupRealtimeAttendance() {
+  const sb = getSupabase();
+  if (!sb || !currentStudent || !currentStudent.id) return;
+
+  try {
+    sb.channel('student-qr-ingress-' + currentStudent.id)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'attendance_logs',
+          filter: 'student_id=eq.' + currentStudent.id
+        },
+        (payload) => {
+          const newRow = payload.new;
+          if (!newRow) return;
+          const t = fmtTime(new Date(newRow.scanned_at || Date.now()));
+          updateStatusBanner(newRow.status, t);
+          appendScanLog(newRow.status, t, (newRow.scan_method || 'QR').toUpperCase());
+          showToast({
+            title: 'Attendance Synced',
+            message: 'Your attendance record has been confirmed in real time.',
+            type: 'success'
+          });
+        }
+      )
+      .subscribe();
+  } catch (err) {
+    console.debug('[AMS QR Realtime] Subscription note:', err);
   }
 }
 
@@ -503,8 +627,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 1. Enforce Student Role Guard
   await requireRole(['student']);
 
-  // 2. Initialize Student Profile
+  // 2. Initialize Student Profile & Load Live Logs
   await initStudentProfile();
+
+  // 2.1 Initialize Geolocation for 15m Geofence
+  initGeolocation();
 
   // 3. Setup Theme Toggle
   const themeBtn = document.getElementById('themeToggle');
@@ -521,27 +648,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnStartCamera')?.addEventListener('click', startCamera);
   document.getElementById('btnStopCamera')?.addEventListener('click', stopCamera);
 
-  // 5. Wire Quick Simulation Triggers
-  document.getElementById('btnSimulateScan')?.addEventListener('click', () => {
-    processAttendanceScan({ method: 'Simulated Pass' });
-  });
-
-  document.getElementById('btnSimulatePresent')?.addEventListener('click', () => {
-    processAttendanceScan({ forcedStatus: 'present', bypassCooldown: true, method: 'On-Time Pass' });
-  });
-
-  document.getElementById('btnSimulateLate')?.addEventListener('click', () => {
-    processAttendanceScan({ forcedStatus: 'late', bypassCooldown: true, method: 'Tardy Pass' });
-  });
-
-  document.getElementById('btnSimulateInvalid')?.addEventListener('click', () => {
-    playAudioFeedback('error');
-    flashResult(false, 'INVALID QR CODE', 'Expired or unauthorized classroom pass');
-    showToast({ title: 'Invalid QR Pass', message: 'Classroom QR code has expired or is invalid.', type: 'danger' });
-  });
-
-  // 6. Wire Reset Demo Button
-  document.getElementById('btnResetDemoAttendance')?.addEventListener('click', resetDemoAttendance);
+  // 5. Setup Realtime Listener for Live Ingress Updates
+  setupRealtimeAttendance();
 });
 
 window.addEventListener('beforeunload', () => {

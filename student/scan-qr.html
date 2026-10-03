@@ -261,6 +261,15 @@
               <div class="sub">Point your camera at the teacher's classroom QR pass or gate terminal</div>
             </div>
 
+            <!-- GPS Geofence Status Pill -->
+            <div id="gpsStatusContainer" style="padding:9px 13px; border-radius:10px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; font-size:11.5px; background:var(--raised); border:1px solid var(--border);">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span id="gpsDot" style="width:8px; height:8px; border-radius:50%; background:#F59E0B; flex-shrink:0;" class="animate-pulse"></span>
+                <span id="gpsText" style="font-weight:500; color:var(--text-2);">Requesting GPS Geolocation...</span>
+              </div>
+              <span id="gpsBadge" style="font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:6px; background:var(--surface); color:var(--text-2); letter-spacing:0.04em;">15m Geofence</span>
+            </div>
+
             <!-- Viewfinder Area -->
             <div class="qr-viewfinder" id="viewfinderContainer">
               <!-- Idle placeholder -->
@@ -304,24 +313,6 @@
               </button>
             </div>
 
-            <!-- Quick Demo / Simulation Trigger -->
-            <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
-              <button type="button" id="btnSimulateScan" class="btn-sim-scan" title="Simulate scanning the active classroom QR pass">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                <span>Simulate Active Classroom QR Pass</span>
-              </button>
-              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-                <button type="button" id="btnSimulatePresent" class="btn-secondary" style="font-size:11px; padding:6px 4px; border-radius:6px; font-weight:600; text-align:center; cursor:pointer;" title="Simulate On-Time Present QR pass">
-                  Present Pass
-                </button>
-                <button type="button" id="btnSimulateLate" class="btn-secondary" style="font-size:11px; padding:6px 4px; border-radius:6px; font-weight:600; text-align:center; cursor:pointer;" title="Simulate Tardy / Late QR pass">
-                  Late Pass
-                </button>
-                <button type="button" id="btnSimulateInvalid" class="btn-secondary" style="font-size:11px; padding:6px 4px; border-radius:6px; font-weight:600; color:var(--absent); border-color:rgba(239,68,68,0.3); text-align:center; cursor:pointer;" title="Simulate scanning an invalid/unauthorized QR code">
-                  Invalid QR
-                </button>
-              </div>
-            </div>
           </div>
 
           <!-- Right Pane: Status Cards & Instructions -->
@@ -330,13 +321,7 @@
             <!-- Today's Personal Status Card -->
             <div class="card" style="padding:20px;">
               <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <h3 style="margin:0; font-size:13.5px; font-weight:700;">My Ingress Today</h3>
-                  <button type="button" id="btnResetDemoAttendance" class="btn-secondary" style="font-size:10.5px; padding:3px 9px; border-radius:6px; color:var(--text-2); display:inline-flex; align-items:center; gap:4px; font-weight:600; cursor:pointer;" title="Reset today's check-in for testing">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    <span>Reset (Demo)</span>
-                  </button>
-                </div>
+                <h3 style="margin:0; font-size:13.5px; font-weight:700;">My Ingress Today</h3>
                 <span id="todayDateBadge" class="text-xs font-mono tabular-nums" style="color:var(--text-3);">--</span>
               </div>
 
