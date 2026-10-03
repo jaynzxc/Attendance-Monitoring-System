@@ -91,6 +91,25 @@
       color: #ffffff !important;
       font-weight: 600;
     }
+
+    /* Refined, ultra-thin hairline dividers */
+    .table-hairline {
+      border-color: rgba(220, 232, 245, 0.45) !important;
+    }
+    [data-theme="dark"] .table-hairline {
+      border-color: rgba(26, 56, 102, 0.45) !important;
+    }
+
+    #attendanceHistoryTableBody tr {
+      border-bottom: 1px solid rgba(220, 232, 245, 0.45);
+      transition: background-color 0.12s ease;
+    }
+    [data-theme="dark"] #attendanceHistoryTableBody tr {
+      border-bottom: 1px solid rgba(26, 56, 102, 0.45);
+    }
+    #attendanceHistoryTableBody tr:last-child {
+      border-bottom: none;
+    }
   </style>
 </head>
 <body>
@@ -234,7 +253,7 @@
         <!-- Filters & History Table Card -->
         <div class="card overflow-hidden">
           <!-- Filter Controls Toolbar -->
-          <div class="p-4 border-b flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3" style="border-color: var(--border);">
+          <div class="p-4 border-b flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 table-hairline">
             <!-- Left Side: Quick Search Input -->
             <div class="search-box sm:w-72">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -277,7 +296,7 @@
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
-                <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
+                <tr class="border-b text-xs uppercase tracking-wider font-semibold table-hairline" style="background: var(--surface-hover); color: var(--text-2);">
                   <th class="py-3 px-4">Date</th>
                   <th class="py-3 px-4">Subject & Section</th>
                   <th class="py-3 px-4">Time In</th>
@@ -285,7 +304,7 @@
                   <th class="py-3 px-4">Method</th>
                 </tr>
               </thead>
-              <tbody id="attendanceHistoryTableBody" class="divide-y" style="border-color: var(--border);">
+              <tbody id="attendanceHistoryTableBody">
                 <tr>
                   <td colspan="5" class="py-12 text-center text-sm" style="color: var(--text-3);">
                     Loading attendance history records...
@@ -296,7 +315,7 @@
           </div>
 
           <!-- Pagination Footer -->
-          <div class="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style="border-color: var(--border); color: var(--text-2);">
+          <div class="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs table-hairline" style="color: var(--text-2);">
             <span id="pageInfoText">Showing 1 to 15 records</span>
             <div class="flex items-center gap-1.5" id="paginationControls">
               <button id="prevPageBtn" class="page-arrow-btn" disabled aria-label="Previous Page">&lt;</button>

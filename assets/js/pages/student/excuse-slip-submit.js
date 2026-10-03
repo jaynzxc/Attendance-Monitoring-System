@@ -148,6 +148,7 @@ function initFormSubmit() {
 
       // Reset form
       form.reset();
+
       initDateInputs();
 
       // Reload history list
@@ -170,6 +171,7 @@ function initFormSubmit() {
     }
   });
 }
+
 
 async function loadSubmittedSlips() {
   const tbody = document.getElementById('studentSlipsHistoryBody');
@@ -246,7 +248,7 @@ function renderSlipsHistoryTable() {
       const statusPillClass = status === 'approved' ? 'pill-present' : status === 'rejected' ? 'pill-absent' : 'pill-pending';
       const statusLabel = status.toUpperCase();
 
-      const reviewerNotes = slip.reviewer_notes ? slip.reviewer_notes : (status === 'pending' ? 'Pending faculty review' : 'No remarks');
+      const reviewerNotes = slip.reviewer_notes ? slip.reviewer_notes : (status === 'approved' ? 'Approved by Section Adviser' : (status === 'pending' ? 'Pending faculty review' : 'No remarks'));
 
       return `
         <tr class="hover:bg-[var(--surface-hover)] transition-colors">

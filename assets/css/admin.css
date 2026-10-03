@@ -89,6 +89,41 @@
   width: 16px;
   height: 16px;
 }
+ 
+.file-btn-modern {
+  display: block;
+  width: 100%;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.file-btn-modern::-webkit-file-upload-button,
+.file-btn-modern::file-selector-button {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--ch-500);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+  box-shadow: 0 1px 3px rgba(33, 150, 243, 0.35);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.file-btn-modern::-webkit-file-upload-button:hover,
+.file-btn-modern::file-selector-button:hover {
+  background: var(--accent-hover);
+}
+
+.file-btn-modern::-webkit-file-upload-button:active,
+.file-btn-modern::file-selector-button:active {
+  transform: translateY(1px);
+}
 
 .btn-secondary {
   background: var(--surface);

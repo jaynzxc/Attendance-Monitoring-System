@@ -21,6 +21,251 @@
   <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
   <link rel="stylesheet" href="../assets/css/tailwind.css">
   <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <style>
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .calendar-header-day {
+      background: var(--surface-hover);
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .calendar-day-cell {
+      background: var(--surface);
+      min-height: 110px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      position: relative;
+    }
+    .calendar-day-cell:hover {
+      background: var(--surface-hover);
+    }
+    .calendar-day-cell.other-month {
+      background: var(--bg);
+      opacity: 0.45;
+      cursor: default;
+    }
+    .calendar-day-cell.today {
+      box-shadow: inset 0 0 0 2px var(--accent);
+    }
+    .calendar-day-number {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+    }
+    .calendar-day-cell.today .calendar-day-number {
+      background: var(--accent);
+      color: #ffffff;
+    }
+    .event-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 6px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-no-class {
+      background: var(--late-soft);
+      color: var(--late);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .badge-holiday {
+      background: var(--absent-soft);
+      color: var(--absent);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .badge-school-event {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border-strong);
+    }
+    .badge-exam {
+      background: rgba(147, 51, 234, 0.15);
+      color: #9333ea;
+      border: 1px solid rgba(147, 51, 234, 0.25);
+    }
+    .badge-suspension {
+      background: rgba(234, 88, 12, 0.15);
+      color: #ea580c;
+      border: 1px solid rgba(234, 88, 12, 0.25);
+    }
+    .badge-present {
+      background: var(--present-soft);
+      color: var(--present);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .badge-late {
+      background: var(--late-soft);
+      color: var(--late);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .badge-absent {
+      background: var(--absent-soft);
+      color: var(--absent);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .badge-excused {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border-strong);
+    }
+    [data-theme="dark"] .badge-exam {
+      background: rgba(168, 85, 247, 0.22);
+      color: #c084fc;
+      border-color: rgba(168, 85, 247, 0.35);
+    }
+    [data-theme="dark"] .badge-suspension {
+      background: rgba(249, 115, 22, 0.22);
+      color: #fb923c;
+      border-color: rgba(249, 115, 22, 0.35);
+    }
+    .calendar-day-cell.sunday-no-class {
+      background: rgba(239, 68, 68, 0.025);
+    }
+    [data-theme="dark"] .calendar-day-cell.sunday-no-class {
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    /* Vibrant Legend & Quick-Count Status Pills */
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .stat-pill .stat-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .stat-pill-present {
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .stat-pill-present .stat-dot {
+      background: #10B981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+    }
+    .stat-pill-late {
+      background: rgba(245, 158, 11, 0.12);
+      color: #D97706;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .stat-pill-late .stat-dot {
+      background: #F59E0B;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    }
+    .stat-pill-absent {
+      background: rgba(239, 68, 68, 0.12);
+      color: #DC2626;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .stat-pill-absent .stat-dot {
+      background: #EF4444;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+    }
+    .stat-pill-excused {
+      background: rgba(2, 136, 209, 0.12);
+      color: #0288D1;
+      border: 1px solid rgba(2, 136, 209, 0.3);
+    }
+    .stat-pill-excused .stat-dot {
+      background: #0288D1;
+      box-shadow: 0 0 6px rgba(2, 136, 209, 0.4);
+    }
+    .stat-pill-rate {
+      background: rgba(33, 150, 243, 0.12);
+      color: #0D47A1;
+      border: 1px solid rgba(33, 150, 243, 0.35);
+      font-weight: 700;
+    }
+    [data-theme="dark"] .stat-pill-present {
+      background: rgba(52, 211, 153, 0.16);
+      color: #34D399;
+      border-color: rgba(52, 211, 153, 0.35);
+    }
+    [data-theme="dark"] .stat-pill-present .stat-dot {
+      background: #34D399;
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+    }
+    [data-theme="dark"] .stat-pill-late {
+      background: rgba(251, 191, 36, 0.16);
+      color: #FBBF24;
+      border-color: rgba(251, 191, 36, 0.35);
+    }
+    [data-theme="dark"] .stat-pill-late .stat-dot {
+      background: #FBBF24;
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+    }
+    [data-theme="dark"] .stat-pill-absent {
+      background: rgba(248, 113, 113, 0.16);
+      color: #F87171;
+      border-color: rgba(248, 113, 113, 0.35);
+    }
+    [data-theme="dark"] .stat-pill-absent .stat-dot {
+      background: #F87171;
+      box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+    }
+    [data-theme="dark"] .stat-pill-excused {
+      background: rgba(96, 165, 250, 0.16);
+      color: #60A5FA;
+      border-color: rgba(96, 165, 250, 0.35);
+    }
+    [data-theme="dark"] .stat-pill-excused .stat-dot {
+      background: #60A5FA;
+      box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
+    }
+    [data-theme="dark"] .stat-pill-rate {
+      background: rgba(33, 150, 243, 0.22);
+      color: #90CAF9;
+      border-color: rgba(144, 202, 249, 0.35);
+    }
+
+    /* Legend Swatches */
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+  </style>
 </head>
 <body>
   <div class="layout">
@@ -124,58 +369,68 @@
           </div>
         </div>
 
-        <!-- Month Navigation & Monthly Summary Ribbon -->
-        <div class="card p-4 mb-6">
-          <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-            <!-- Month Selector Controls -->
-            <div class="flex items-center gap-2">
-              <button type="button" id="prevMonthBtn" class="pillbtn text-xs p-2" title="Previous Month">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-              <h2 class="text-base font-bold min-w-[160px] text-center" id="calendarMonthTitle">September 2026</h2>
-              <button type="button" id="nextMonthBtn" class="pillbtn text-xs p-2" title="Next Month">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
-              <button type="button" id="currentMonthBtn" class="pillbtn text-xs ml-2">Today</button>
-            </div>
-
-            <!-- Month Quick Counts Ribbon -->
-            <div class="flex flex-wrap items-center gap-2 text-xs">
-              <span class="px-2.5 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 tabular-nums">
-                <strong id="monthPresentCount">0</strong> Present
-              </span>
-              <span class="px-2.5 py-1 rounded-full font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 tabular-nums">
-                <strong id="monthLateCount">0</strong> Late
-              </span>
-              <span class="px-2.5 py-1 rounded-full font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 tabular-nums">
-                <strong id="monthAbsentCount">0</strong> Absent
-              </span>
-              <span class="px-2.5 py-1 rounded-full font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 tabular-nums">
-                <strong id="monthExcusedCount">0</strong> Excused
-              </span>
-              <span class="px-3 py-1 rounded-full font-bold tabular-nums" style="background: var(--raised); color: var(--accent);" id="monthRateBadge">
-                0% Rate
-              </span>
-            </div>
+        <!-- Month Navigation Bar -->
+        <div class="card" style="padding:14px 18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="prevMonthBtn" class="pillbtn" style="padding:6px 12px;" aria-label="Previous Month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <h2 id="calendarMonthTitle" style="margin:0; font-size:16px; font-weight:700; color:var(--text-1); min-width:180px; text-align:center;">
+              October 2026
+            </h2>
+            <button id="nextMonthBtn" class="pillbtn" style="padding:6px 12px;" aria-label="Next Month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <button id="currentMonthBtn" class="pillbtn" style="padding:6px 12px; margin-left:6px; font-size:12px;">
+              Today
+            </button>
           </div>
         </div>
 
         <!-- Calendar Grid -->
-        <div class="card overflow-hidden">
-          <!-- Weekday Headers -->
-          <div class="grid grid-cols-7 border-b text-center text-xs font-semibold uppercase tracking-wider py-2.5" style="background: var(--surface-hover); border-color: var(--border); color: var(--text-2);">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-          </div>
+        <div class="calendar-grid" id="calendarGrid">
+          <div class="calendar-header-day">Sun</div>
+          <div class="calendar-header-day">Mon</div>
+          <div class="calendar-header-day">Tue</div>
+          <div class="calendar-header-day">Wed</div>
+          <div class="calendar-header-day">Thu</div>
+          <div class="calendar-header-day">Fri</div>
+          <div class="calendar-header-day">Sat</div>
+        </div>
 
-          <!-- Calendar Days Grid Container -->
-          <div class="grid grid-cols-7 gap-px" style="background: var(--border);" id="calendarGrid">
-            <!-- Day cells populated dynamically -->
+        <!-- Notice / Legend Footer -->
+        <div class="card" style="margin-top:16px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:12px;">
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-present" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Present
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-late" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Late / Tardy
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-absent" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Absent
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-excused" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Excused Slip
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-no-class" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> No Classes (Sundays / Non-Class Days)
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-holiday" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Legal Holiday
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-school-event" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> School Event
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-exam" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Exam Week
+            </span>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+              <span class="badge-suspension" style="width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;"></span> Class Suspension
+            </span>
+          </div>
+          <div style="color:var(--text-3); font-size:11.5px;">
+            Entries automatically sync to Teacher &amp; Student calendars and exempt users from nightly absence evaluation.
           </div>
         </div>
       </main>
