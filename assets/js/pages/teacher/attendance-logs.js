@@ -34,9 +34,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 3. Setup Theme Toggle
   initThemeToggle();
 
-  // 4. Setup Default Date Filter
+  // 4. Parse URL query parameters for deep linking
+  const urlParams = new URLSearchParams(window.location.search);
+  const statusParam = urlParams.get('status');
+  const subjectParam = urlParams.get('subject');
+  const dateParam = urlParams.get('date');
+
+  // 5. Setup Default Date Filter
   const dateInput = document.getElementById('filterDate');
   if (dateInput) {
+    if (dateParam) {
+      selectedDate = dateParam;
+    }
     dateInput.value = selectedDate;
     dateInput.addEventListener('change', async (e) => {
       selectedDate = e.target.value;
@@ -44,7 +53,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 5. Setup Filters & Search Listeners
+  // Pre-select status from URL if present
+  if (statusParam) {
+    const statusSelect = document.getElementById('filterStatus');
+    if (statusSelect) {
+      statusSelect.value = statusParam.toLowerCase();
+    }
+  }
+
+  // 6. Setup Filters & Search Listeners
   document.getElementById('searchStudent')?.addEventListener('input', filterAndRenderLogs);
   document.getElementById('filterSubject')?.addEventListener('change', filterAndRenderLogs);
   document.getElementById('filterStatus')?.addEventListener('change', filterAndRenderLogs);
