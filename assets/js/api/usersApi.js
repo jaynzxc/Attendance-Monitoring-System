@@ -486,5 +486,57 @@ export const usersApi = {
 
     if (error) throw error;
     return { token, ...data };
+  },
+
+  /**
+   * Resets a user's password directly via RPC fn_admin_reset_user_password
+   * @param {string} userId - Target user ID (UUID)
+   * @param {string} newPassword - New password string (min 6 chars)
+   */
+  async resetUserPassword(userId, newPassword) {
+    if (!userId) throw new Error('User ID is required.');
+    if (!newPassword || newPassword.trim().length < 6) {
+      throw new Error('Password must be at least 6 characters.');
+    }
+
+    const sb = getSupabase();
+    if (!sb) {
+      return { success: true, message: 'Password updated (offline mock).' };
+    }
+
+    const { data, error } = await sb.rpc('fn_admin_reset_user_password', {
+      p_user_id: userId,
+      p_new_password: newPassword.trim()
+    });
+
+    if (error) {
+      console.error('[usersApi] fn_admin_reset_user_password error:', error);
+      throw new Error(error.message || 'Failed to reset password.');
+    }
+
+    if (data && !data.success) {
+      throw new Error(data.error || 'Failed to reset password.');
+    }
+
+    return data || { success: true, message: 'Password reset successfully.' };
+  },
+
+  /**
+   * Sends a password reset email to the user's registered address via Supabase Auth
+   * @param {string} email - Target user email
+   */
+  async sendPasswordResetEmail(email) {
+    if (!email) throw new Error('User email is required.');
+    const sb = getSupabase();
+    if (!sb) {
+      return { success: true, message: 'Reset email triggered (offline mock).' };
+    }
+
+    const { data, error } = await sb.auth.resetPasswordForEmail(email.trim());
+    if (error) {
+      console.warn('[usersApi] resetPasswordForEmail error:', error);
+      throw error;
+    }
+    return { success: true, data };
   }
 };

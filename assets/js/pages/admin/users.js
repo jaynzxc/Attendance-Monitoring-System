@@ -17,6 +17,17 @@ let currentUsersList = [];
 let sectionsList = [];
 
 /**
+ * Computes institutional default password (#Last2+8080)
+ */
+function computeDefaultPassword(lastName, firstName) {
+  let name = (lastName || '').trim();
+  if (!name || name.length < 2) name = (firstName || '').trim();
+  name = name.replace(/[^a-zA-Z]/g, '');
+  if (name.length < 2) return '#Aa8080';
+  return '#' + name[0].toUpperCase() + name[1].toLowerCase() + '8080';
+}
+
+/**
  * Loads users according to current filters and pagination
  */
 async function loadUsers() {
@@ -446,6 +457,63 @@ function openEditUserModal(user) {
           Tap card on administrator USB reader, enter 8–14 character HEX UID, or click <strong>Auto-Generate UID</strong>.
         </p>
       </div>
+
+      <!-- Account Security: Reset Password Section -->
+      <div style="border-top:1px solid var(--border); padding-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:12px; font-weight:700; color:var(--text-1); display:flex; align-items:center; gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Account Security & Password Reset
+            </div>
+            <div style="font-size:11px; color:var(--text-3); margin-top:2px;">
+              Reset portal login password or send recovery credentials
+            </div>
+          </div>
+          <button type="button" id="btnToggleResetPassword" class="btn-secondary" style="font-size:11px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;" title="Reset user password">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-6 6-3 3m2-8-8 8m-2 4 4-4"/></svg>
+            <span id="resetPasswordToggleText">Reset Password</span>
+          </button>
+        </div>
+
+        <!-- Collapsible Password Reset Container -->
+        <div id="resetPasswordBox" style="display:none; background:var(--raised); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="font-size:11.5px; font-weight:600; color:var(--text-1); margin:0;">
+              New Temporary Password
+            </label>
+            <button type="button" id="btnAutoGenerateEditPassword" class="btn-secondary" style="font-size:11px; padding:2px 7px; display:inline-flex; align-items:center; gap:4px;" title="Generate institutional default (#Last2+8080)">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M21 21v-5h-5"/></svg>
+              Generate Default
+            </button>
+          </div>
+
+          <div style="position:relative; display:flex; align-items:center; margin-bottom:10px;">
+            <input type="password" id="editResetPasswordInput" class="input-field" style="width:100%; font-family:monospace; padding-right:40px;" placeholder="Enter new password (min. 6 chars)">
+            <button type="button" id="btnToggleEditPasswordEye" style="position:absolute; right:8px; background:none; border:none; color:var(--text-3); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center;" title="Show / hide password">
+              <svg id="editPasswordEyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:11px; color:var(--text-3);">
+              Institutional default pattern: <code>#</code> + first 2 letters of Last Name + <code>8080</code>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" id="btnApplyResetPasswordNow" class="btn-primary" style="font-size:11.5px; padding:5px 12px; display:inline-flex; align-items:center; gap:5px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Apply Reset Now
+              </button>
+              ${user.email ? `
+                <button type="button" id="btnSendPasswordResetEmail" class="btn-secondary" style="font-size:11.5px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px;" title="Send password reset email to ${user.email}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  Send Reset Link
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -523,6 +591,16 @@ function openEditUserModal(user) {
               });
             }
 
+            // 5. Update Password if specified in Reset Password box
+            const newPasswordVal = document.getElementById('editResetPasswordInput')?.value.trim();
+            if (newPasswordVal) {
+              if (newPasswordVal.length < 6) {
+                toast.show('Password must be at least 6 characters.', 'warning');
+                return;
+              }
+              await usersApi.resetUserPassword(user.id, newPasswordVal);
+            }
+
             toast.show(`Details for ${firstName} ${lastName} updated successfully.`, 'success');
             Modal.close('editUserModal');
             loadUsers();
@@ -552,6 +630,77 @@ function openEditUserModal(user) {
     if (input) {
       input.value = '';
       toast.show('RFID card cleared. Click "Save Changes" to commit.', 'info');
+    }
+  });
+
+  // Wire up Reset Password toggle and actions inside Edit Modal
+  const resetBox = document.getElementById('resetPasswordBox');
+  const toggleBtn = document.getElementById('btnToggleResetPassword');
+  const toggleText = document.getElementById('resetPasswordToggleText');
+  const pwInput = document.getElementById('editResetPasswordInput');
+
+  toggleBtn?.addEventListener('click', () => {
+    if (!resetBox) return;
+    const isHidden = resetBox.style.display === 'none';
+    resetBox.style.display = isHidden ? 'block' : 'none';
+    toggleText.textContent = isHidden ? 'Close Reset Box' : 'Reset Password';
+    if (isHidden && pwInput && !pwInput.value) {
+      pwInput.value = computeDefaultPassword(user.last_name, user.first_name);
+    }
+  });
+
+  document.getElementById('btnAutoGenerateEditPassword')?.addEventListener('click', () => {
+    if (pwInput) {
+      const generated = computeDefaultPassword(user.last_name, user.first_name);
+      pwInput.value = generated;
+      pwInput.type = 'text';
+      toast.show(`Generated default password: ${generated}`, 'info');
+    }
+  });
+
+  let isPwVisible = false;
+  document.getElementById('btnToggleEditPasswordEye')?.addEventListener('click', () => {
+    if (!pwInput) return;
+    isPwVisible = !isPwVisible;
+    pwInput.type = isPwVisible ? 'text' : 'password';
+    const icon = document.getElementById('editPasswordEyeIcon');
+    if (icon) {
+      icon.innerHTML = isPwVisible
+        ? '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>'
+        : '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  });
+
+  document.getElementById('btnApplyResetPasswordNow')?.addEventListener('click', async () => {
+    const newPw = pwInput?.value.trim();
+    if (!newPw || newPw.length < 6) {
+      toast.show('Password must be at least 6 characters.', 'warning');
+      pwInput?.focus();
+      return;
+    }
+
+    try {
+      await usersApi.resetUserPassword(user.id, newPw);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(newPw).catch(() => {});
+      }
+      toast.show(`Password updated to "${newPw}". Copied to clipboard!`, 'success');
+      toggleText.textContent = 'Password Updated';
+    } catch (err) {
+      toast.show('Failed to reset password: ' + (err.message || 'Error'), 'error');
+    }
+  });
+
+  document.getElementById('btnSendPasswordResetEmail')?.addEventListener('click', async () => {
+    if (!user.email) {
+      toast.show('User has no registered email.', 'warning');
+      return;
+    }
+    try {
+      await usersApi.sendPasswordResetEmail(user.email);
+      toast.show(`Password reset link sent to ${user.email}!`, 'success');
+    } catch (err) {
+      toast.show('Failed to send reset email: ' + (err.message || 'Error'), 'error');
     }
   });
 }
