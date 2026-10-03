@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     id: 'c0000000-0000-0000-0000-000000000001',
     first_name: 'Juan',
     last_name: 'Dela Cruz',
-    student_number: '2024-IT-00101',
+    student_number: 's230110001',
     email: 'juan.delacruz@student.bestlink.edu.ph',
     section_name: '31001',
     role: 'student'
@@ -95,7 +95,7 @@ async function loadStudentProfileData() {
 
     // Derived fields
     const fullName = `${profile.first_name || 'Juan'} ${profile.last_name || 'Dela Cruz'}`.trim();
-    const studentNo = profile.student_number || '2024-IT-00101';
+    const studentNo = profile.student_number || 's230110001';
     const sectionName = profile.student_sections?.[0]?.sections?.name || profile.section_name || '31001';
     const activeRfid = profile.rfid_cards?.find(c => c.is_active)?.card_uid || 'E2806894';
     const email = profile.email || 'juan.delacruz@student.bestlink.edu.ph';
@@ -111,7 +111,7 @@ async function loadStudentProfileData() {
     const metaRfid = document.getElementById('metaRfid');
     const metaQr = document.getElementById('metaQr');
 
-    const combinedSec = sectionName.includes(' - ') ? sectionName : `BSIT - ${sectionName}`;
+    const combinedSec = sectionName;
     if (pfAvatar) pfAvatar.textContent = initials;
     if (pfFullName) pfFullName.textContent = fullName;
     if (metaEmail) metaEmail.textContent = email;

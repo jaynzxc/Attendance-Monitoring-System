@@ -183,7 +183,7 @@ function renderSlipsTable() {
 
   tbody.innerHTML = pagedSlips.map(slip => {
     const studentName = slip.student ? `${slip.student.first_name} ${slip.student.last_name}` : 'Student';
-    const studentNum = slip.student?.student_number || '2024-IT-00000';
+    const studentNum = slip.student?.student_number || 's230110000';
     const sectionName = slip.section?.name || 'Assigned Section';
 
     const startDate = new Date(slip.start_date || slip.date_from).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -304,7 +304,7 @@ async function openReviewModal(slip) {
   const notesInput = document.getElementById('reviewerNotesInput');
 
   const studentName = slip.student ? `${slip.student.first_name} ${slip.student.last_name}` : 'Student';
-  const studentNum = slip.student?.student_number || '2024-IT-00000';
+  const studentNum = slip.student?.student_number || 's230110000';
   const sectionName = slip.section?.name || 'Section';
 
   const startDate = new Date(slip.start_date || slip.date_from).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

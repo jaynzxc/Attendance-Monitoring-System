@@ -331,7 +331,7 @@
         </div>
 
         <!-- Consolidated Faculty Attendance Ledger (Full Width) -->
-        <div class="card overflow-hidden">
+        <div class="table-card">
           <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--border);">
             <div>
               <h2 class="text-base font-semibold" id="tableHeaderTitle">Faculty Daily Records</h2>
@@ -342,23 +342,23 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm">
+          <div class="table-responsive">
+            <table class="data-table">
               <thead>
-                <tr class="border-b text-xs uppercase tracking-wider font-semibold" style="background:var(--surface-hover); border-color:var(--border); color:var(--text-2);">
-                  <th class="py-3 px-4">Faculty Member</th>
-                  <th class="py-3 px-4">Section & Subject</th>
-                  <th class="py-3 px-4">Class Schedule</th>
-                  <th class="py-3 px-4">Time In</th>
-                  <th class="py-3 px-4">Time Out</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4">Rendered</th>
-                  <th class="py-3 px-4 text-center">Action</th>
+                <tr>
+                  <th>Faculty Member</th>
+                  <th>Section &amp; Subject</th>
+                  <th>Class Schedule</th>
+                  <th>Time In</th>
+                  <th>Time Out</th>
+                  <th>Status</th>
+                  <th>Rendered</th>
+                  <th style="text-align:center;">Action</th>
                 </tr>
               </thead>
-              <tbody id="teacherRecordsTableBody" class="divide-y" style="border-color:var(--border);">
+              <tbody id="teacherRecordsTableBody">
                 <tr>
-                  <td colspan="8" class="py-12 text-center text-sm" style="color:var(--text-3);">
+                  <td colspan="8" style="text-align:center; padding: 36px; color:var(--text-3);">
                     Loading faculty attendance records...
                   </td>
                 </tr>

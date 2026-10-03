@@ -25,11 +25,11 @@ async function evaluateCandidates() {
 
   try {
     let mockCandidates = [
-      { name: 'Ethan Bautista', num: '2024-00101', section: '31001', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSIT' },
-      { name: 'Chloe Alvarez', num: '2024-00105', section: '31001', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSIT' },
-      { name: 'Daniel Mendoza', num: '2024-00106', section: '21001', days: 45, present: 44, tardy: 0, rate: 97.8, excused: 1, program: 'BSIS' },
-      { name: 'Jasmine Cruz', num: '2024-00107', section: '11001', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSCS' },
-      { name: 'Mark Anthony Diaz', num: '2024-00108', section: '31002', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSIT' }
+      { name: 'Ethan Bautista', num: 's230110001', section: '31001', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSIT' },
+      { name: 'Chloe Alvarez', num: 's230110005', section: '31001', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSIT' },
+      { name: 'Daniel Mendoza', num: 's230110006', section: '21001', days: 45, present: 44, tardy: 0, rate: 97.8, excused: 1, program: 'BSIS' },
+      { name: 'Jasmine Cruz', num: 's230110007', section: '11001', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSCS' },
+      { name: 'Mark Anthony Diaz', num: 's230110008', section: '31002', days: 45, present: 45, tardy: 0, rate: 100.0, program: 'BSIT' }
     ];
 
     if (sb) {

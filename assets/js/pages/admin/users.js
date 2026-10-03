@@ -281,7 +281,7 @@ function openCreateUserModal() {
         </div>
         <div>
           <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Student / Employee #</label>
-          <input type="text" id="newStudentNum" class="input-field" style="width:100%;" placeholder="e.g. 2024-00109">
+          <input type="text" id="newStudentNum" class="input-field" style="width:100%;" placeholder="e.g. s230110001">
         </div>
       </div>
 

@@ -91,7 +91,6 @@ function renderSectionsTable() {
       <tr>
         <td>
           <div style="font-weight:700; color:var(--text-1); font-size:14px; font-family:monospace;">${sec.name}</div>
-          <div style="font-size:11.5px; color:var(--text-3); font-weight:600;">${sec.program_code} - ${sec.name}</div>
         </td>
         <td>
           <span style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; background:var(--raised); color:var(--text-1); border:1px solid var(--border);">
@@ -203,6 +202,7 @@ async function viewSectionRoster(secId) {
   function renderRosterContent() {
     const advisorName = section.advisor ? `${section.advisor.first_name || ''} ${section.advisor.last_name || ''}`.trim() : 'Unassigned';
     const eligibleStudents = getEligibleStudents();
+    const matchingEligibleStudents = eligibleStudents.filter(st => getStudentYearInfo(st).yearLevel === bcp.yearLevel);
 
     return `
       <div style="display:flex; flex-direction:column; gap:16px;">
@@ -210,10 +210,7 @@ async function viewSectionRoster(secId) {
         <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; background:var(--raised); border-radius:10px; border:1px solid var(--border);">
           <div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:15px; font-weight:700; color:var(--text-1);">${section.name}</span>
-              <span style="font-family:monospace; font-size:11.5px; font-weight:700; background:var(--ch-100); color:var(--ch-900); padding:2px 8px; border-radius:4px; border:1px solid var(--border-strong);">
-                BCP Code: ${sectionBcpCode}
-              </span>
+              <span style="font-size:16px; font-weight:700; color:var(--text-1); font-family:monospace;">${section.name}</span>
             </div>
             <div style="font-size:12px; color:var(--text-2); margin-top:2px;">
               Academic Standing: <strong style="color:var(--ch-500);">${bcp.yearLevelName} · ${bcp.semester}</strong> (AY ${section.school_year || '2026-2027'})
@@ -268,12 +265,11 @@ async function viewSectionRoster(secId) {
               </div>
               <div style="min-width:180px;">
                 <select id="candidateYearFilter" class="select-field" style="width:100%; font-size:12px; padding:6px 10px;">
-                  <option value="matching" selected>Matching ${bcp.yearLevelName} Students Only</option>
-                  <option value="all">All Eligible Students (${eligibleStudents.length})</option>
-                  <option value="1">1st Year Candidates</option>
-                  <option value="2">2nd Year Candidates</option>
-                  <option value="3">3rd Year Candidates</option>
-                  <option value="4">4th Year Candidates</option>
+                  <option value="all" selected>All Eligible Students (${matchingEligibleStudents.length})</option>
+                  <option value="1">1st Year Students</option>
+                  <option value="2">2nd Year Students</option>
+                  <option value="3">3rd Year Students</option>
+                  <option value="4">4th Year Students</option>
                 </select>
               </div>
             </div>
@@ -315,7 +311,7 @@ async function viewSectionRoster(secId) {
               </div>
               <div>
                 <label style="display:block; font-size:11.5px; font-weight:600; margin-bottom:4px; color:var(--text-1);">Or Paste Student Numbers (comma or newline separated)</label>
-                <textarea id="csvPasteTextarea" class="input-field" rows="3" placeholder="e.g.&#10;2024-IT-00101&#10;2024-IT-00102&#10;2024-IT-00103" style="width:100%; font-size:12px; font-family:monospace; resize:none;"></textarea>
+                <textarea id="csvPasteTextarea" class="input-field" rows="3" placeholder="e.g.&#10;s230110001&#10;s230110002&#10;s230110003" style="width:100%; font-size:12px; font-family:monospace; resize:none;"></textarea>
               </div>
             </div>
 
@@ -342,16 +338,16 @@ async function viewSectionRoster(secId) {
         </div>
 
         <!-- Enrolled Students Table -->
-        <div style="max-height:360px; overflow-y:auto; border:1px solid var(--border); border-radius:8px;">
-          <table class="data-table" style="width:100%; margin:0;">
+        <div style="max-height:360px; overflow-y:auto; overflow-x:hidden; border:1px solid var(--border); border-radius:8px;">
+          <table class="data-table" style="width:100%; margin:0; table-layout:auto;">
             <thead>
               <tr>
-                <th style="font-size:11px;">Student #</th>
+                <th style="font-size:11px; white-space:nowrap; width:130px;">Student #</th>
                 <th style="font-size:11px;">Name & Email</th>
-                <th style="font-size:11px;">Year Standing</th>
-                <th style="font-size:11px;">Status</th>
-                <th style="font-size:11px;">RFID Card</th>
-                <th style="text-align:right; font-size:11px;">Action</th>
+                <th style="font-size:11px; white-space:nowrap; width:110px;">Year Standing</th>
+                <th style="font-size:11px; white-space:nowrap; width:90px;">Status</th>
+                <th style="font-size:11px; white-space:nowrap; width:120px;">RFID Card</th>
+                <th style="text-align:right; font-size:11px; white-space:nowrap; width:95px;">Action</th>
               </tr>
             </thead>
             <tbody id="rosterTableBody">
@@ -493,15 +489,15 @@ async function viewSectionRoster(secId) {
     function getFilteredCandidates() {
       const eligible = getEligibleStudents();
       const q = candidateSearch?.value.trim().toLowerCase() || '';
-      const yrVal = candidateYearFilter?.value || 'matching';
+      const yrVal = candidateYearFilter?.value || 'all';
 
       return eligible.filter(st => {
         const yrInfo = getStudentYearInfo(st);
 
-        // Filter by Year
-        if (yrVal === 'matching') {
+        // Filter by Year: 'all' automatically detects and displays students matching this section's year level!
+        if (yrVal === 'all') {
           if (yrInfo.yearLevel !== bcp.yearLevel) return false;
-        } else if (yrVal !== 'all') {
+        } else {
           if (yrInfo.yearLevel !== parseInt(yrVal, 10)) return false;
         }
 
@@ -707,7 +703,7 @@ async function viewSectionRoster(secId) {
         csvPreviewContainer.innerHTML = `
           <div style="font-weight:700; margin-bottom:6px; color:var(--text-1);">Matched Students Ready for Enrollment:</div>
           ${matchedStudents.length === 0 ? `
-            <div style="color:var(--text-3); font-style:italic;">No valid student IDs found matching directory. Check format (e.g. 2024-IT-00101).</div>
+            <div style="color:var(--text-3); font-style:italic;">No valid student IDs found matching directory. Check format (e.g. s230110001).</div>
           ` : `
             <ul style="margin:0; padding-left:16px; color:var(--text-1);">
               ${matchedStudents.map(s => `<li><strong>${s.student_number}</strong> — ${s.first_name} ${s.last_name} (${getStudentYearInfo(s).yearLevelName})</li>`).join('')}
@@ -800,7 +796,7 @@ async function viewSectionRoster(secId) {
   Modal.open({
     id: 'rosterModal',
     title: `Section Roster: ${section.name}`,
-    maxWidth: '740px',
+    maxWidth: '920px',
     content: renderRosterContent(),
     actions: [
       {

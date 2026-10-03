@@ -55,15 +55,21 @@ insert into users (id, role, first_name, last_name, email, student_number, emplo
   ('b0000000-0000-0000-0000-000000000001', 'teacher', 'Ricardo', 'Santos', 'prof.santos@bestlink.edu.ph', null, 'EMP-2018-042', 'active'),
   ('b0000000-0000-0000-0000-000000000002', 'teacher', 'Carmen', 'Reyes', 'prof.reyes@bestlink.edu.ph', null, 'EMP-2019-088', 'active'),
   -- Students (Section 31001)
-  ('c0000000-0000-0000-0000-000000000001', 'student', 'Juan', 'Dela Cruz', 'juan.delacruz@student.bestlink.edu.ph', '2024-IT-00101', null, 'active'),
-  ('c0000000-0000-0000-0000-000000000002', 'student', 'Maria', 'Clara', 'maria.clara@student.bestlink.edu.ph', '2024-IT-00102', null, 'active'),
-  ('c0000000-0000-0000-0000-000000000003', 'student', 'Jose', 'Rizal', 'jose.rizal@student.bestlink.edu.ph', '2024-IT-00103', null, 'active'),
+  ('c0000000-0000-0000-0000-000000000001', 'student', 'Juan', 'Dela Cruz', 'juan.delacruz@student.bestlink.edu.ph', 's230110001', null, 'active'),
+  ('c0000000-0000-0000-0000-000000000002', 'student', 'Maria', 'Clara', 'maria.clara@student.bestlink.edu.ph', 's230110002', null, 'active'),
+  ('c0000000-0000-0000-0000-000000000003', 'student', 'Jose', 'Rizal', 'jose.rizal@student.bestlink.edu.ph', 's230110003', null, 'active'),
   -- Students (Section 31002)
-  ('c0000000-0000-0000-0000-000000000004', 'student', 'Andres', 'Bonifacio', 'andres.bonifacio@student.bestlink.edu.ph', '2024-IT-00201', null, 'active'),
-  ('c0000000-0000-0000-0000-000000000005', 'student', 'Gabriela', 'Silang', 'gabriela.silang@student.bestlink.edu.ph', '2024-IT-00202', null, 'active'),
+  ('c0000000-0000-0000-0000-000000000004', 'student', 'Andres', 'Bonifacio', 'andres.bonifacio@student.bestlink.edu.ph', 's230110004', null, 'active'),
+  ('c0000000-0000-0000-0000-000000000005', 'student', 'Gabriela', 'Silang', 'gabriela.silang@student.bestlink.edu.ph', 's230110005', null, 'active'),
   -- Student (Section 21001)
-  ('c0000000-0000-0000-0000-000000000006', 'student', 'Emilio', 'Aguinaldo', 'emilio.aguinaldo@student.bestlink.edu.ph', '2025-IS-00012', null, 'active')
-on conflict (id) do nothing;
+  ('c0000000-0000-0000-0000-000000000006', 'student', 'Emilio', 'Aguinaldo', 'emilio.aguinaldo@student.bestlink.edu.ph', 's230110006', null, 'active')
+on conflict (id) do update set
+  student_number = excluded.student_number,
+  first_name = excluded.first_name,
+  last_name = excluded.last_name,
+  email = excluded.email,
+  role = excluded.role,
+  status = excluded.status;
 
 -- 3. PARENT CONTACTS
 insert into parent_contacts (id, student_id, full_name, relationship, mobile_number, is_primary) values
@@ -124,10 +130,12 @@ on conflict (id) do nothing;
 
 -- 9. ATTENDANCE LOGS & DAILY SUMMARIES
 -- Today's live logs
-insert into attendance_logs (student_id, section_id, device_id, scan_method, event_type, status, scanned_at) values
-  ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', '70000000-0000-0000-0000-000000000001', 'rfid', 'time_in', 'present', now() - interval '3 hours'),
-  ('c0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', '70000000-0000-0000-0000-000000000001', 'rfid', 'time_in', 'late', now() - interval '2 hours 15 minutes'),
-  ('c0000000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', '70000000-0000-0000-0000-000000000002', 'qr', 'time_in', 'present', now() - interval '3 hours 10 minutes');
+insert into attendance_logs (student_id, section_id, device_id, scan_method, event_type, status, scanned_at, is_voided, voided_by, voided_at, void_reason) values
+  ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', '70000000-0000-0000-0000-000000000001', 'rfid', 'time_in', 'present', now() - interval '3 hours', false, null, null, null),
+  ('c0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', '70000000-0000-0000-0000-000000000001', 'rfid', 'time_in', 'late', now() - interval '2 hours 15 minutes', false, null, null, null),
+  ('c0000000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', '70000000-0000-0000-0000-000000000002', 'qr', 'time_in', 'present', now() - interval '3 hours 10 minutes', false, null, null, null),
+  -- 1 EXAMPLE OF VOIDED STUDENT: Jose Rizal scanned in, but was VOIDED by teacher Prof. Ricardo Santos due to buddy punching / proxy tap
+  ('c0000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', '70000000-0000-0000-0000-000000000001', 'rfid', 'time_in', 'absent', now() - interval '1 hour 45 minutes', true, 'b0000000-0000-0000-0000-000000000001', now() - interval '1 hour 30 minutes', 'Proxy badge tap detected / student absent in room');
 
 -- Teacher check-in
 insert into attendance_logs (teacher_id, device_id, scan_method, event_type, status, scanned_at) values

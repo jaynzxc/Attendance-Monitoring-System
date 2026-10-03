@@ -418,7 +418,7 @@ function renderRosterRows(roster) {
   tbody.innerHTML = roster.map(student => {
     const initials = `${(student.first_name || 'U')[0]}${(student.last_name || '')[0] || ''}`.toUpperCase();
     const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
-    const studentNum = student.student_number || '2024-IT-00000';
+    const studentNum = student.student_number || 's230110000';
     const status = student.is_voided ? 'absent' : (student.status || 'absent');
 
     let statusPillClass = 'pill-absent';
@@ -817,7 +817,7 @@ function openOverrideModal(student) {
   const statusButtons = modal.querySelectorAll('.status-choice-btn');
 
   if (nameEl) nameEl.textContent = `${student.first_name} ${student.last_name}`;
-  if (idEl) idEl.textContent = `Student Number: ${student.student_number || '2024-IT-00000'}`;
+  if (idEl) idEl.textContent = `Student Number: ${student.student_number || 's230110000'}`;
   if (reasonInput) reasonInput.value = '';
 
   statusButtons.forEach(btn => {
@@ -929,7 +929,7 @@ function appendLiveTapToStream(student, log) {
  */
 function createLiveTapElement(student, log) {
   const name = `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student';
-  const studentNum = student.student_number || '2024-IT';
+  const studentNum = student.student_number || 's23011';
   const time = log.scanned_at ? new Date(log.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : 'Now';
   const method = (log.scan_method || 'rfid').toUpperCase();
   const isLate = log.status === 'late';
@@ -997,7 +997,7 @@ function openVoidModal(student) {
     const timeStr = student.scanned_at
       ? new Date(student.scanned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
       : 'Recorded';
-    detailsEl.textContent = `ID: ${student.student_number || '2024-IT-00000'} · Scanned: ${timeStr} · Method: ${(student.scan_method || 'rfid').toUpperCase()}`;
+    detailsEl.textContent = `ID: ${student.student_number || 's230110000'} · Scanned: ${timeStr} · Method: ${(student.scan_method || 'rfid').toUpperCase()}`;
   }
   if (reasonInput) {
     reasonInput.value = 'Buddy punching / proxy tap detected during roll call';
@@ -1908,7 +1908,7 @@ function recordStudentCardTap(student, cardUid = null, method = 'rfid') {
     id: student.id,
     first_name: student.first_name,
     last_name: student.last_name,
-    student_number: student.student_number || '2024-IT-00000',
+    student_number: student.student_number || 's230110000',
     status: status,
     time: timeStr,
     scanned_at: now.toISOString(),

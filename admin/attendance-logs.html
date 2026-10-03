@@ -179,8 +179,15 @@
 
             <select id="filterMethod" class="select-field">
               <option value="">All Methods</option>
-              <option value="rfid">RFID Gate</option>
-              <option value="qr">QR Fallback</option>
+              <option value="rfid">RFID</option>
+              <option value="qr">QR</option>
+              <option value="manual">Manual</option>
+            </select>
+
+            <select id="filterAudit" class="select-field">
+              <option value="">All Audit Statuses</option>
+              <option value="verified">Verified by Teacher</option>
+              <option value="voided">Voided by Teacher</option>
             </select>
 
             <input type="date" id="filterDate" class="input-field" title="Select Date">
@@ -201,12 +208,13 @@
                   <th>Event</th>
                   <th>Status</th>
                   <th>Method</th>
-                  <th>Audit</th>
+                  <th>Audit Status</th>
+                  <th style="text-align:right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="logsTableBody">
                 <tr>
-                  <td colspan="7" style="text-align:center; padding: 36px;">Loading attendance records...</td>
+                  <td colspan="8" style="text-align:center; padding: 36px;">Loading attendance records...</td>
                 </tr>
               </tbody>
             </table>

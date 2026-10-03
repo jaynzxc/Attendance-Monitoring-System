@@ -461,7 +461,7 @@ async function initStudentProfile() {
     id: 'c0000000-0000-0000-0000-000000000001',
     first_name: 'Juan',
     last_name: 'Dela Cruz',
-    student_number: '2024-IT-00101',
+    student_number: 's230110001',
     role: 'student',
     section_id: '11111111-1111-1111-1111-111111111111',
     section_name: '31001'
@@ -473,7 +473,7 @@ async function initStudentProfile() {
   const dateBadge = document.getElementById('todayDateBadge');
 
   const rawSec = currentStudent.section_name || '31001';
-  const formattedSec = rawSec.includes(' - ') ? rawSec : `BSIT - ${rawSec}`;
+  const formattedSec = rawSec;
   if (secEl) secEl.textContent = `Student · ${formattedSec}`;
   if (sumSec) sumSec.textContent = formattedSec;
   if (dateBadge) {

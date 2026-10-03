@@ -593,7 +593,7 @@ export const sectionsApi = {
           id: 'c0000000-0000-0000-0000-000000000004',
           first_name: 'Andres',
           last_name: 'Bonifacio',
-          student_number: '2024-IT-00201',
+          student_number: 's230110004',
           email: 'andres.bonifacio@student.bestlink.edu.ph',
           status: 'present',
           scanned_at: `${date}T12:48:22.000Z`,
@@ -604,7 +604,7 @@ export const sectionsApi = {
           id: 'c0000000-0000-0000-0000-000000000005',
           first_name: 'Gabriela',
           last_name: 'Silang',
-          student_number: '2024-IT-00202',
+          student_number: 's230110005',
           email: 'gabriela.silang@student.bestlink.edu.ph',
           status: 'present',
           scanned_at: `${date}T12:52:14.000Z`,
@@ -617,7 +617,7 @@ export const sectionsApi = {
       const firstNames = ['Manuel', 'Francisco', 'Emilio', 'Calixto', 'Antonio', 'Apolinario', 'Mariano', 'Manuel', 'Artemio', 'Trinidad', 'Pio', 'Jose', 'Mariano', 'Jacinto', 'Marcelo', 'Graciano', 'Pedro', 'Miguel', 'Felipe', 'Melchora', 'Josefa', 'Danilo', 'Corazon', 'Eduardo', 'Grace', 'Ramon', 'Liza', 'Ferdinand', 'Sara', 'Luz'];
 
       for (let i = 0; i < 30; i++) {
-        const num = String(i + 203).padStart(5, '0');
+        const num = String(i + 20).padStart(4, '0');
         let status = 'present';
         let scannedAt = `${date}T12:${String(35 + (i % 22)).padStart(2, '0')}:15.000Z`;
         let method = i % 4 === 0 ? 'qr' : 'rfid';
@@ -637,7 +637,7 @@ export const sectionsApi = {
           id: `c0000000-0000-0000-0000-0000000002${String(i + 10).padStart(2, '0')}`,
           first_name: firstNames[i],
           last_name: surnames[i],
-          student_number: `2024-IT-${num}`,
+          student_number: `s23011${num}`,
           email: `${firstNames[i].toLowerCase()}.${surnames[i].toLowerCase().replace(/\s+/g, '')}@student.bestlink.edu.ph`,
           status,
           scanned_at: scannedAt,
@@ -656,7 +656,7 @@ export const sectionsApi = {
           id: 'c0000000-0000-0000-0000-000000000006',
           first_name: 'Emilio',
           last_name: 'Aguinaldo',
-          student_number: '2025-IS-00012',
+          student_number: 's230110006',
           email: 'emilio.aguinaldo@student.bestlink.edu.ph',
           status: 'present',
           scanned_at: `${date}T10:18:40.000Z`,
@@ -669,7 +669,7 @@ export const sectionsApi = {
       const firstNames = ['Arthur', 'Bernadette', 'Conrado', 'Domenic', 'Evelyn', 'Federico', 'Gemma', 'Hector', 'Irene', 'Joel', 'Kristine', 'Lorenzo', 'Miriam', 'Nestor', 'Olivia', 'Paul', 'Queenie', 'Reynaldo', 'Sheryl', 'Tristan', 'Ursula', 'Vicente', 'Wendy', 'Xavier', 'Yvette', 'Zaldy', 'Amelia'];
 
       for (let i = 0; i < 27; i++) {
-        const num = String(i + 13).padStart(5, '0');
+        const num = String(i + 60).padStart(4, '0');
         let status = 'present';
         let scannedAt = `${date}T10:${String(12 + (i % 16)).padStart(2, '0')}:20.000Z`;
         let method = i % 3 === 0 ? 'qr' : 'rfid';
@@ -689,7 +689,7 @@ export const sectionsApi = {
           id: `c0000000-0000-0000-0000-0000000003${String(i + 10).padStart(2, '0')}`,
           first_name: firstNames[i],
           last_name: surnames[i],
-          student_number: `2025-IS-${num}`,
+          student_number: `s23011${num}`,
           email: `${firstNames[i].toLowerCase()}.${surnames[i].toLowerCase()}@student.bestlink.edu.ph`,
           status,
           scanned_at: scannedAt,
@@ -707,7 +707,7 @@ export const sectionsApi = {
         id: 'c0000000-0000-0000-0000-000000000001',
         first_name: 'Juan',
         last_name: 'Dela Cruz',
-        student_number: '2024-IT-00101',
+        student_number: 's230110001',
         email: 'juan.delacruz@student.bestlink.edu.ph',
         status: 'present',
         scanned_at: `${date}T07:42:15.000Z`,
@@ -718,7 +718,7 @@ export const sectionsApi = {
         id: 'c0000000-0000-0000-0000-000000000002',
         first_name: 'Maria',
         last_name: 'Clara',
-        student_number: '2024-IT-00102',
+        student_number: 's230110002',
         email: 'maria.clara@student.bestlink.edu.ph',
         status: 'late',
         scanned_at: `${date}T08:15:20.000Z`,
@@ -729,7 +729,7 @@ export const sectionsApi = {
         id: 'c0000000-0000-0000-0000-000000000003',
         first_name: 'Jose',
         last_name: 'Rizal',
-        student_number: '2024-IT-00103',
+        student_number: 's230110003',
         email: 'jose.rizal@student.bestlink.edu.ph',
         status: 'absent',
         scanned_at: null,
@@ -742,7 +742,7 @@ export const sectionsApi = {
     const firstNames = ['Carlos', 'Bea', 'Christian', 'Diana', 'Elijah', 'Faith', 'Gabriel', 'Hannah', 'Ian', 'Julia', 'Kevin', 'Leah', 'Mark', 'Nicole', 'Oscar', 'Patricia', 'Quirino', 'Rachel', 'Samuel', 'Theresa', 'Ulysses', 'Vanessa', 'William', 'Ximena', 'Yosef', 'Zoe', 'Adrian', 'Bianca', 'Cedric', 'Daphne', 'Ethan', 'Fiona'];
 
     for (let i = 0; i < 32; i++) {
-      const num = String(i + 104).padStart(5, '0');
+      const num = String(i + 10).padStart(4, '0');
       let status = 'present';
       let scannedAt = `${date}T07:${String(32 + (i % 26)).padStart(2, '0')}:40.000Z`;
       let method = i % 3 === 0 ? 'qr' : 'rfid';
@@ -762,7 +762,7 @@ export const sectionsApi = {
         id: `c0000000-0000-0000-0000-0000000001${String(i + 10).padStart(2, '0')}`,
         first_name: firstNames[i],
         last_name: surnames[i],
-        student_number: `2024-IT-${num}`,
+        student_number: `s23011${num}`,
         email: `${firstNames[i].toLowerCase()}.${surnames[i].toLowerCase()}@student.bestlink.edu.ph`,
         status,
         scanned_at: scannedAt,

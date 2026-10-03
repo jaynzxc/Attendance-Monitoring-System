@@ -322,9 +322,8 @@ export function openProfileModal(user = {}) {
   const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Juan Dela Cruz';
   const role = (user.role || 'Member').toLowerCase();
   const roleName = role.charAt(0).toUpperCase() + role.slice(1);
-  const identifier = user.student_number || user.employee_number || '2024-IT-00101';
-  const rawSec = user.section_name || '31001';
-  const section = rawSec.includes(' - ') ? rawSec : (role === 'student' ? `BSIT - ${rawSec}` : rawSec);
+  const identifier = user.student_number || user.employee_number || 's230110001';
+  const section = user.section_name || '31001';
   const email = user.email || `${identifier.toLowerCase()}@bcp.edu.ph`;
   const initials = `${(user.first_name || 'U')[0]}${(user.last_name || '')[0] || ''}`.toUpperCase();
 

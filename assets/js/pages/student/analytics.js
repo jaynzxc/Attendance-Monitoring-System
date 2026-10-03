@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     id: 'c0000000-0000-0000-0000-000000000001',
     first_name: 'Juan',
     last_name: 'Dela Cruz',
-    student_number: '2024-IT-00101',
+    student_number: 's230110001',
     role: 'student'
   };
 
@@ -257,7 +257,7 @@ const renderArrivalChart = renderSubjectAttendanceChart;
 
 function handleExportAnalytics() {
   const studentFullName = `${currentStudent?.first_name || ''} ${currentStudent?.last_name || ''}`.trim() || 'Juan Dela Cruz';
-  const studentNo = currentStudent?.student_number || '2024-IT-00101';
+  const studentNo = currentStudent?.student_number || 's230110001';
   const sectionName = currentStudent?.section_name || '31001';
   const overallRate = currentStats?.attendanceRate ?? 95.6;
 
@@ -363,7 +363,7 @@ function initCertificateModal() {
     if (e) e.preventDefault();
 
     const studentName = `${currentStudent?.first_name || ''} ${currentStudent?.last_name || ''}`.trim() || 'Juan Dela Cruz';
-    const studentNo = currentStudent?.student_number || '2024-IT-00101';
+    const studentNo = currentStudent?.student_number || 's230110001';
     const sectionName = currentStudent?.section_name || '31001';
     const rate = currentStats?.attendanceRate ?? 100;
 

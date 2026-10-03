@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     id: 'c0000000-0000-0000-0000-000000000001',
     first_name: 'Juan',
     last_name: 'Dela Cruz',
-    student_number: '2024-IT-00101',
+    student_number: 's230110001',
     role: 'student'
   };
 

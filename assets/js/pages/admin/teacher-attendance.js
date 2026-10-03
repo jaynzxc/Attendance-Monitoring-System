@@ -401,8 +401,8 @@ function renderTeacherTable(records) {
     const method = (item.scan_method || 'rfid').toUpperCase();
 
     return `
-      <tr class="hover:bg-[var(--surface-hover)] transition-colors">
-        <td class="py-3 px-4">
+      <tr>
+        <td>
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0" style="background:var(--ch-100); color:var(--ch-900);">
               ${initials}
@@ -413,31 +413,31 @@ function renderTeacherTable(records) {
             </div>
           </div>
         </td>
-        <td class="py-3 px-4">
+        <td>
           <div>
             <span class="inline-block text-[11px] font-bold px-1.5 py-0.5 rounded" style="background:var(--raised); border:1px solid var(--border); color:var(--ch-900);">${secName}</span>
             <div class="text-[11px] text-[var(--text-2)] truncate max-w-[140px] mt-0.5" title="${subject}">${subject}</div>
           </div>
         </td>
-        <td class="py-3 px-4">
+        <td>
           <span class="text-xs tabular-nums text-[var(--text-2)] whitespace-nowrap">${schedule}</span>
         </td>
-        <td class="py-3 px-4">
+        <td>
           <div class="flex items-center gap-1.5">
             <span class="font-mono text-xs tabular-nums font-semibold text-[var(--text-1)]">${timeInStr}</span>
             <span class="text-[9px] font-bold px-1 rounded" style="background:var(--raised); color:var(--text-3);">${method}</span>
           </div>
         </td>
-        <td class="py-3 px-4">
+        <td>
           <span class="font-mono text-xs tabular-nums font-semibold text-[var(--text-1)]">${timeOutStr}</span>
         </td>
-        <td class="py-3 px-4">
+        <td>
           ${statusBadge}
         </td>
-        <td class="py-3 px-4">
+        <td>
           <span class="text-xs tabular-nums text-[var(--text-1)]">${durationStr}</span>
         </td>
-        <td class="py-3 px-4 text-center">
+        <td style="text-align:center;">
           <button class="btn-secondary btn-override text-[11px] py-1 px-2.5 rounded" 
             data-id="${t.id || ''}" 
             data-name="${fullName}" 

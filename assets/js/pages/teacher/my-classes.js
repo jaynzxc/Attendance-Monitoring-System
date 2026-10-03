@@ -398,7 +398,7 @@ function renderModalRosterRows(students) {
   tbody.innerHTML = students.map(student => {
     const initials = `${(student.first_name || 'U')[0]}${(student.last_name || '')[0] || ''}`.toUpperCase();
     const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
-    const studentNum = student.student_number || '2024-IT-00000';
+    const studentNum = student.student_number || 's230110000';
 
     // 1. Status Badge (Present, Late, Absent, Excused)
     const rawStatus = (student.status || 'absent').toLowerCase();

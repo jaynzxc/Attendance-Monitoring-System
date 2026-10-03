@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     id: 'c0000000-0000-0000-0000-000000000001',
     first_name: 'Juan',
     last_name: 'Dela Cruz',
-    student_number: '2024-IT-00101',
+    student_number: 's230110001',
     section_name: '31001',
     role: 'student'
   };
@@ -72,7 +72,7 @@ function initStudentProfile(user) {
   const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Juan Dela Cruz';
   if (nameEl) nameEl.textContent = fullName;
   const rawSec = user.section_name || '31001';
-  if (sectionEl) sectionEl.textContent = rawSec.includes(' - ') ? rawSec : `BSIT - ${rawSec}`;
+  if (sectionEl) sectionEl.textContent = rawSec;
 
   loadStudentRfidUid(user.id);
 }
@@ -505,7 +505,7 @@ async function exportHistoryToCsv() {
       rows,
       metadata: {
         'Student Name': studentFullName,
-        'Student ID': currentStudent.student_number || '2024-IT-00101',
+        'Student ID': currentStudent.student_number || 's230110001',
         'Academic Section': currentStudent.section_name || '31001',
         'Academic Term': 'AY 2026-2027 1st Semester',
         'Total Logged Sessions': `${records.length}`
