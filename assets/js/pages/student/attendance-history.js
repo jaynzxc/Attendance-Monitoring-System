@@ -135,6 +135,40 @@ function initFilterControls() {
   const methodSelect = document.getElementById('filterMethod');
   const searchInput = document.getElementById('filterSearch');
 
+  // Parse incoming URL query params (e.g. ?status=present, ?status=late, ?status=absent, ?status=excused)
+  const urlParams = new URLSearchParams(window.location.search);
+  const statusParam = urlParams.get('status');
+  if (statusParam && statusSelect) {
+    const validStatuses = ['present', 'late', 'absent', 'excused'];
+    const normalized = statusParam.toLowerCase();
+    if (validStatuses.includes(normalized)) {
+      statusSelect.value = normalized;
+      currentFilters.status = normalized;
+    }
+  }
+
+  // Bind in-page KPI card filters for instant interactive filtering
+  const kpiPresent = document.getElementById('kpiCardPresent');
+  const kpiLate = document.getElementById('kpiCardLate');
+  const kpiAbsent = document.getElementById('kpiCardAbsent');
+
+  const setKpiFilter = (statusVal, e) => {
+    if (e) e.preventDefault();
+    if (statusSelect) {
+      statusSelect.value = statusVal;
+      currentFilters.status = statusVal;
+      currentPage = 0;
+      loadAttendanceHistoryPage();
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('status', statusVal);
+      window.history.pushState({}, '', newUrl);
+    }
+  };
+
+  if (kpiPresent) kpiPresent.addEventListener('click', (e) => setKpiFilter('present', e));
+  if (kpiLate) kpiLate.addEventListener('click', (e) => setKpiFilter('late', e));
+  if (kpiAbsent) kpiAbsent.addEventListener('click', (e) => setKpiFilter('absent', e));
+
   let debounceTimer = null;
   const triggerAutoFilter = (immediate = false) => {
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -170,6 +204,9 @@ function initFilterControls() {
 
       currentPage = 0;
       currentFilters = { date: '', dateFrom: '', dateTo: '', status: '', scanMethod: '', search: '' };
+      const cleanUrl = new URL(window.location);
+      cleanUrl.searchParams.delete('status');
+      window.history.replaceState({}, '', cleanUrl);
       loadAttendanceHistoryPage();
     });
   }

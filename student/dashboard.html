@@ -130,38 +130,38 @@
 
         <!-- Student Attendance KPI Summary Cards -->
         <div class="kpis">
-          <div class="card kpi">
+          <a href="analytics.html" class="card kpi clickable-kpi" title="View Personal Attendance Analytics">
             <div class="label">Attendance Rate</div>
             <div class="num tabular-nums" id="kAttendanceRate">0%</div>
             <span class="chip chip-good" id="kAttendanceRateChip">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>
               Target &ge; 85%
             </span>
-          </div>
+          </a>
 
-          <div class="card kpi">
+          <a href="attendance-history.html?status=present" class="card kpi clickable-kpi" title="View Present Attendance History">
             <div class="label">Days Present</div>
             <div class="num tabular-nums" id="kPresentDays">0</div>
             <span class="chip chip-good">
               Verified Campus Ingress
             </span>
-          </div>
+          </a>
 
-          <div class="card kpi">
+          <a href="attendance-history.html?status=late" class="card kpi clickable-kpi" title="View Late Check-in History">
             <div class="label">Tardy / Late</div>
             <div class="num tabular-nums" id="kLateDays" style="color:var(--late);">0</div>
             <span class="chip" style="background:var(--late-soft); color:var(--late);" id="kLateDaysChip">
               Post-Cutoff
             </span>
-          </div>
+          </a>
 
-          <div class="card kpi">
+          <a href="attendance-history.html?status=absent" class="card kpi clickable-kpi" title="View Unexcused Absence History">
             <div class="label">Unexcused Absences</div>
             <div class="num tabular-nums" id="kAbsentDays" style="color:var(--absent);">0</div>
             <span class="chip chip-bad" id="kAbsentDaysChip">
               3 Max Allowed
             </span>
-          </div>
+          </a>
         </div>
 
         <!-- Upper Grid: Attendance Performance Trend (Left) & Excuse Slips & Standing (Right) -->
@@ -259,38 +259,38 @@
               </div>
 
               <!-- Vertical Legend Table matching institutional reference -->
-              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:8px;">
+                <a href="attendance-history.html?status=present" class="donut-legend-row" title="View Present Attendance History">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#10B981; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Present</span>
                   </div>
                   <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radPresent">0</span>
-                </div>
+                </a>
 
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <a href="attendance-history.html?status=late" class="donut-legend-row" title="View Late Check-in History">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#F59E0B; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Late / Tardy</span>
                   </div>
                   <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radLate">0</span>
-                </div>
+                </a>
 
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <a href="attendance-history.html?status=absent" class="donut-legend-row" title="View Unexcused Absence History">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#EF4444; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Absent</span>
                   </div>
                   <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radAbsent">0</span>
-                </div>
+                </a>
 
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <a href="excuse-slip-submit.html" class="donut-legend-row" title="Submit / View Excuse Slips">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="width:9px; height:9px; border-radius:50%; background:#3B82F6; display:inline-block; flex-shrink:0;"></span>
                     <span style="font-size:13.5px; color:var(--text-1); font-weight:500;">Excused</span>
                   </div>
                   <span style="font-size:14.5px; font-weight:700; color:var(--text-1);" class="tabular-nums" id="radExcused">0</span>
-                </div>
+                </a>
               </div>
             </div>
 

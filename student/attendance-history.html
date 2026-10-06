@@ -225,29 +225,29 @@
 
         <!-- Attendance KPIs (Institutional Standard: 4 Cards) -->
         <div class="kpis" style="margin-bottom: 20px;">
-          <div class="card kpi">
+          <a href="analytics.html" class="card kpi clickable-kpi" title="View Personal Attendance Analytics">
             <div class="label">Attendance Rate</div>
             <div class="num tabular-nums" style="color:var(--accent);" id="kpiAttendanceRate">--%</div>
             <span class="chip chip-good">Semester Target &ge; 85%</span>
-          </div>
+          </a>
 
-          <div class="card kpi">
+          <a href="attendance-history.html?status=present" id="kpiCardPresent" class="card kpi clickable-kpi" title="Filter by Verified Present Days">
             <div class="label">Days Present</div>
             <div class="num tabular-nums" style="color:var(--present);" id="kpiPresentDays">--</div>
             <span class="chip chip-good">Verified Ingress</span>
-          </div>
+          </a>
 
-          <div class="card kpi">
+          <a href="attendance-history.html?status=late" id="kpiCardLate" class="card kpi clickable-kpi" title="Filter by Late Check-ins">
             <div class="label">Tardy / Late Check-ins</div>
             <div class="num tabular-nums" style="color:var(--late);" id="kpiLateDays">--</div>
             <span class="chip" style="background:var(--late-soft); color:var(--late);">Post-08:00 AM</span>
-          </div>
+          </a>
 
-          <div class="card kpi">
+          <a href="attendance-history.html?status=absent" id="kpiCardAbsent" class="card kpi clickable-kpi" title="Filter by Unexcused Absences">
             <div class="label">Unexcused Absences</div>
             <div class="num tabular-nums" style="color:var(--absent);" id="kpiAbsentDays">--</div>
             <span class="chip chip-bad">Max Allowed: 3</span>
-          </div>
+          </a>
         </div>
 
         <!-- Filters & History Table Card -->
