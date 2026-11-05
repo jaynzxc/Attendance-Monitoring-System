@@ -43,16 +43,18 @@ This PRD covers only the **Attendance Monitoring System** subsystem. Other SMS 1
 
 ## 3. Target Users / Stakeholders
 
-The system uses **Role-Based Access Control (RBAC)** with three authenticated panels: **Admin**, **Teacher**, and **Student**. Parents/guardians are **not** system users — they are notified passively via **SMS notifications** only and do not have a login or panel.
+The system enforces **Role-Based Access Control (RBAC)** across dedicated, physically separated portals for authenticated users, while parents receive asynchronous automated alerts. Every authenticated role has its own dedicated directory and navigation layout to prevent privilege confusion and ensure strict data confidentiality:
 
-| Role | Panel Access | Description | Key Needs |
-|------|--------------|-------------|-----------|
-| **Admin** | Admin Panel | System administrator / registrar / attendance officer (single top-level role covering all administrative functions) | Manage users (students/teachers), RFID/QR device configuration, system settings, section/schedule setup, review & approve/reject excuse slips (or delegate to teacher), monitor institution-wide analytics, manage Perfect Attendance Award rules, generate/export reports, configure SMS alert templates, view audit logs |
-| **Teacher** | Teacher Panel | Subject/advisory teacher | Log own attendance (time-in/out), view/manage attendance for own sections, mark manual attendance as fallback, review/approve excuse slips for their students, view section-level analytics |
-| **Student** | Student Panel | Enrolled student, owns an RFID card/QR ID | Tap/scan to log attendance (via ESP32/RFID or QR fallback), view own attendance record/calendar, submit excuse slips, view own attendance analytics |
-| **Parent/Guardian** | No panel (SMS only) | Linked to a student's profile via mobile number | Receives automatic SMS notifications for tardiness, absence, and (optionally) time-in confirmation — no login, no dashboard access |
-
-**Note on OSAS/Guidance integration:** In the initial RBAC model, any future read-access for OSAS or other SMS 1 subsystems will be handled as an **Admin-delegated** permission or a separate service-level integration, not as a distinct end-user role in this phase.
+| Role | Portal / Route | Description & System Scope | Key Responsibilities & Privileges |
+|------|----------------|----------------------------|-----------------------------------|
+| **Super Admin** | `/super-admin/` | Technical System Administrator (MIS / IT Department) | Complete, unrestricted system ownership: ESP32 device registry and API key hashing, system configuration, system audit log inspection, system-level user role management, SMS and Gmail gateway credentials. |
+| **Admin** | `/admin/` | College Registrar / Head Attendance Officer | Daily academic and attendance operations: Student & faculty directory, class section & schedule management, daily attendance review, excuse slip escalations, report export, and school holiday cutoffs. |
+| **Staff** | `/staff/` | Clerical / Office Assistant | Clerical workbench: Daily scan log verification, student profile inquiries, physical excuse slip intake logging, front-desk inquiry assistance. Zero system settings or user deletion rights. |
+| **Acad Official** | `/acad-official/` | Academic Executives (Deans, Program Heads, VP Academics) | Executive oversight: Institution-wide and department-level attendance trends, faculty attendance compliance, section risk watchlists, accreditation/CHED reporting. |
+| **Monitoring** | `/monitoring/` | Classroom Roving Inspector / Proctor | Mobile/tablet room rounds tool: In-person classroom inspection, verifying scheduled section, confirming assigned faculty-in-charge, and comparing actual student headcount against real-time RFID/QR scans. |
+| **Faculty members** | `/teacher/` | Subject / Advisory Teacher | Classroom instructor: Physical RFID card duty check-in/out, live section roll call, manual fallback attendance marking, excuse slip review for assigned sections, section-level analytics. |
+| **Student** | `/student/` | Enrolled Student, RFID/QR credential holder | Taps RFID card or QR code to record attendance; views personal scan timeline and monthly color-coded calendar; submits digital excuse slips with proof attachments. |
+| **Parent / Guardian** | *No Portal* | Non-Teaching / Non-Authenticated Stakeholder | Linked to student profile via mobile number and email address. Receives automated, asynchronous SMS and Gmail notifications for tardiness and unexcused absences. Zero dashboard credentials. |
 
 ---
 
@@ -99,13 +101,13 @@ The system uses **Role-Based Access Control (RBAC)** with three authenticated pa
 - FR-6.4: **Automated Schedule Propagation:** Any non-class day, holiday, or school event entered by the Admin or school event subsystem shall immediately reflect on Teacher and Student calendars and automatically exempt affected users from nightly absence evaluation (`compute-daily-status`).
 - FR-6.5: System shall provide month/year navigation controls and clickable day drill-downs tailored to the authenticated role.
 
-### 4.7 Alerts to Parents (SMS Notifications)
-- FR-7.1: System shall automatically send an **SMS notification** to the parent/guardian's registered mobile number when a student is marked late or absent. Parents have no login/panel — SMS is the sole notification channel.
-- FR-7.2: System shall send an SMS confirmation to parents when a time-in scan is successfully recorded (optional/configurable, to limit SMS costs).
-- FR-7.3: System shall log all sent SMS alerts (recipient number, message content, timestamp, delivery status) in `alerts_log`.
-- FR-7.4: SMS alert templates shall be configurable by Admin.
-- FR-7.5: Each student profile shall store one or more parent/guardian mobile numbers (managed by Admin, editable via Student/Admin panel).
-- FR-7.6: System shall integrate with a third-party SMS gateway/API (e.g., Semaphore, Movider, or similar Philippine SMS provider) via Supabase Edge Function to dispatch messages.
+### 4.7 Alerts to Parents (SMS & Gmail Notifications)
+- FR-7.1: System shall automatically send an **SMS notification** and **Gmail alert** to the parent/guardian's registered contact information when a student is marked late or absent. Parents have no login/panel — automated notifications are the sole delivery channels.
+- FR-7.2: System shall send an alert confirmation to parents when a time-in scan is successfully recorded (optional/configurable, to limit SMS costs).
+- FR-7.3: System shall log all sent SMS and email alerts (recipient number/email, message content, timestamp, channel, delivery status) in `alerts_log`.
+- FR-7.4: SMS and email alert templates shall be configurable by Super Admin/Admin.
+- FR-7.5: Each student profile shall store parent/guardian mobile number and email address (managed by Admin, editable via Student/Admin panel).
+- FR-7.6: System shall integrate with a third-party SMS gateway/API (Semaphore / Movider) and an email delivery service (SMTP / Resend / Google API) via Supabase Edge Function to dispatch alerts.
 
 ### 4.8 Analytics Dashboard (Core Feature)
 - FR-8.1: System shall provide a real-time dashboard showing daily attendance rate (institution-wide, per department, per section).
@@ -124,6 +126,19 @@ The system uses **Role-Based Access Control (RBAC)** with three authenticated pa
 - FR-10.1: System shall allow export of attendance logs, tardy/absence reports, and analytics summaries to CSV and Excel (.xlsx) formats.
 - FR-10.2: Exports shall support filtering (date range, section, student, status) prior to generation.
 - FR-10.3: Exported files shall include a generation timestamp and the filters applied, for audit purposes.
+
+### 4.11 Monitoring & Classroom Inspection Subsystem
+- FR-11.1: System shall provide a mobile/tablet-optimized interface for designated **Monitoring Officers** (`/monitoring/`) to perform live classroom rounds.
+- FR-11.2: System shall display an interactive room list / floor plan showing scheduled sections, class times, and assigned professors-in-charge based on the master timetable.
+- FR-11.3: System shall compare real-time scanned student attendance counts against total enrolled roster counts per room.
+- FR-11.4: System shall allow the monitoring officer to log manual headcount verification notes (e.g., actual physical head count vs. recorded RFID scans).
+- FR-11.5: System shall flag discrepancies when an assigned faculty member has not recorded a duty Time-In during a scheduled lecture period.
+
+### 4.12 Academic Official Executive Analytics Subsystem
+- FR-12.1: System shall provide **Academic Officials** (Deans, Program Heads) with a dedicated executive portal (`/acad-official/`).
+- FR-12.2: System shall render college-wide and department-specific attendance trends, punctuality KPIs, and historical comparisons.
+- FR-12.3: System shall highlight section risk watchlists (classes with highest absence and tardiness rates) to enable early academic intervention.
+- FR-12.4: System shall provide institutional compliance exports formatted for academic council review, CHED reporting, and accreditation audits.
 
 ---
 
@@ -171,18 +186,22 @@ The system uses **Role-Based Access Control (RBAC)** with three authenticated pa
 - `award_qualifications` (computed perfect attendance records per period)
 - `holidays` (non-attendance dates)
 
-### 6.4 RBAC Authentication & Panel Routing Flow
+### 6.4 RBAC Authentication & Dedicated Portal Routing Flow
 1. User navigates to the login page and submits credentials (email/username + password) via Supabase Auth.
 2. Supabase Auth verifies credentials and returns a JWT session containing the user's `id`.
-3. On successful login, the frontend queries the `users` table (`SELECT role FROM users WHERE id = auth.uid()`) to retrieve the user's `role` (`admin`, `teacher`, or `student`).
-4. The application router redirects the user to the panel matching their role:
-   - `role = admin` → `/admin/dashboard`
-   - `role = teacher` → `/teacher/dashboard`
-   - `role = student` → `/student/dashboard`
-5. Each panel's UI components and API/RPC calls are scoped to that role; the frontend does not expose admin/teacher-only UI elements to lower-privileged roles (defense in depth — the real enforcement is at the database level via RLS, step 6).
-6. Every subsequent data request is authenticated with the user's JWT; Supabase RLS policies (see 6.6) evaluate `auth.uid()` and the caller's role on every query, so even a direct/forged API call cannot bypass access control.
-7. On logout or session expiry, the JWT is invalidated and the user is redirected to the login page.
-8. Parents are not part of this flow — they never authenticate. Their mobile number is stored as an attribute on the linked `students` record and is used exclusively as the destination for outbound SMS from the notification service (see 4.7).
+3. On successful login, the frontend queries the `users` table (`SELECT role FROM users WHERE id = auth.uid()`) to retrieve the user's `role`.
+4. The application router strictly redirects the user to their dedicated portal matching their role:
+   - `role = super_admin` → `/super-admin/dashboard.html`
+   - `role = admin` → `/admin/dashboard.html`
+   - `role = staff` → `/staff/dashboard.html`
+   - `role = acad_official` → `/acad-official/dashboard.html`
+   - `role = monitoring` → `/monitoring/dashboard.html`
+   - `role = faculty` (or legacy `teacher`) → `/teacher/dashboard.html`
+   - `role = student` → `/student/dashboard.html`
+5. Each portal's directory (`/super-admin/`, `/admin/`, `/staff/`, `/acad-official/`, `/monitoring/`, `/teacher/`, `/student/`) contains dedicated HTML pages and modular page controllers. Client-side route guards (`rbac-guard.js`) prevent unauthorized URL traversal, while database RLS policies enforce access at the data engine level.
+6. Every subsequent data request is authenticated with the user's JWT; Supabase RLS policies evaluate `auth.uid()` and the caller's role on every query.
+7. On logout or session expiry, the JWT is invalidated and the user is redirected to `/index.html`.
+8. Parents are not part of this flow — they never authenticate. Their mobile number and email are stored in `parent_contacts` linked to the student record and are used exclusively as destinations for automated SMS and Gmail alerts.
 
 ### 6.5 Row Level Security (RLS) Policy Design (Pseudocode)
 
@@ -288,16 +307,20 @@ This policy pattern (Admin: `all`; Teacher: scoped by `teacher_sections`; Studen
 
 ## 7. Role-Based Access Control (RBAC) & Permissions (RLS Summary)
 
-The system implements three authenticated roles, each with a dedicated panel, enforced at the database level via Supabase Row Level Security (RLS) policies keyed to the user's role.
+The system implements 7 authenticated roles across dedicated, isolated web portals, plus passive parent recipients, enforced at the database level via Supabase Row Level Security (RLS) policies keyed to `users.role`.
 
-| Role | Panel | Permissions |
-|------|-------|-------------|
-| **Student** | Student Panel | View own attendance record/calendar, trigger scan events (via card/QR), submit excuse slips, view own analytics |
-| **Teacher** | Teacher Panel | Mark/view attendance for own sections, log own attendance, approve/reject excuse slips for their students, view section-level analytics, manual attendance override for their classes |
-| **Admin** | Admin Panel | Full system access — user management (students/teachers/accounts), RFID/QR device management, section/schedule/holiday configuration, institution-wide analytics, Perfect Attendance Award rules & generation, CSV/Excel exports, SMS alert template configuration, parent contact number management, audit logs |
-| **Parent/Guardian** | *No panel* | Not an authenticated system role. Receives SMS notifications only (tardiness, absence, optional time-in confirmation). Cannot log in or view a dashboard. |
+| Role | Dedicated Portal | Core Permissions & Scopes |
+|------|------------------|---------------------------|
+| **Super Admin** | `/super-admin/` | Complete system ownership — Hardware scanner device API key generation & hashing, ESP32 telemetry, system audit log inspection, system-level user role management, SMS and Gmail gateway credentials, academic year roll-over. |
+| **Admin** | `/admin/` | Registrar / Attendance Officer operations — Student & faculty directory, class section management, daily attendance logs, excuse slip escalation & final approval, holiday calendar cutoffs, report exports (CSV/Excel). |
+| **Staff** | `/staff/` | Clerical / Office Assistant — Daily scan log verification, student profile lookups, physical excuse slip intake logging, front-desk inquiry assistance. Zero system settings or record deletion rights. |
+| **Acad Official** | `/acad-official/` | Academic Executives (Deans, Program Heads) — Institutional and department-level attendance analytics, faculty attendance performance compliance, section risk watchlists, accreditation/CHED reporting. |
+| **Monitoring** | `/monitoring/` | Roving Room Checker — Real-time room-by-room schedule inspection, student head counting (actual physical headcount vs. scanned RFID count), verification of assigned faculty-in-charge. |
+| **Faculty** | `/teacher/` | Classroom Instructors — Mark/view attendance for assigned sections, log own check-in/time-out duty, review/approve excuse slips for assigned students, view section-level analytics, manual fallback override. |
+| **Student** | `/student/` | Enrolled Students — View personal attendance record/calendar, trigger scan events (via RFID card / QR fallback), submit digital excuse slips with proof attachments, view personal analytics. |
+| **Parent/Guardian** | *No portal* | Non-Teaching / Non-Authenticated. Receives automated SMS and Gmail notifications only (tardiness, unexcused absence, optional time-in confirmation). Zero dashboard credentials. |
 
-**RLS Design Note:** A `role` field (`admin`, `teacher`, `student`) on the `users` table drives all RLS policies. Students can only `SELECT` their own attendance rows; teachers can `SELECT`/`UPDATE` rows scoped to their assigned sections; admins have unrestricted access. Parent mobile numbers are stored as attributes on the student record, not as separate authenticated accounts.
+**RLS Design Note:** A `role` field on the `users` table (`super_admin`, `admin`, `staff`, `acad_official`, `monitoring`, `faculty`, `student`) drives all RLS policies. Students can only `SELECT` their own attendance rows; teachers can only access rows scoped to their assigned sections; staff have read access for log verification without deletion rights; super admins maintain full administrative authority. Parent contact details (mobile number and email) are stored in `parent_contacts`, not as separate authenticated user rows.
 
 ---
 

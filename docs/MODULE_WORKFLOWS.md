@@ -260,17 +260,63 @@ flowchart LR
 
 ---
 
-## 12. Module Dependency Summary
+## 12. Module 11 — Monitoring & Classroom Inspection Subsystem
+
+**Actors:** Monitoring Officer, Assigned Faculty, Enrolled Students.
+**Trigger:** Monitoring Officer performs roving physical room rounds using mobile/tablet device (`/monitoring/dashboard.html`).
+
+```mermaid
+flowchart LR
+    A[Officer opens /monitoring/] --> B[Selects Building & Room]
+    B --> C[Query room_schedules for current time window]
+    C --> D[Display scheduled section & assigned faculty]
+    D --> E[Fetch real-time scanned student count vs. enrolled roster]
+    E --> F{Discrepancy observed?}
+    F -- Yes --> G[Officer logs physical headcount & discrepancy notes]
+    F -- No --> H[Room verified on-schedule]
+```
+
+**Real-World Operational Behavior:**
+* The roving inspector opens `/monitoring/` on their tablet or phone during period rounds.
+* The system displays active classrooms, indicating the scheduled section, whether the assigned faculty member has tapped in for duty, and how many enrolled students have scanned into campus.
+* The proctor can compare actual heads in the room against logged scans and record head count verification notes.
+
+**Tables touched:** `room_schedules` (read), `sections` (read), `student_sections` (read), `attendance_logs` (read), `users` (read).
+**Exit state:** Real-time room inspection snapshot and verification log for academic audit.
+
+---
+
+## 13. Module 12 — Academic Official Executive Analytics Subsystem
+
+**Actors:** Academic Officials (Deans, Program Heads, VP Academics).
+**Trigger:** Executive logs in to `/acad-official/dashboard.html` to review performance metrics or generate compliance reports.
+
+```mermaid
+flowchart LR
+    A[Dean opens /acad-official/] --> B[Fetch college/department KPI metrics]
+    B --> C[Compute section risk watchlists & faculty compliance]
+    C --> D[Render comparative charts & trend analysis]
+    D --> E[Export CHED / accreditation compliance summaries]
+```
+
+**Tables touched:** `attendance_summary` (read-only aggregate), `sections` (read), `users` (read), `room_schedules` (read).
+**Exit state:** High-level executive decision insights and exportable compliance documentation.
+
+---
+
+## 14. Module Dependency Summary
 
 | Module | Depends on | Feeds into |
 |---|---|---|
-| 1. Daily Attendance Marking | Module 2 (or manual fallback) | Modules 3, 6, 7, 8 |
+| 1. Daily Attendance Marking | Module 2 (or manual fallback) | Modules 3, 6, 7, 8, 11 |
 | 2. RFID/QR Scanning | Hardware (ESP32/RFID/QR) | Module 1 |
-| 3. Tardy & Absence Logs | Module 1, Module 5 (excuse slips) | Module 7, 8, 9 |
-| 4. Teacher Attendance | Module 2 (or manual) | Future Academic HR integration |
+| 3. Tardy & Absence Logs | Module 1, Module 5 (excuse slips) | Module 7, 8, 9, 12 |
+| 4. Teacher Attendance | Module 2 (or manual) | Module 11, Future Academic HR integration |
 | 5. Excuse Slip Submission | Module 3 (status context) | Module 3 (updates), Module 6 |
 | 6. Attendance Calendar | Modules 1, 3, 5 | Read-only, terminal |
 | 7. Alerts to Parents | Modules 1, 3 | Read-only, terminal (`alerts_log`) |
 | 8. Analytics Dashboard | Modules 1, 3 | Read-only, terminal |
 | 9. Perfect Attendance Award | Module 3 (finalized summaries) | Read-only + `award_qualifications` |
 | 10. CSV/Excel Export | Any of the above | Read-only, terminal + `audit_log` |
+| 11. Monitoring & Classroom Inspection | Modules 1, 2, 4 (`room_schedules`) | Operational verification, Module 12 |
+| 12. Academic Official Executive Analytics | Modules 1, 3, 4, 8, 11 | Executive decision support, CHED reporting |

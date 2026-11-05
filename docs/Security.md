@@ -86,16 +86,17 @@ Authoritative security is enforced inside PostgreSQL via **Row-Level Security (R
 
 ### 3.1 Role Hierarchy & Permissions Matrix
 
-| Resource / Table | Student Permissions | Teacher Permissions | Admin Permissions |
-|---|---|---|---|
-| `users` | Read self (`id = auth.uid()`) | Read self + students in assigned sections | Full read/write; deactivation via `status = 'inactive'` |
-| `parent_contacts` | Read linked parents (`student_id = auth.uid()`) | Read contacts for assigned sections | Full read/write |
-| `sections` | Read enrolled sections | Read assigned sections | Full read/write |
-| `attendance_logs` | Read self (`student_id = auth.uid()`) | Read assigned sections; manual override insert | Full read/write/audit |
-| `attendance_summary`| Read self (`user_id = auth.uid()`) | Read assigned sections | Full read/write |
-| `excuse_slips` | Insert own; Read own slips | Read assigned sections; Approve/Reject | Full read/write/escalate |
-| `scan_devices` | No access (403) | No access (403) | Full read/write/telemetry |
-| `audit_log` | No access (403) | No access (403) | Read-only (immutable append) |
+| Resource / Table | Student | Faculty | Staff | Acad Official | Monitoring | Admin | Super Admin |
+|---|---|---|---|---|---|---|---|
+| `users` | Read self (`id = auth.uid()`) | Read self + assigned sections | Read-only directory inquiry | Read department directories | Read faculty in assigned rooms | Full user management (students/faculty) | Global user management + role assignment |
+| `parent_contacts` | Read linked parents (`student_id = auth.uid()`) | Read contacts for assigned sections | Read contacts for inquiry | No access (403) | No access (403) | Full read/write | Full read/write |
+| `sections` | Read enrolled | Read assigned | Read all sections | Read department sections | Read all sections | Full read/write | Full read/write |
+| `attendance_logs` | Read self (`student_id = auth.uid()`) | Read assigned sections; manual override insert | Read-only log verification | Read department summaries | Read live room scan counts | Full read/write/audit | Full read/write/audit |
+| `attendance_summary`| Read self (`user_id = auth.uid()`) | Read assigned sections | Read-only verification | Read executive KPIs | Read current room aggregates | Full read/write | Full read/write |
+| `excuse_slips` | Insert own; Read own slips | Read assigned sections; Approve/Reject | Intake support logging | Read department reports | No access (403) | Full review & escalation | Full review & escalation |
+| `room_schedules` | Read enrolled timetable | Read assigned schedule | Read-only inquiry | Read department schedules | Read-only room inspection | Full schedule management | Full schedule management |
+| `scan_devices` | No access (403) | No access (403) | No access (403) | No access (403) | No access (403) | Read-only status telemetry | Full read/write & key generation |
+| `audit_log` | No access (403) | No access (403) | No access (403) | No access (403) | No access (403) | Operational logs read-only | Full system audit trail inspection |
 
 ### 3.2 Authoritative PostgreSQL RLS Policies
 
@@ -106,15 +107,22 @@ alter table attendance_logs enable row level security;
 alter table attendance_summary enable row level security;
 alter table excuse_slips enable row level security;
 alter table scan_devices enable row level security;
+alter table room_schedules enable row level security;
 alter table audit_log enable row level security;
+
+-- Helper function: get role
+create or replace function current_user_role()
+returns text as $$
+  select role from users where id = auth.uid();
+$$ language sql stable;
 
 -- 1. USERS POLICIES
 create policy "users_read_policy" on users
 for select using (
   auth.uid() = id or 
-  (select role from users where id = auth.uid()) = 'admin' or
+  current_user_role() in ('super_admin', 'admin', 'staff', 'acad_official', 'monitoring') or
   (
-    (select role from users where id = auth.uid()) = 'teacher' and
+    current_user_role() in ('faculty', 'teacher') and
     id in (
       select ss.student_id from student_sections ss
       join teacher_sections ts on ts.section_id = ss.section_id
@@ -125,59 +133,49 @@ for select using (
 
 create policy "users_admin_write" on users
 for all using (
-  (select role from users where id = auth.uid()) = 'admin'
+  current_user_role() in ('super_admin', 'admin')
 );
 
 -- 2. ATTENDANCE LOGS POLICIES
 create policy "logs_student_read" on attendance_logs
 for select using (student_id = auth.uid());
 
-create policy "logs_teacher_read" on attendance_logs
+create policy "logs_faculty_read" on attendance_logs
 for select using (
-  section_id in (
-    select section_id from teacher_sections where teacher_id = auth.uid()
+  current_user_role() in ('faculty', 'teacher') and
+  (
+    teacher_id = auth.uid() or
+    section_id in (select section_id from teacher_sections where teacher_id = auth.uid())
   )
 );
 
-create policy "logs_teacher_manual_insert" on attendance_logs
-for insert with check (
-  (select role from users where id = auth.uid()) = 'teacher' and
-  scan_method = 'manual' and
-  created_by = auth.uid() and
-  section_id in (
-    select section_id from teacher_sections where teacher_id = auth.uid()
-  )
+create policy "logs_staff_acad_read" on attendance_logs
+for select using (
+  current_user_role() in ('staff', 'acad_official', 'monitoring')
 );
 
 create policy "logs_admin_all" on attendance_logs
 for all using (
-  (select role from users where id = auth.uid()) = 'admin'
+  current_user_role() in ('super_admin', 'admin')
 );
 
--- 3. EXCUSE SLIPS POLICIES
-create policy "slips_student_insert" on excuse_slips
-for insert with check (
-  student_id = auth.uid() and
-  status = 'pending'
-);
-
-create policy "slips_student_read" on excuse_slips
-for select using (student_id = auth.uid());
-
-create policy "slips_teacher_review" on excuse_slips
+-- 3. SCAN DEVICES POLICIES (Super Admin Full, Admin Telemetry)
+create policy "devices_super_admin_manage" on scan_devices
 for all using (
-  section_id in (
-    select section_id from teacher_sections where teacher_id = auth.uid()
-  ) or (select role from users where id = auth.uid()) = 'admin'
+  current_user_role() = 'super_admin'
 );
 
--- 4. SCAN DEVICES POLICIES (Admin Only)
-create policy "devices_admin_only" on scan_devices
-for all using (
-  (select role from users where id = auth.uid()) = 'admin'
+create policy "devices_admin_read_only" on scan_devices
+for select using (
+  current_user_role() = 'admin'
 );
 
--- 5. AUDIT LOG POLICIES (Admin Read-Only, System Append)
+-- 4. AUDIT LOG POLICIES (Super Admin Full, Admin Operational)
+create policy "audit_super_admin_all" on audit_log
+for select using (
+  current_user_role() in ('super_admin', 'admin')
+);
+```
 create policy "audit_log_admin_read" on audit_log
 for select using (
   (select role from users where id = auth.uid()) = 'admin'

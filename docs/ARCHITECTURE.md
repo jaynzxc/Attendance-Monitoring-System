@@ -41,16 +41,20 @@ This document translates the PRD into a concrete technical architecture for impl
                                           │
                     ┌─────────────────────┼─────────────────────┐
                     ▼                     ▼                     ▼
-          ┌──────────────┐     ┌──────────────────┐   ┌──────────────────┐
-          │ PostgreSQL DB │     │ Supabase Realtime │   │ SMS Gateway Edge  │
-          │ (RLS enforced)│     │ (broadcast change) │   │ Function (async)  │
-          └──────┬────────┘     └─────────┬─────────┘   └─────────┬────────┘
-                 │                        │                       │
-                 ▼                        ▼                       ▼
-       ┌───────────────────┐   ┌────────────────────┐   ┌──────────────────┐
-       │ Admin / Teacher /  │   │ Live dashboard      │   │ Parent's phone    │
-       │ Student Web Panels │   │ updates (charts)    │   │ (SMS notification)│
-       │ (HTML/Tailwind/JS) │   └────────────────────┘   └──────────────────┘
+          ┌──────────────┐     ┌──────────────────┐   ┌──────────────────────┐
+          │ PostgreSQL DB │     │ Supabase Realtime │   │ Alerts Edge Function │
+          │ (RLS enforced)│     │ (broadcast change)│   │ (SMS + Gmail Async)  │
+          └──────┬────────┘     └─────────┬────────┘   └──────────┬───────────┘
+                 │                        │                        │
+                 ▼                        ▼                        ▼
+       ┌───────────────────┐    ┌────────────────────┐   ┌──────────────────┐
+       │ Dedicated Portals  │    │ Live dashboard     │   │ Parent / Guardian│
+       │ /super-admin/      │    │ updates (stream)   │   │ (SMS & Gmail)    │
+       │ /admin/            │    └────────────────────┘   └──────────────────┘
+       │ /staff/            │
+       │ /acad-official/    │
+       │ /monitoring/       │
+       │ /teacher/ /student/│
        └───────────────────┘
 ```
 
@@ -65,61 +69,62 @@ Since the stack is Vanilla JS (no framework/bundler required), the project uses 
 
 ```
 ams-web/
-├── public/
-│   ├── index.html                 # Login page
-│   ├── admin/
-│   │   ├── dashboard.html
-│   │   ├── users.html             # manage students/teachers
-│   │   ├── devices.html           # RFID/QR device registry
-│   │   ├── sections.html
-│   │   ├── excuse-slips.html
-│   │   ├── awards.html            # Perfect Attendance Award tool
-│   │   ├── reports.html           # CSV/Excel export
-│   │   └── settings.html          # SMS templates, thresholds, holidays
-│   ├── teacher/
-│   │   ├── dashboard.html
-│   │   ├── attendance.html        # manual marking / section view
-│   │   ├── excuse-slips.html      # approve/reject
-│   │   └── analytics.html
-│   ├── student/
-│   │   ├── dashboard.html
-│   │   ├── attendance-calendar.html
-│   │   ├── excuse-slip-submit.html
-│   │   └── analytics.html
-│   └── shared/
-│       ├── qr-scan.html           # camera-based QR fallback scan page
-│       └── unauthorized.html
-├── src/
+├── index.html                     # Login page
+├── super-admin/                   # Super Admin portal (MIS/IT)
+│   ├── dashboard.html
+│   ├── devices.html               # RFID/QR device registry & key hashing
+│   ├── audit.html                 # System-wide audit log trail
+│   ├── users.html                 # System-level role management
+│   └── settings.html              # SMS/Gmail gateway, cutoff times, holidays
+├── admin/                         # Admin portal (Registrar / Attendance Officer)
+│   ├── dashboard.html
+│   ├── attendance-logs.html       # Live stream & filterable audit logs
+│   ├── sections.html              # Section & curriculum management
+│   ├── users.html                 # Student & teacher directory
+│   ├── excuse-slips.html          # Excuse slip escalation & review
+│   ├── analytics.html             # Institutional attendance analytics
+│   ├── awards.html                # Perfect Attendance Award engine
+│   └── reports.html               # CSV & Excel data export
+├── staff/                         # Staff portal (Clerical / Inquiry workbench)
+│   ├── dashboard.html
+│   ├── logs.html                  # Daily log verification
+│   └── inquiries.html             # Student record inquiry desk
+├── acad-official/                 # Academic Official portal (Deans / Program Heads)
+│   ├── dashboard.html             # High-level executive KPIs
+│   ├── analytics.html             # Department-level attendance trends
+│   └── compliance.html            # CHED/accreditation attendance reports
+├── monitoring/                    # Monitoring portal (Roving Room Rounds)
+│   ├── dashboard.html             # Mobile-friendly room grid
+│   └── rooms.html                 # Live headcount & professor check
+├── teacher/                       # Faculty portal (Subject / Advisory Teacher)
+│   ├── dashboard.html
+│   ├── attendance.html            # Live section roll call & manual override
+│   ├── excuse-slips.html          # Section excuse slip approval workbench
+│   ├── analytics.html             # Section-level attendance performance
+│   └── my-logs.html               # Teacher personal attendance duty logs
+├── student/                       # Student portal
+│   ├── dashboard.html
+│   ├── attendance-calendar.html
+│   ├── excuse-slip-submit.html
+│   └── analytics.html
+├── shared/
+│   ├── qr-scan.html               # camera-based QR fallback scan page
+│   └── unauthorized.html          # HTTP 403 access denial screen
+├── assets/
 │   ├── js/
-│   │   ├── lib/
-│   │   │   ├── supabaseClient.js  # Supabase JS client init
-│   │   │   ├── auth.js            # login, logout, session, role check
-│   │   │   ├── rbac-guard.js      # route protection per panel
-│   │   │   └── realtime.js        # Supabase Realtime subscription helpers
-│   │   ├── api/
-│   │   │   ├── attendance.js      # attendance CRUD/query wrappers
-│   │   │   ├── excuseSlips.js
-│   │   │   ├── users.js
-│   │   │   ├── devices.js
-│   │   │   ├── analytics.js
-│   │   │   ├── awards.js
-│   │   │   └── exports.js         # CSV/XLSX generation
-│   │   ├── components/            # reusable JS UI builders (non-framework)
-│   │   │   ├── calendar.js
-│   │   │   ├── charts.js          # Chart.js wrappers
-│   │   │   ├── table.js
-│   │   │   └── toast.js
-│   │   └── pages/                 # page-specific controller scripts
-│   │       ├── admin/*.js
-│   │       ├── teacher/*.js
-│   │       └── student/*.js
-│   └── css/
-│       └── tailwind.css           # compiled Tailwind output
+│   │   ├── lib/                   # Supabase client, auth, rbac-guard, realtime
+│   │   ├── api/                   # Service API wrappers
+│   │   ├── components/            # Reusable UI widgets (charts, tables, toasts)
+│   │   └── pages/                 # Page-specific controllers
+│   ├── css/
+│   │   └── tailwind.css           # Compiled Tailwind output
+│   └── images/
 ├── supabase/
 │   ├── migrations/                # SQL migration files (schema + RLS)
 │   ├── functions/
-│   │   ├── scan-ingest/           # ESP32 scan endpoint
-│   │   ├── send-sms-alert/        # SMS dispatch
+│   │   ├── scan-ingest/           # ESP32 & QR scan endpoint
+│   │   ├── send-sms-alert/        # SMS dispatch (Semaphore / Movider)
+│   │   ├── send-email-alert/      # Gmail dispatch (SMTP / Resend / Google API)
 │   │   ├── compute-daily-status/  # cron: tardy/absent classification
 │   │   └── compute-awards/        # cron: perfect attendance evaluation
 │   └── seed.sql
@@ -132,8 +137,8 @@ ams-web/
 ```
 
 ### 3.3 RBAC Route Protection (Frontend)
-- `rbac-guard.js` runs on every panel page load: verifies an active Supabase session exists, fetches `role` from `users`, and redirects to `/index.html` (login) or `/shared/unauthorized.html` if the role doesn't match the folder (`/admin/*` requires `admin`, etc.).
-- This is a **UX convenience only** — the authoritative enforcement is Postgres RLS (Section 5). Never trust the frontend check alone.
+- `rbac-guard.js` runs on every portal page load in `<head>`: verifies an active Supabase session exists, fetches `role` from `users`, and redirects to `/index.html` (login) or `/shared/unauthorized.html` if the role doesn't match the dedicated folder (`/super-admin/*` strictly requires `super_admin`, `/admin/*` requires `admin` or `super_admin`, etc.).
+- This is a **UX convenience and security barrier** — authoritative enforcement is Postgres RLS (Section 5).
 
 ---
 
@@ -145,11 +150,11 @@ ams-web/
 -- ============================
 create table users (
   id uuid primary key references auth.users(id) on delete cascade,
-  role text not null check (role in ('admin','teacher','student')),
+  role text not null check (role in ('super_admin','admin','staff','acad_official','monitoring','faculty','student','teacher')),
   first_name text not null,
   last_name text not null,
   email text unique,
-  student_number text unique,        -- null for teachers/admins
+  student_number text unique,        -- null for faculty/staff/admins
   employee_number text unique,       -- null for students
   status text not null default 'active' check (status in ('active','inactive')),
   created_at timestamptz not null default now()
@@ -160,7 +165,8 @@ create table parent_contacts (
   student_id uuid not null references users(id) on delete cascade,
   full_name text not null,
   relationship text,                  -- e.g. 'Mother', 'Guardian'
-  mobile_number text not null,
+  mobile_number text not null,        -- SMS destination
+  email text,                         -- Gmail / email destination
   is_primary boolean not null default true,
   created_at timestamptz not null default now()
 );
@@ -304,6 +310,22 @@ create table award_qualifications (
   qualified boolean not null,
   computed_at timestamptz not null default now(),
   unique (period_id, user_id)
+);
+
+-- ============================
+-- ROOM SCHEDULES (MONITORING)
+-- ============================
+create table room_schedules (
+  id uuid primary key default gen_random_uuid(),
+  room_number text not null,
+  building text not null default 'Main',
+  section_id uuid not null references sections(id) on delete cascade,
+  faculty_id uuid not null references users(id) on delete cascade,
+  day_of_week int not null check (day_of_week between 1 and 7),
+  start_time time not null,
+  end_time time not null,
+  subject text not null,
+  created_at timestamptz not null default now()
 );
 
 -- ============================
