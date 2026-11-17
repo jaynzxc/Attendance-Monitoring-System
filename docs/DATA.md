@@ -50,12 +50,12 @@ Central identity table for all authenticated roles. Mirrors/extends `auth.users`
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | `uuid` | PK, FK → `auth.users(id)`, `on delete cascade` | Matches the Supabase Auth user ID |
-| `role` | `text` | `not null`, check in (`admin`,`teacher`,`student`) | RBAC role |
+| `role` | `text` | `not null`, check in (`super_admin`,`admin`,`staff`,`acad_official`,`monitoring`,`faculty`,`student`,`teacher`) | RBAC institutional role |
 | `first_name` | `text` | `not null` | |
 | `last_name` | `text` | `not null` | |
 | `email` | `text` | `unique` | Login email |
 | `student_number` | `text` | `unique`, nullable | Populated only for students |
-| `employee_number` | `text` | `unique`, nullable | Populated only for teachers/admins |
+| `employee_number` | `text` | `unique`, nullable | Populated for faculty/staff/admins |
 | `status` | `text` | `not null`, default `active`, check in (`active`,`inactive`) | Enrollment/employment status |
 | `created_at` | `timestamptz` | `not null`, default `now()` | |
 
@@ -64,7 +64,7 @@ Central identity table for all authenticated roles. Mirrors/extends `auth.users`
 ---
 
 ### 3.2 `parent_contacts`
-Stores parent/guardian mobile numbers linked to a student. **Not** an authenticated identity — no role, no login.
+Stores parent/guardian contact credentials linked to a student. **Not** an authenticated identity — no role, no login.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -72,7 +72,8 @@ Stores parent/guardian mobile numbers linked to a student. **Not** an authentica
 | `student_id` | `uuid` | FK → `users(id)`, `on delete cascade` | Must reference a user with `role = 'student'` (enforced at application layer) |
 | `full_name` | `text` | `not null` | |
 | `relationship` | `text` | nullable | e.g. "Mother", "Father", "Guardian" |
-| `mobile_number` | `text` | `not null` | SMS destination |
+| `mobile_number` | `text` | `not null` | SMS alert destination |
+| `email` | `text` | nullable | Gmail / email alert destination |
 | `is_primary` | `boolean` | `not null`, default `true` | Primary contact receives all alerts by default |
 | `created_at` | `timestamptz` | `not null`, default `now()` | |
 
@@ -283,11 +284,29 @@ Immutable log of sensitive/administrative actions (manual overrides, exports, un
 
 ---
 
+### 3.17 `room_schedules`
+Timetable mapping classrooms, class sections, assigned faculty, and scheduled time windows for roving **Monitoring Officers** (`/monitoring/`).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `uuid` | PK, default `gen_random_uuid()` | |
+| `room_number` | `text` | `not null` | e.g. "MV-301", "MV-Lab 2" |
+| `building` | `text` | `not null`, default "Main" | Building or campus wing |
+| `section_id` | `uuid` | FK → `sections(id)`, `on delete cascade` | Scheduled class section |
+| `faculty_id` | `uuid` | FK → `users(id)`, `on delete cascade` | Assigned professor-in-charge |
+| `day_of_week` | `int` | `not null`, check in (1,2,3,4,5,6,7) | 1 = Monday ... 7 = Sunday |
+| `start_time` | `time` | `not null` | Class start time |
+| `end_time` | `time` | `not null` | Class end time |
+| `subject` | `text` | `not null` | Subject name or course code |
+| `created_at` | `timestamptz` | `not null`, default `now()` | |
+
+---
+
 ## 4. Enumerated Values Reference
 
 | Field | Table | Allowed Values |
 |-------|-------|-----------------|
-| `role` | `users` | `admin`, `teacher`, `student` |
+| `role` | `users` | `super_admin`, `admin`, `staff`, `acad_official`, `monitoring`, `faculty`, `student`, `teacher` |
 | `status` (enrollment) | `users` | `active`, `inactive` |
 | `status` (device) | `scan_devices` | `online`, `offline` |
 | `scan_method` | `attendance_logs` | `rfid`, `qr`, `manual` |
@@ -295,7 +314,7 @@ Immutable log of sensitive/administrative actions (manual overrides, exports, un
 | `status` (attendance) | `attendance_logs`, `attendance_summary` | `present`, `late`, `absent`, `excused` (+ `holiday` in `attendance_summary` only) |
 | `status` (excuse slip) | `excuse_slips` | `pending`, `approved`, `rejected` |
 | `status` (alert) | `alerts_log` | `pending`, `sent`, `failed` |
-| `channel` | `alerts_log` | `sms` (reserved for future expansion) |
+| `channel` | `alerts_log` | `sms`, `email` |
 
 ---
 

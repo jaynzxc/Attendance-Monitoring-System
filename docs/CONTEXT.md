@@ -25,23 +25,28 @@ The **Attendance Monitoring System (AMS)** is a web-based subsystem of the large
 ```mermaid
 flowchart TB
     subgraph Users["People (Actors)"]
+        SuperAdmin["Super Admin<br/>(MIS / IT Administrator)"]
         Admin["Admin<br/>(Registrar / Attendance Officer)"]
-        Teacher["Teacher<br/>(Subject / Advisory)"]
+        Staff["Staff<br/>(Clerical / Inquiry Assistant)"]
+        AcadOfficial["Acad Official<br/>(Deans / Program Heads)"]
+        Monitoring["Monitoring Officer<br/>(Classroom Headcount Inspector)"]
+        Faculty["Faculty Member<br/>(Classroom Teacher)"]
         Student["Student"]
-        Parent["Parent / Guardian<br/>(no login — SMS only)"]
+        Parent["Parent / Guardian<br/>(no login — SMS & Gmail alerts)"]
     end
 
     subgraph AMS["Attendance Monitoring System (AMS)<br/>[Software System — this project]"]
     end
 
     subgraph External["External Systems"]
-        SMSGW["SMS Gateway API<br/>(e.g., Semaphore / Movider)"]
+        SMSGW["SMS Gateway API<br/>(Semaphore / Movider)"]
+        EmailGW["Email Gateway (Gmail / SMTP / Resend)"]
         SupabaseAuth["Supabase Auth<br/>(Identity Provider)"]
     end
 
     subgraph Hardware["Hardware Devices"]
         ESP32["ESP32 + RFID Reader<br/>(Scanner at gate/room)"]
-        RFIDCard["RFID Card<br/>(carried by Student/Teacher)"]
+        RFIDCard["RFID Card<br/>(carried by Student/Faculty)"]
         Cam["Device Camera<br/>(QR fallback scan)"]
     end
 
@@ -49,15 +54,21 @@ flowchart TB
         SMS1["Other SMS 1 Subsystems<br/>(Academic HR, OSAS, PREFECT, etc.)"]
     end
 
-    Admin -- "Manages users, devices,<br/>configures rules, views reports" --> AMS
-    Teacher -- "Marks/approves attendance,<br/>views section analytics" --> AMS
-    Student -- "Taps card / scans QR,<br/>submits excuse slips" --> AMS
+    SuperAdmin -- "Manages hardware keys, audit logs,<br/>system settings, API secrets" --> AMS
+    Admin -- "Manages users, sections,<br/>excuse slips, exports" --> AMS
+    Staff -- "Verifies daily logs,<br/>handles student inquiries" --> AMS
+    AcadOfficial -- "Views executive KPIs,<br/>accreditation reports" --> AMS
+    Monitoring -- "Checks room headcounts,<br/>verifies faculty in charge" --> AMS
+    Faculty -- "Duty check-in/out, live roll call,<br/>approves section excuse slips" --> AMS
+    Student -- "Taps card / scans QR,<br/>submits excuse slips, views calendar" --> AMS
     RFIDCard -- "tap" --> ESP32
     ESP32 -- "POSTs scan events (HTTPS)" --> AMS
     Cam -- "QR scan (browser)" --> AMS
     AMS -- "Authenticates users via" --> SupabaseAuth
-    AMS -- "Sends SMS alerts via" --> SMSGW
+    AMS -- "Dispatches SMS alerts via" --> SMSGW
+    AMS -- "Dispatches Gmail alerts via" --> EmailGW
     SMSGW -- "Delivers SMS" --> Parent
+    EmailGW -- "Delivers Email" --> Parent
     AMS -. "Exposes attendance data<br/>(future integration hooks)" .-> SMS1
 ```
 
@@ -67,10 +78,14 @@ flowchart TB
 
 | Actor | Type | Description | Interaction with AMS |
 |-------|------|--------------|-----------------------|
-| **Admin** | Primary (Human, authenticated) | Registrar / attendance officer / system administrator | Full system configuration and oversight via Admin Panel |
-| **Teacher** | Primary (Human, authenticated) | Subject/advisory teacher | Attendance marking, excuse slip review, section analytics via Teacher Panel |
-| **Student** | Primary (Human, authenticated) | Enrolled student | Attendance scanning, personal history, excuse slip submission via Student Panel |
-| **Parent/Guardian** | Secondary (Human, unauthenticated) | Linked to a student's profile by mobile number only | Receives SMS notifications; no direct system access |
+| **Super Admin** | Primary (Human, authenticated) | Head of IT / MIS Administrator | Full system administration, API keys, ESP32 device registry, audit log inspection via `/super-admin/` |
+| **Admin** | Primary (Human, authenticated) | College Registrar / Head Attendance Officer | Daily attendance management, student/teacher directory, sections, excuse slips, reporting via `/admin/` |
+| **Staff** | Primary (Human, authenticated) | Clerical / Office Assistant | Daily scan log inquiries, physical slip intake assistance, front-desk inquiries via `/staff/` |
+| **Acad Official** | Primary (Human, authenticated) | Academic Executives (Deans, Program Heads) | Executive analytics, department attendance trends, section risk watchlists via `/acad-official/` |
+| **Monitoring** | Primary (Human, authenticated) | Classroom Roving Inspector | Room-by-room headcount verification, verifying assigned professor-in-charge via `/monitoring/` |
+| **Faculty Member** | Primary (Human, authenticated) | Subject / Advisory Classroom Instructor | Duty check-in/out, live section roll call, manual fallback marking, excuse slip review via `/teacher/` |
+| **Student** | Primary (Human, authenticated) | Enrolled Student | RFID card / QR code holder, personal calendar, excuse slip submission via `/student/` |
+| **Parent / Guardian** | Secondary (Human, unauthenticated) | Non-teaching stakeholder linked to student | Receives automated, asynchronous SMS and Gmail notifications; zero web login or portal access |
 
 ---
 
@@ -79,7 +94,8 @@ flowchart TB
 | External System | Direction | Purpose | Notes |
 |------------------|-----------|---------|-------|
 | **Supabase Auth** | AMS → depends on | User authentication, session/JWT issuance | Also backs RBAC role checks and RLS via `auth.uid()` |
-| **SMS Gateway API** (e.g., Semaphore, Movider) | AMS → external | Sends SMS alerts to parents | Abstracted as a "notification service"; provider selected during implementation |
+| **SMS Gateway API** (Semaphore / Movider) | AMS → external | Sends SMS alerts to parents | Dispatches real-time tardiness and nightly absence notices |
+| **Email Gateway (Gmail / SMTP / Resend)** | AMS → external | Sends automated Gmail alerts to parents | Dispatches email alerts for unexcused absences and tardiness |
 | **Supabase Realtime** | Internal to backend, treated as a platform capability | Live dashboard updates | Part of the Supabase platform, not a separate external system |
 | **Supabase Storage** | Internal to backend | Stores excuse slip attachments | Part of the Supabase platform |
 | **Other SMS 1 Subsystems** (Library, Clinic, Property Custodian, School Event, OSAS, PREFECT, Academic HR, Financial, Alumni) | Future — AMS exposes data | Long-term integration (e.g., Academic HR consuming teacher attendance; OSAS/PREFECT correlating incidents with attendance) | **Out of scope** for this capstone; represented only as an integration boundary |
