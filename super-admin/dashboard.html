@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Super Admin System Infrastructure</title>
+  
+  <!-- Anti-FOUC: Immediate theme restoration before first paint -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <!-- Modern Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Compiled Tailwind CSS & Color Hunt Design Tokens -->
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10B981;
+      animation: pulse-ring 2s infinite;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .badge-super {
+      background: linear-gradient(135deg, #0D47A1, #1976D2);
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 4px rgba(13, 71, 161, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Super Admin Navigation">
+      <div class="brand">
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
+        <span>AMS</span>
+        <span class="badge-super">SUPER ADMIN</span>
+      </div>
+
+      <div class="navgroup">SYSTEM ARCHITECTURE</div>
+      <nav class="nav">
+        <a class="active" href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview & Health
+        </a>
+        <a href="devices.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+          Hardware Device Hub
+        </a>
+        <a href="users.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.8 14.2c2.4.4 4.2 2.5 4.2 5"/></svg>
+          User Role Hierarchy
+        </a>
+        <a href="settings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          System & API Settings
+        </a>
+        <a href="audit.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          System Audit Trail
+        </a>
+      </nav>
+
+      <div class="navgroup" style="margin-top: auto;">PORTAL SWITCH</div>
+      <nav class="nav">
+        <a href="../admin/dashboard.html" style="font-size: 12px; opacity: 0.85;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Registrar Admin Portal
+        </a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <!-- Top Application Bar -->
+      <header class="appbar">
+        <div class="flex items-center gap-3">
+          <button id="sidebarToggle" class="mobile-toggle-btn md:hidden" aria-label="Toggle Navigation">
+            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-blue-600">Infrastructure Operations</div>
+            <h1 class="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
+              Super Admin Console
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="pulse-dot"></span> All Systems Operational
+              </span>
+            </h1>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Theme Toggle Button -->
+          <button id="themeToggleBtn" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors" aria-label="Toggle Theme">
+            <svg id="themeIcon" class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </button>
+
+          <!-- User Profile Dropdown Pill -->
+          <div class="relative">
+            <button id="profileDropdownBtn" class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+              <div class="w-7 h-7 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-xs" id="userAvatarText">SA</div>
+              <div class="text-left hidden sm:block">
+                <div class="text-xs font-semibold text-slate-800 leading-none" id="userNameText">Chief Administrator</div>
+                <div class="text-[10px] text-blue-600 font-medium leading-tight">Super Admin</div>
+              </div>
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-48 rounded-xl shadow-lg border border-slate-100 bg-white py-1 z-50">
+              <div class="px-4 py-2 border-b border-slate-100 text-xs text-slate-500">
+                Signed in as <strong class="text-slate-700 font-semibold" id="dropdownUserRole">Super Admin</strong>
+              </div>
+              <a href="settings.html" class="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50">System Settings</a>
+              <button id="btnSignOut" class="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 font-medium">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Body Container -->
+      <main class="main">
+        <!-- Infrastructure KPI Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Active ESP32 Scanners</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-bold text-slate-800 tabular-nums" id="statOnlineDevices">0 / 0</div>
+            <div class="text-xs text-emerald-600 mt-1 flex items-center gap-1 font-medium">
+              <span class="pulse-dot"></span> Heartbeat Active (< 3m)
+            </div>
+          </div>
+
+          <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">SMS Gateway Pipeline</span>
+              <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-bold text-slate-800 tabular-nums" id="statSmsStatus">CONNECTED</div>
+            <div class="text-xs text-slate-500 mt-1">Semaphore Gateway API v4</div>
+          </div>
+
+          <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Gmail Alert Engine</span>
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-bold text-slate-800 tabular-nums" id="statGmailStatus">ACTIVE</div>
+            <div class="text-xs text-slate-500 mt-1">Dual Parent Delivery Enabled</div>
+          </div>
+
+          <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">System Users Total</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-bold text-slate-800 tabular-nums" id="statTotalUsers">--</div>
+            <div class="text-xs text-slate-500 mt-1">Across 8 Institutional Roles</div>
+          </div>
+        </div>
+
+        <!-- System Architecture & Security Health -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <!-- Role Distribution Matrix -->
+          <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm lg:col-span-2">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div>
+                <h3 class="font-bold text-slate-800 text-sm">8-Role System Hierarchy</h3>
+                <p class="text-xs text-slate-500">Distribution of authenticated accounts and security boundaries</p>
+              </div>
+              <a href="users.html" class="text-xs font-semibold text-blue-600 hover:text-blue-800">Manage Users &rarr;</a>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="roleCountersContainer">
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Super Admin</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countSuperAdmin">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Admin</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countAdmin">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Staff</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countStaff">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Acad Official</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countAcadOfficial">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Monitoring</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countMonitoring">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Faculty</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countFaculty">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Students</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countStudent">--</div>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="text-[10px] uppercase font-bold text-slate-400">Parent Contacts</div>
+                <div class="text-xl font-bold text-slate-800 tabular-nums" id="countParent">--</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick System Infrastructure Panel -->
+          <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+            <h3 class="font-bold text-slate-800 text-sm mb-3">Core Subsystems</h3>
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <span class="font-medium text-slate-700">Database Engine</span>
+                <span class="font-semibold text-emerald-600 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Supabase / PG 15</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <span class="font-medium text-slate-700">Row-Level Security</span>
+                <span class="font-semibold text-blue-600">Enforced (Zero-Trust)</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <span class="font-medium text-slate-700">Anti-Passback Defense</span>
+                <span class="font-semibold text-emerald-600">5-Min Cooldown</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <span class="font-medium text-slate-700">Realtime Channel</span>
+                <span class="font-semibold text-emerald-600">WebSocket Connected</span>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <a href="settings.html" class="w-full text-center py-2 px-3 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+                Configure Global Cutoffs & Secrets
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent System Security & Ingress Audit Events -->
+        <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm">Recent Infrastructure & Security Events</h3>
+              <p class="text-xs text-slate-500">Real-time audit log of system modifications and device activity</p>
+            </div>
+            <a href="audit.html" class="text-xs font-semibold text-blue-600 hover:text-blue-800">View Full Audit Log &rarr;</a>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-100">
+                <tr>
+                  <th class="py-2.5 px-3">Timestamp</th>
+                  <th class="py-2.5 px-3">Actor Role</th>
+                  <th class="py-2.5 px-3">Action Type</th>
+                  <th class="py-2.5 px-3">Resource</th>
+                  <th class="py-2.5 px-3">Event Details</th>
+                </tr>
+              </thead>
+              <tbody id="recentAuditEventsBody" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="5" class="py-6 text-center text-slate-400">Loading system audit telemetry...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/pages/super-admin/dashboard.js"></script>
+</body>
+</html>

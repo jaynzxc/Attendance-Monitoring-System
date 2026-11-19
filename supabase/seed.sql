@@ -35,6 +35,7 @@ insert into auth.users (
   email_change_token_new,
   recovery_token
 ) values
+  ('00000000-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'superadmin@bcp.edu.ph', crypt('#SuperAdmin123', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"super_admin"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'jaynzxc.devs@gmail.com', crypt('#Admin123', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"admin"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'jayncanicon0722@gmail.com', crypt('#Sa8080', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"teacher"}', now(), now(), '', '', '', ''),
   ('00000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'prof.reyes@bestlink.edu.ph', crypt('#Re8080', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"role":"teacher"}', now(), now(), '', '', '', ''),
@@ -49,6 +50,8 @@ on conflict (id) do nothing;
 -- 3. USERS (Public Profiles & Roles)
 -- Fixed UUIDs for consistent development testing
 insert into users (id, role, first_name, last_name, email, student_number, employee_number, status) values
+  -- Super Admin
+  ('a0000000-0000-0000-0000-000000000000', 'super_admin', 'Chief', 'Administrator', 'superadmin@bcp.edu.ph', null, 'EMP-2020-000', 'active'),
   -- Admin
   ('a0000000-0000-0000-0000-000000000001', 'admin', 'Administrator', '', 'jaynzxc.devs@gmail.com', null, 'EMP-2020-001', 'active'),
   -- Teachers

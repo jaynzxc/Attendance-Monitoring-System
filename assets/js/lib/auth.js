@@ -150,8 +150,17 @@ export async function getCurrentUser() {
  */
 export function getRoleDashboardPath(role) {
   switch (role) {
+    case 'super_admin':
+      return '/super-admin/dashboard.html';
     case 'admin':
       return '/admin/dashboard.html';
+    case 'staff':
+      return '/staff/dashboard.html';
+    case 'acad_official':
+      return '/acad-official/dashboard.html';
+    case 'monitoring':
+      return '/monitoring/dashboard.html';
+    case 'faculty':
     case 'teacher':
       return '/teacher/dashboard.html';
     case 'student':

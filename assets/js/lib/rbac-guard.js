@@ -42,10 +42,18 @@ export async function requireRole(allowedRoles) {
   if (!sb) {
     console.warn('[AMS RBAC] Supabase client unavailable, skipping live guard.');
     const userRole = roles[0];
-    const defaultProfile = userRole === 'teacher'
+    const defaultProfile = userRole === 'super_admin'
+      ? { first_name: 'Chief', last_name: 'Admin', role: 'super_admin' }
+      : userRole === 'teacher' || userRole === 'faculty'
       ? { first_name: 'Ricardo', last_name: 'Santos', role: 'teacher' }
       : userRole === 'student'
       ? { first_name: 'Juan', last_name: 'Dela Cruz', role: 'student' }
+      : userRole === 'staff'
+      ? { first_name: 'Clara', last_name: 'Mendoza', role: 'staff' }
+      : userRole === 'acad_official'
+      ? { first_name: 'Dean', last_name: 'Vanguardia', role: 'acad_official' }
+      : userRole === 'monitoring'
+      ? { first_name: 'Officer', last_name: 'Reyes', role: 'monitoring' }
       : { first_name: 'Administrator', last_name: '', role: 'admin' };
 
     let profile = defaultProfile;

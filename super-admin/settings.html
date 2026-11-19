@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMS — Super Admin System Settings & API Secrets</title>
+  
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('ams_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/css/tailwind.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .badge-super {
+      background: linear-gradient(135deg, #0D47A1, #1976D2);
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <aside class="sidebar" aria-label="Super Admin Navigation">
+      <div class="brand">
+        <img src="../assets/images/logo.png" alt="Bestlink Logo" class="brand-logo" width="32" height="32" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
+        <span>AMS</span>
+        <span class="badge-super">SUPER ADMIN</span>
+      </div>
+
+      <div class="navgroup">SYSTEM ARCHITECTURE</div>
+      <nav class="nav">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview & Health
+        </a>
+        <a href="devices.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+          Hardware Device Hub
+        </a>
+        <a href="users.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.8 14.2c2.4.4 4.2 2.5 4.2 5"/></svg>
+          User Role Hierarchy
+        </a>
+        <a class="active" href="settings.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          System & API Settings
+        </a>
+        <a href="audit.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          System Audit Trail
+        </a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <header class="appbar">
+        <div class="flex items-center gap-3">
+          <button id="sidebarToggle" class="mobile-toggle-btn md:hidden" aria-label="Toggle Navigation">
+            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wider text-blue-600">Core Configuration</div>
+            <h1 class="text-lg font-bold text-slate-800 tracking-tight">System Infrastructure & API Secrets</h1>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="themeToggleBtn" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors" aria-label="Toggle Theme">
+            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </button>
+          <button id="btnSaveAllSettings" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Save Configuration
+          </button>
+        </div>
+      </header>
+
+      <main class="main space-y-6">
+        <!-- Ingress Cutoff & Anti-Passback Form -->
+        <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+          <h2 class="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100 mb-4 flex items-center justify-between">
+            <span>Attendance Cutoffs & Anti-Passback Cooldown</span>
+            <span class="text-xs font-normal text-slate-500">Enforced by Supabase / Edge Functions</span>
+          </h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Student Morning Cutoff (Tardy Threshold)</label>
+              <input type="time" id="settingStudentCutoff" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" value="08:00">
+              <p class="text-[11px] text-slate-500 mt-1">Scans past this time are classified as Late.</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Teacher Shift Cutoff</label>
+              <input type="time" id="settingTeacherCutoff" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" value="07:30">
+              <p class="text-[11px] text-slate-500 mt-1">Classified as On-Time Duty vs. Late.</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Anti-Passback Window (Minutes)</label>
+              <input type="number" id="settingCooldownMins" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" value="5" min="1" max="60">
+              <p class="text-[11px] text-slate-500 mt-1">Repeated scans within this window return HTTP 429.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SMS Gateway Configuration -->
+        <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+          <h2 class="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100 mb-4 flex items-center justify-between">
+            <span>SMS Alert Gateway Credentials</span>
+            <span class="text-xs font-normal text-slate-500">Semaphore / Movider Gateway API</span>
+          </h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">SMS API Secret Key</label>
+              <input type="password" id="settingSmsApiKey" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" placeholder="••••••••••••••••••••••••••••••••" value="demo_semaphore_key_ams">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Sender Name / Mask</label>
+              <input type="text" id="settingSmsSenderName" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" value="BCP-AMS" maxlength="11">
+            </div>
+          </div>
+        </div>
+
+        <!-- Gmail Delivery Configuration -->
+        <div class="card p-5 border border-slate-200 bg-white rounded-xl shadow-sm">
+          <h2 class="text-sm font-bold text-slate-800 pb-2 border-b border-slate-100 mb-4 flex items-center justify-between">
+            <span>Gmail & Email Notification Delivery</span>
+            <span class="text-xs font-normal text-slate-500">Automated Parent Alerts & OTP Links</span>
+          </h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">SMTP / Relay Host</label>
+              <input type="text" id="settingEmailHost" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" value="smtp.gmail.com">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Sender Address</label>
+              <input type="email" id="settingEmailSender" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" value="attendance@bcp.edu.ph">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">App Password / Secret</label>
+              <input type="password" id="settingEmailPass" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 font-mono" placeholder="••••••••••••••••" value="app_pass_ams_live">
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/pages/super-admin/settings.js"></script>
+</body>
+</html>
